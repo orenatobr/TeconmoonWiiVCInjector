@@ -81,7 +81,7 @@
           <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto" Background="Gainsboro">
             <Canvas Background="Gainsboro" Width="471" Height="345">
               <CheckBox Name="Wiimmfi" Canvas.Left="10" Canvas.Top="307" Content="Patch game to use the Wiimmfi server for online play (Wii Retail only)"/>
-              <CheckBox Name="WiiVMC" Canvas.Left="10" Canvas.Top="284" Content="Patch video mode with Wii-VMC (Wii Retail only, opens a new window during conversion)"/>
+              <CheckBox Name="WiiVMC" Canvas.Left="10" Canvas.Top="284" Content="Patch video mode (Wii Retail only, picks the mode when ticked, experimental)"/>
               <CheckBox Name="DisableGamePad" Canvas.Left="10" Canvas.Top="137" IsCheckedChanged="DisableGamePad_CheckedChanged" Content="Don't use GamePad as controller (Won't prompt for usage)"/>
               <local:WfLabel Name="label2" Canvas.Left="6" Canvas.Top="245" FontSize="11.0" FontWeight="Bold" Text="Wii Retail Injection / vWii NAND Title Launcher Patches"/>
               <Button Name="SaveAncastKeyButton" Canvas.Left="281" Canvas.Top="181" Width="63" Height="23" Background="Silver" IsEnabled="False" Click="SaveAncastKeyButton_Click" Classes="wf"><TextBlock Text="Save Key" TextWrapping="Wrap" TextAlignment="Center" TextTrimming="None"/></Button>

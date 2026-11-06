@@ -20,7 +20,14 @@ public static class BuildEngine
     static string Run(BuildOptions o, IProgress<(int Percent, string Status)> progress, CancellationToken ct)
     {
         void P(int v, string s) { Emit(s); progress.Report((v, s)); }
-        void Exec(string exe, IEnumerable<string> args, string? cwd = null) { ct.ThrowIfCancellationRequested(); Tools.Run(exe, args, cwd, ct); }
+        var total = System.Diagnostics.Stopwatch.StartNew();
+        void Exec(string exe, IEnumerable<string> args, string? cwd = null)
+        {
+            ct.ThrowIfCancellationRequested();
+            var sw = System.Diagnostics.Stopwatch.StartNew();
+            Tools.Run(exe, args, cwd, ct);
+            Emit($"[time] {Path.GetFileName(exe)} {args.FirstOrDefault()} took {sw.Elapsed.TotalSeconds:F1}s");
+        }
 
         if (o.System is not ("wii" or "gcn" or "dol" or "wiiware")) throw new ArgumentException("unknown system: " + o.System);
         if (o.System != "wiiware" && !File.Exists(o.GamePath)) throw new FileNotFoundException("game file not found", o.GamePath);
@@ -104,6 +111,7 @@ public static class BuildEngine
                 foreach (var l in report.Errors) Emit("[wup] ERROR: " + l);
                 throw new InvalidOperationException("The generated WUP failed validation, do not install it:\n" + string.Join("\n", report.Errors));
             }
+            Emit($"[time] total {total.Elapsed.TotalSeconds:F1}s");
             P(100, "Conversion complete...");
             return outPath;
         }
@@ -119,12 +127,15 @@ public static class BuildEngine
         if (o.System == "wii")
         {
             var game = o.GamePath;
-            if (game.EndsWith(".wbfs", StringComparison.OrdinalIgnoreCase))
+            var trimming = !(o.DisableTrimming && !o.ForceCC);
+            // wit extract reads WBFS directly (the extracted tree is identical apart from the image-type line of setup.txt),
+            // so the 6+ GB WBFS to ISO copy is only needed when the ISO itself is used without trimming.
+            if (game.EndsWith(".wbfs", StringComparison.OrdinalIgnoreCase) && !trimming)
             {
                 game = Path.Combine(work, "wbfsconvert.iso");
                 exec(wit, ["copy", o.GamePath, "--DEST", game, "--iso", "-ovv"], null);
             }
-            if (o.DisableTrimming && !o.ForceCC)
+            if (!trimming)
             {
                 return game;
             }
@@ -142,6 +153,7 @@ public static class BuildEngine
             }
             string[] copy = ["copy", extract, "--DEST", iso, "-ovv", "--links", "--iso"];
             exec(wit, o.Wiimmfi ? [.. copy, "--wiimmfi"] : copy, null);
+            try { Directory.Delete(extract, true); } catch { }  // frees the extracted tree (as big as the game) before the NFS step
             return iso;
         }
 

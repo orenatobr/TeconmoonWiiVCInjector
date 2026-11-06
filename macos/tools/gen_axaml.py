@@ -135,8 +135,10 @@ def emit(n, ind, parent_kind, group):
     ta = p.get("TextAlign", "")
     if t == "Label":
         al = ' HorizontalContentAlignment="Center"' if "Center" in ta else ""
-        va = ' VerticalContentAlignment="Center"' if "Middle" in ta else ""
-        bd = ' BorderBrush="Gray" BorderThickness="1"' if "Fixed" in p.get("BorderStyle", "") else ""
+        boxed = "Fixed" in p.get("BorderStyle", "")
+        # boxed labels act as read-only fields: center the text vertically and keep it off the border
+        va = ' VerticalContentAlignment="Center"' if ("Middle" in ta or boxed) else ""
+        bd = ' BorderBrush="Gray" BorderThickness="1" Padding="5,0"' if boxed else ""
         tr = ' TextTrimming="CharacterEllipsis"' if p.get("AutoEllipsis") == "true" else ""
         out.append(f'{sp}<local:WfLabel{common}{extra}{ev}{al}{va}{bd}{tr} Text={quoteattr(text)}/>')
     elif t == "LinkLabel":

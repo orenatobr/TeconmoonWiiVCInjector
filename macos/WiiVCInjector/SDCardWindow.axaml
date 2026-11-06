@@ -31,7 +31,7 @@
             <ComboBoxItem Content="4"/>
           </ComboBox>
           <Button Name="GenerateConfig" Canvas.Left="4" Canvas.Top="323" Click="GenerateConfig_Click" Classes="wf"><TextBlock Text="Generate Nintendont Config File (nincfg.bin)" TextWrapping="Wrap" TextAlignment="Center" TextTrimming="None"/></Button>
-          <local:WfLabel Name="gamepadSlotLabel" Canvas.Left="6" Canvas.Top="267" Width="124" Height="18" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" BorderBrush="Gray" BorderThickness="1" Text="Wii U Gamepad Slot"/>
+          <local:WfLabel Name="gamepadSlotLabel" Canvas.Left="6" Canvas.Top="267" Width="124" Height="18" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" BorderBrush="Gray" BorderThickness="1" Padding="5,0" Text="Wii U Gamepad Slot"/>
           <ComboBox Name="LanguageBox" Canvas.Left="6" Canvas.Top="236" Width="124" Height="21" Classes="wf">
             <ComboBoxItem Content="Automatic"/>
             <ComboBoxItem Content="English"/>
@@ -41,7 +41,7 @@
             <ComboBoxItem Content="Italian"/>
             <ComboBoxItem Content="Dutch"/>
           </ComboBox>
-          <local:WfLabel Name="LanguageText" Canvas.Left="6" Canvas.Top="213" Width="124" Height="18" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" BorderBrush="Gray" BorderThickness="1" Text="Language"/>
+          <local:WfLabel Name="LanguageText" Canvas.Left="6" Canvas.Top="213" Width="124" Height="18" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" BorderBrush="Gray" BorderThickness="1" Padding="5,0" Text="Language"/>
           <CheckBox Name="MemcardMulti" Canvas.Left="6" Canvas.Top="184" Width="124" Height="26" Content="Memcard Multi"/>
           <ComboBox Name="VideoForceMode" Canvas.Left="136" Canvas.Top="157" Width="123" Height="21" SelectionChanged="VideoForceMode_SelectedIndexChanged" Classes="wf">
             <ComboBoxItem Content="Auto"/>
@@ -57,8 +57,8 @@
             <ComboBoxItem Content="1019 (Unstable)"/>
             <ComboBoxItem Content="2043 (Unstable)"/>
           </ComboBox>
-          <local:WfLabel Name="VideoText" Canvas.Left="135" Canvas.Top="136" Width="124" Height="18" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" BorderBrush="Gray" BorderThickness="1" Text="Video Mode"/>
-          <local:WfLabel Name="MemcardText" Canvas.Left="6" Canvas.Top="136" Width="124" Height="18" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" BorderBrush="Gray" BorderThickness="1" Text="Memcard Blocks"/>
+          <local:WfLabel Name="VideoText" Canvas.Left="135" Canvas.Top="136" Width="124" Height="18" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" BorderBrush="Gray" BorderThickness="1" Padding="5,0" Text="Video Mode"/>
+          <local:WfLabel Name="MemcardText" Canvas.Left="6" Canvas.Top="136" Width="124" Height="18" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" BorderBrush="Gray" BorderThickness="1" Padding="5,0" Text="Memcard Blocks"/>
           <ComboBox Name="VideoTypeMode" Canvas.Left="136" Canvas.Top="184" Width="123" Height="21" SelectionChanged="VideoTypeMode_SelectedIndexChanged" Classes="wf">
             <ComboBoxItem Content="Auto"/>
             <ComboBoxItem Content="NTSC"/>
@@ -68,7 +68,7 @@
           </ComboBox>
           <local:WfLabel Name="WidthNumber" Canvas.Left="132" Canvas.Top="229" Width="127" Height="14" HorizontalContentAlignment="Center" Text="Auto"/>
           <Slider Name="VideoWidth" Canvas.Left="136" Canvas.Top="234" Width="123" Height="26" Background="#F0F0F0" IsEnabled="False" ValueChanged="VideoWidth_Scroll" Minimum="640" Maximum="720" Value="640" SmallChange="2" LargeChange="10"/>
-          <local:WfLabel Name="VideoWidthText" Canvas.Left="136" Canvas.Top="213" Width="123" Height="18" IsEnabled="False" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" BorderBrush="Gray" BorderThickness="1" Text="Video Width"/>
+          <local:WfLabel Name="VideoWidthText" Canvas.Left="136" Canvas.Top="213" Width="123" Height="18" IsEnabled="False" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" BorderBrush="Gray" BorderThickness="1" Padding="5,0" Text="Video Width"/>
         </Canvas>
       </Grid>
       <local:WfLink Name="Format" Canvas.Left="118" Canvas.Top="61" Click="Format_LinkClicked" Text="Use this to format your SD Card" Foreground="#0066CC" Cursor="Hand"/>

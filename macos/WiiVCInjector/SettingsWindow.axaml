@@ -1,6 +1,6 @@
 <Window xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:local="using:WiiVCInjector"
-        x:Class="WiiVCInjector.SettingsWindow" Width="369" Height="295" CanResize="False"
+        x:Class="WiiVCInjector.SettingsWindow" Width="369" Height="295" MinWidth="369" MinHeight="295" CanResize="False"
         Title="Application Settings" Background="#F0F0F0" FontSize="11">
     <Canvas>
       <local:WfLabel Name="OutputDirLabel" Canvas.Left="12" Canvas.Top="60" Width="262" Height="15" Text="Output Directory (leave empty to always ask)"/>

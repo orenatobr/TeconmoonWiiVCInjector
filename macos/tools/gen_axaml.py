@@ -95,6 +95,10 @@ EVMAP = {"Click": "Click", "CheckedChanged": "IsCheckedChanged", "LinkClicked": 
          "SelectedIndexChanged": "SelectionChanged", "Scroll": "ValueChanged", "DoubleClick": "DoubleTapped"}
 
 
+VERTICAL_INSET = 8  # plus the 3 px cell margin: 11 px above the radios and below the page
+HEADER_INSET = 11  # header rows and tab strip line up with the content inside the pages (x = 14)
+
+
 def emit(n, ind, parent_kind, group):
     t = types[n]
     p = props.get(n, {})
@@ -107,12 +111,25 @@ def emit(n, ind, parent_kind, group):
         c, r = cells[n]
         m = 6 if parent_kind == "cellgrid" else 3
         pos = (f' Grid.Column="{c}" Grid.Row="{r}"' + (f' Grid.ColumnSpan="{spans[n]}"' if n in spans else "")
-               + (f' Margin="{m}"' if types[n] == "TabControl" else
+               + (f' Margin="{m - HEADER_INSET},{m},{m - HEADER_INSET},{m}"' if types[n] == "TabControl" and group == "MainTableLayout" else
+                  f' Margin="{m}"' if types[n] == "TabControl" else
+                  f' Margin="{m}" HorizontalAlignment="Stretch" VerticalAlignment="Top"' if types[n] == "Button" and group == "MainTableLayout" else
                   f' Margin="{m},{m},0,0" HorizontalAlignment="Left" VerticalAlignment="Top"'))
     size = ""
+    stretch = parent_kind in ("grid", "cellgrid") and t == "Button" and group == "MainTableLayout"
     if "Size" in p and t not in ("TableLayoutPanel", "TabPage") and (p.get("AutoSize") != "true" or t == "TabControl"):
         w, h = nums(p["Size"])
-        size = f' Width="{int(w)}" Height="{int(h)}"'
+        if t == "TabControl" and group == "MainTableLayout":
+            size = ""  # fills the row, so the bottom margin is the grid's, like the top one
+        else:
+            size = f' Height="{int(h)}"' if stretch else f' Width="{int(w)}" Height="{int(h)}"'
+    elif t == "Button" and parent_kind == "canvas" and p.get("AutoSize") == "true":
+        # AutoSize buttons (the two Save Key buttons) would shrink to the text; give them a real button size
+        # and center them on the neighbouring 20 px text box
+        size = ' Width="64" Height="22"'
+        pos = re.sub(r'Canvas\.Top="(\d+)"', lambda m: f'Canvas.Top="{int(m.group(1)) - 1}"', pos)
+    elif t == "TableLayoutPanel" and n == "MainTableLayout":
+        size = ""  # fills the window; the header inset is a margin on the grid
     elif t == "TableLayoutPanel" and "Location" in p and "Size" in p:
         w, h = nums(p["Size"])
         size = f' Width="{int(w)}" Height="{int(h)}"'
@@ -135,8 +152,10 @@ def emit(n, ind, parent_kind, group):
     ta = p.get("TextAlign", "")
     if t == "Label":
         al = ' HorizontalContentAlignment="Center"' if "Center" in ta else ""
-        va = ' VerticalContentAlignment="Center"' if "Middle" in ta else ""
-        bd = ' BorderBrush="Gray" BorderThickness="1"' if "Fixed" in p.get("BorderStyle", "") else ""
+        boxed = "Fixed" in p.get("BorderStyle", "")
+        # boxed labels act as read-only fields: center the text vertically and keep it off the border
+        va = ' VerticalContentAlignment="Center"' if ("Middle" in ta or boxed) else ""
+        bd = ' BorderBrush="Gray" BorderThickness="1" Padding="5,1,5,0"' if boxed else ""
         tr = ' TextTrimming="CharacterEllipsis"' if p.get("AutoEllipsis") == "true" else ""
         out.append(f'{sp}<local:WfLabel{common}{extra}{ev}{al}{va}{bd}{tr} Text={quoteattr(text)}/>')
     elif t == "LinkLabel":
@@ -190,16 +209,22 @@ def emit(n, ind, parent_kind, group):
     elif t == "TabPage":
         bg = color(p["BackColor"]) if "BackColor" in p else "White"
         out.append(f'{sp}<TabItem{q("Name", n)} Header={quoteattr(text)}>')
-        out.append(f'{sp}  <Canvas Background="{bg}">')
+        # The page scrolls when fonts or the tab strip make the content area smaller than the design.
+        tw, th = nums(p["Size"]) if "Size" in p else (0, 0)
+        cvs = f' Width="{int(tw)}" Height="{int(th)}"' if tw else ""
+        out.append(f'{sp}  <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto" Background="{bg}">')
+        out.append(f'{sp}    <Canvas Background="{bg}"{cvs}>')
         for c in children.get(n, []):
-            emit(c, ind + 4, "canvas", n)
-        out.append(f"{sp}  </Canvas>")
+            emit(c, ind + 6, "canvas", n)
+        out.append(f"{sp}    </Canvas>")
+        out.append(f"{sp}  </ScrollViewer>")
         out.append(f"{sp}</TabItem>")
     elif t == "TableLayoutPanel":
         cs = ",".join(f"{float(v):.4f}*" if k == "Percent" else f"{float(v or 0):g}" for k, v in styles("Column", n))
         rs = ",".join("*" if k == "Percent" else f"{float(v or 0):g}" for k, v in styles("Row", n))
         cellb = "CellBorderStyle" in p
-        out.append(f'{sp}<Grid{q("Name", n)}{pos}{size} ColumnDefinitions="{cs}" RowDefinitions="{rs}">')
+        inset = f' Margin="{HEADER_INSET},{VERTICAL_INSET},{HEADER_INSET},{VERTICAL_INSET}"' if n == "MainTableLayout" else ""
+        out.append(f'{sp}<Grid{q("Name", n)}{pos}{size}{inset} ColumnDefinitions="{cs}" RowDefinitions="{rs}">')
         if cellb:
             for r in range(len(styles("Row", n))):
                 for c in range(len(styles("Column", n))):
@@ -224,9 +249,10 @@ form_text = lit(form["Text"]) if "Text" in form else ""
 cw, ch = re.search(r"this\.ClientSize = new System\.Drawing\.Size\((\d+), (\d+)\)", body).groups()
 dialogs = {n: {k: lit(v) for k, v in props[n].items() if k in ("Filter", "Title", "FileName")}
            for n, t in types.items() if t == "OpenFileDialog"}
+SLACK = 24 if args.cls.endswith('MainWindow') else 0  # room for the tab strip metrics of the macOS fonts
 xaml = f'''<Window xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:local="using:WiiVCInjector"
-        x:Class="{args.cls}" Width="{cw}" Height="{ch}" CanResize="False"
+        x:Class="{args.cls}" Width="{cw}" Height="{int(ch) + SLACK}" MinWidth="{cw}" MinHeight="{ch}" CanResize="False"
         Title={quoteattr(form_text)} Background="#F0F0F0" FontSize="11">
 {body_xaml}
 </Window>

@@ -1,17 +1,17 @@
 {
   "format": 1,
   "restore": {
-    "/Users/renato.pereira/Workspace/TeconmoonWiiVCInjector/macos/WiiVCInjector/WiiVCInjector.csproj": {}
+    "/Users/renato.pereira/Workspace/wt-ui/macos/WiiVCInjector/WiiVCInjector.csproj": {}
   },
   "projects": {
-    "/Users/renato.pereira/Workspace/TeconmoonWiiVCInjector/macos/WiiVCInjector/WiiVCInjector.csproj": {
+    "/Users/renato.pereira/Workspace/wt-ui/macos/WiiVCInjector/WiiVCInjector.csproj": {
       "version": "1.0.0",
       "restore": {
-        "projectUniqueName": "/Users/renato.pereira/Workspace/TeconmoonWiiVCInjector/macos/WiiVCInjector/WiiVCInjector.csproj",
+        "projectUniqueName": "/Users/renato.pereira/Workspace/wt-ui/macos/WiiVCInjector/WiiVCInjector.csproj",
         "projectName": "WiiVCInjector",
-        "projectPath": "/Users/renato.pereira/Workspace/TeconmoonWiiVCInjector/macos/WiiVCInjector/WiiVCInjector.csproj",
+        "projectPath": "/Users/renato.pereira/Workspace/wt-ui/macos/WiiVCInjector/WiiVCInjector.csproj",
         "packagesPath": "/Users/renato.pereira/.nuget/packages/",
-        "outputPath": "/Users/renato.pereira/Workspace/TeconmoonWiiVCInjector/macos/WiiVCInjector/obj/",
+        "outputPath": "/Users/renato.pereira/Workspace/wt-ui/macos/WiiVCInjector/obj/",
         "projectStyle": "PackageReference",
         "configFilePaths": [
           "/Users/renato.pereira/.nuget/NuGet/NuGet.Config"

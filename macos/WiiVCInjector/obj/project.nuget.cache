@@ -1,8 +1,8 @@
 {
   "version": 2,
-  "dgSpecHash": "uziGHrFHLdM=",
+  "dgSpecHash": "L8kkTX0M2S0=",
   "success": true,
-  "projectFilePath": "/Users/renato.pereira/Workspace/TeconmoonWiiVCInjector/macos/WiiVCInjector/WiiVCInjector.csproj",
+  "projectFilePath": "/Users/renato.pereira/Workspace/wt-ui/macos/WiiVCInjector/WiiVCInjector.csproj",
   "expectedPackageFiles": [
     "/Users/renato.pereira/.nuget/packages/avalonia/12.0.4/avalonia.12.0.4.nupkg.sha512",
     "/Users/renato.pereira/.nuget/packages/avalonia.angle.windows.natives/2.1.27548.20260419/avalonia.angle.windows.natives.2.1.27548.20260419.nupkg.sha512",

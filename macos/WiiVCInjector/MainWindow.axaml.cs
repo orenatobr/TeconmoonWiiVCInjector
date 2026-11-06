@@ -8,6 +8,8 @@ public partial class MainWindow : Window
     public MainWindow()
     {
         InitializeComponent();
+        var tab = Environment.GetEnvironmentVariable("WIIVC_TAB");
+        if (int.TryParse(tab, out var ti)) MainTabs.SelectedIndex = ti;
         var snap = Environment.GetEnvironmentVariable("WIIVC_SNAPSHOT");
         if (!string.IsNullOrEmpty(snap))
             Opened += async (_, _) =>

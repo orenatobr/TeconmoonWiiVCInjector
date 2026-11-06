@@ -102,6 +102,15 @@ public static class BuildEngine
             Exec(Tools.Java(), ["-jar", Tools.Jar("NUSPacker"), "-in", "BUILDDIR", "-out", outPath, "-encryptKeyWith", o.CommonKey], work);
             foreach (var f in new[] { "title.tmd", "title.tik", "title.cert" })
                 if (!File.Exists(Path.Combine(outPath, f))) throw new InvalidOperationException($"NUSPacker did not produce {f}.");
+            // The original app packs with nuspacker.exe 0.4, which leaves the two SHA-256 fields of the TMD (the hash of the
+            // content infos at 0x1E4 and the hash of the content records at 0x208) zero; the 0.3-i jar fills them in. A run of
+            // both tools on the same input (workflow windows-reference) showed this is the only difference besides random
+            // ticket bytes, so match the original that is known to install.
+            var tmdPath = Path.Combine(outPath, "title.tmd");
+            var tmdBytes = File.ReadAllBytes(tmdPath);
+            Array.Clear(tmdBytes, 0x1E4, 0x20);
+            Array.Clear(tmdBytes, 0x208, 0x20);
+            File.WriteAllBytes(tmdPath, tmdBytes);
             P(96, "Validating the WUP package...");
             var report = WupValidator.Validate(outPath, o.CommonKey);
             foreach (var l in report.Info) Emit("[wup] " + l);

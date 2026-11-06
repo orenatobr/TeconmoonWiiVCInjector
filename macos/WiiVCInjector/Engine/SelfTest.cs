@@ -49,6 +49,13 @@ internal static class SelfTest
     {
         if (Environment.GetEnvironmentVariable("WIIVC_BUILDFILE") is { Length: > 0 } bf) return BuildFile(bf);
         if (Environment.GetEnvironmentVariable("WIIVC_VALIDATE") is { Length: > 0 } vd) return ValidateDir(vd);
+        if (Environment.GetEnvironmentVariable("WIIVC_TGATEST") is { Length: > 0 } td)
+        {   // WIIVC_TGATEST=dir with iconTex.png and bootTvTex.png: writes our TGAs next to them for a byte comparison
+            Media.WriteTga(Path.Combine(td, "iconTex.png"), Path.Combine(td, "iconTex.tga"), 128, 128, 32);
+            Media.WriteTga(Path.Combine(td, "bootTvTex.png"), Path.Combine(td, "bootTvTex.tga"), 1280, 720, 24);
+            Media.WriteTga(Path.Combine(td, "bootTvTex.png"), Path.Combine(td, "bootDrcTex.tga"), 854, 480, 24);
+            return 0;
+        }
         try { Units(); Builds(); }
         catch (Exception e) { Console.WriteLine("[FAIL] exception: " + e); _fail++; }
         Console.WriteLine(_fail == 0 ? "ALL OK" : $"{_fail} FAILED");

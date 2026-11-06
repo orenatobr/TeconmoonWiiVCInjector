@@ -18,6 +18,14 @@ is a small launcher script (keeps `codesign --verify --deep --strict` clean).
 `.github/workflows/macos-release.yml` builds on tag `v*`. It expects a release asset `wiivc-mac-tools.tar.gz`
 (tools tree without `jre/` and `nfs/`, with `nfs-src/`) in this repo. It has not been run.
 
+## Install
+
+The simplest way, which avoids the Gatekeeper block below (`curl` does not set the quarantine flag):
+
+    curl -fsSL https://raw.githubusercontent.com/orenatobr/TeconmoonWiiVCInjector/main/macos/install.sh | bash
+
+It downloads the latest release and installs it in `/Applications`.
+
 ## First run
 
 The app is ad-hoc signed, not notarized, so recent macOS versions block it with "WiiVCInjector.app was not opened"

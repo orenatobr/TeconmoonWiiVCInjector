@@ -70,6 +70,9 @@ MODS="$("$JDK_HOME/bin/jdeps" --multi-release 17 --ignore-missing-deps --print-m
 
 find "$APP" \( -name '._*' -o -name .DS_Store \) -delete
 
+# jlink copies read-only (0444) files; make them writable so users can run xattr -dr or delete the app
+chmod -R u+w "$APP"
+
 echo "==> codesign (ad-hoc)"
 # sign every Mach-O (nested first), then the bundle
 find "$APP/Contents/Resources" -type f | while read -r f; do

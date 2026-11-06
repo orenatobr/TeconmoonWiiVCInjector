@@ -44,6 +44,8 @@ public partial class MainWindow : Window
 
         if (Environment.GetEnvironmentVariable("WIIVC_UITEST") == "1")
             Opened += (_, _) => Environment.Exit(UiSelfTest.Run(this));
+        if (Environment.GetEnvironmentVariable("WIIVC_GUIBUILD") == "1")
+            Opened += async (_, _) => Environment.Exit(await GuiBuildTest.Run(this));
         var tab = Environment.GetEnvironmentVariable("WIIVC_TAB");
         if (int.TryParse(tab, out var ti)) MainTabs.SelectedIndex = ti;
         var snap = Environment.GetEnvironmentVariable("WIIVC_SNAPSHOT");
@@ -366,7 +368,7 @@ public partial class MainWindow : Window
     string TempPng(string name) => Path.Combine(TempSourcePath, name);
 
     /// <summary>Convert the chosen image to the temp PNG and show it; false on failure.</summary>
-    async Task<bool> ImportImage(string src, string tempName, Image preview)
+    internal async Task<bool> ImportImage(string src, string tempName, Image preview)
     {
         try
         {
@@ -861,7 +863,10 @@ public partial class MainWindow : Window
         catch { return true; }
     }
 
-    private async void TheBigOneTM_Click(object? s, RoutedEventArgs e)
+    private async void TheBigOneTM_Click(object? s, RoutedEventArgs e) => await BuildClick();
+
+    /// <summary>The body of the BUILD button (also driven by the GUI build self-test).</summary>
+    internal async Task BuildClick()
     {
         MainTabs.IsEnabled = false;
         void Done() { MainTabs.IsEnabled = true; BuildStatus.Text = ""; BuildProgress.Value = 0; }

@@ -25,7 +25,7 @@ internal static class SelfTest
         var outDir = Environment.GetEnvironmentVariable("WIIVC_OUT") ?? Path.Combine(tmp, "out");
         var system = Environment.GetEnvironmentVariable("WIIVC_SYSTEM") ?? "wii";   // wii, dol, gcn
         var title = Environment.GetEnvironmentVariable("WIIVC_TITLE") ?? Path.GetFileNameWithoutExtension(game);
-        var o = new BuildOptions { System = system, GamePath = game, OutputDir = outDir, Title1 = title, IconPath = icon, BannerPath = banner, CommonKey = ck, TitleKey = tk };
+        var o = new BuildOptions { System = system, GamePath = game, OutputDir = outDir, Title1 = title, IconPath = icon, BannerPath = banner, CommonKey = ck, TitleKey = tk, DrcUse = Environment.GetEnvironmentVariable("WIIVC_DRCUSE") ?? "1" };
         var pkg = BuildEngine.RunAsync(o, prog).GetAwaiter().GetResult();
         var bytes = Directory.GetFiles(pkg).Sum(f => new FileInfo(f).Length);
         Console.WriteLine($"package: {pkg}\nfiles: {Directory.GetFiles(pkg).Length}, total {bytes / 1048576.0:F1} MiB");

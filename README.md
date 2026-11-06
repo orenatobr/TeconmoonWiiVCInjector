@@ -13,7 +13,7 @@ This fork adds a native **macOS (Apple Silicon) port** under [`macos/`](macos/),
 - Settings are stored in `~/Library/Application Support/WiiVCInjector/settings.json` instead of the Windows registry.
 - Packaging: `macos/package.sh` builds a self-contained `WiiVCInjector.app` (bundled .NET runtime and a minimal Java runtime). Download it from the [latest release](https://github.com/orenatobr/TeconmoonWiiVCInjector/releases/latest).
 
-**Status:** tested with synthetic inputs only (a fake homebrew DOL, a synthetic Wii disc, WBFS, GameCube and WiiWare stand-ins). No real Wii or GameCube game has been injected and no package has been installed on a Wii U yet. NKit/NASOS input is not supported on macOS; use ISO or WBFS. See [`macos/README.md`](macos/README.md) for build, first run (the app is ad-hoc signed, not notarized) and checks.
+**Status:** one real game was built: a 6.78 GB Xenoblade WBFS produces a 6.4 GiB package, and its WBFS to ISO to NFS to ISO roundtrip passes `wit verify`. The other paths (ISO, GameCube, WiiWare, homebrew DOL) were only run with synthetic inputs, and no package has been installed on a Wii U or opened in Cemu yet. NKit/NASOS input is not supported on macOS; use ISO or WBFS. See [`macos/README.md`](macos/README.md) for build, first run (the app is ad-hoc signed, not notarized: use Open Anyway or `xattr -dr com.apple.quarantine`) and checks.
 
 ---
 

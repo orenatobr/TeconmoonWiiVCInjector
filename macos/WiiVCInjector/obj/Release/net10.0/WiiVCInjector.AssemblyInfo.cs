@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("WiiVCInjector")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Release")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+3964aebbee2578dbbe57c0528c3e7ea228204aec")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+c0c1044a659ba4ba385c8ff591560ef4bbb9aa4a")]
 [assembly: System.Reflection.AssemblyProductAttribute("WiiVCInjector")]
 [assembly: System.Reflection.AssemblyTitleAttribute("WiiVCInjector")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

@@ -95,6 +95,9 @@ EVMAP = {"Click": "Click", "CheckedChanged": "IsCheckedChanged", "LinkClicked": 
          "SelectedIndexChanged": "SelectionChanged", "Scroll": "ValueChanged", "DoubleClick": "DoubleTapped"}
 
 
+HEADER_INSET = 11  # header rows and tab strip line up with the content inside the pages (x = 14)
+
+
 def emit(n, ind, parent_kind, group):
     t = types[n]
     p = props.get(n, {})
@@ -107,12 +110,17 @@ def emit(n, ind, parent_kind, group):
         c, r = cells[n]
         m = 6 if parent_kind == "cellgrid" else 3
         pos = (f' Grid.Column="{c}" Grid.Row="{r}"' + (f' Grid.ColumnSpan="{spans[n]}"' if n in spans else "")
-               + (f' Margin="{m}"' if types[n] == "TabControl" else
+               + (f' Margin="{m - HEADER_INSET},{m},{m - HEADER_INSET},{m}"' if types[n] == "TabControl" and group == "MainTableLayout" else
+                  f' Margin="{m}"' if types[n] == "TabControl" else
+                  f' Margin="{m}" HorizontalAlignment="Stretch" VerticalAlignment="Top"' if types[n] == "Button" and group == "MainTableLayout" else
                   f' Margin="{m},{m},0,0" HorizontalAlignment="Left" VerticalAlignment="Top"'))
     size = ""
+    stretch = parent_kind in ("grid", "cellgrid") and t == "Button" and group == "MainTableLayout"
     if "Size" in p and t not in ("TableLayoutPanel", "TabPage") and (p.get("AutoSize") != "true" or t == "TabControl"):
         w, h = nums(p["Size"])
-        size = f' Width="{int(w)}" Height="{int(h)}"'
+        size = f' Height="{int(h)}"' if stretch or (t == "TabControl" and group == "MainTableLayout") else f' Width="{int(w)}" Height="{int(h)}"'
+    elif t == "TableLayoutPanel" and n == "MainTableLayout":
+        size = ""  # fills the window; the header inset is a margin on the grid
     elif t == "TableLayoutPanel" and "Location" in p and "Size" in p:
         w, h = nums(p["Size"])
         size = f' Width="{int(w)}" Height="{int(h)}"'
@@ -206,7 +214,8 @@ def emit(n, ind, parent_kind, group):
         cs = ",".join(f"{float(v):.4f}*" if k == "Percent" else f"{float(v or 0):g}" for k, v in styles("Column", n))
         rs = ",".join("*" if k == "Percent" else f"{float(v or 0):g}" for k, v in styles("Row", n))
         cellb = "CellBorderStyle" in p
-        out.append(f'{sp}<Grid{q("Name", n)}{pos}{size} ColumnDefinitions="{cs}" RowDefinitions="{rs}">')
+        inset = f' Margin="{HEADER_INSET},0,{HEADER_INSET},0"' if n == "MainTableLayout" else ""
+        out.append(f'{sp}<Grid{q("Name", n)}{pos}{size}{inset} ColumnDefinitions="{cs}" RowDefinitions="{rs}">')
         if cellb:
             for r in range(len(styles("Row", n))):
                 for c in range(len(styles("Column", n))):

@@ -44,7 +44,7 @@
     <Style Selector="TabControl.wf">
       <Setter Property="Padding" Value="0" />
       <Setter Property="ItemsPanel">
-        <ItemsPanelTemplate><StackPanel Orientation="Horizontal" /></ItemsPanelTemplate>
+        <ItemsPanelTemplate><StackPanel Orientation="Horizontal" Margin="11,0,0,0" /></ItemsPanelTemplate>
       </Setter>
     </Style>
     <Style Selector="ComboBox.wf">

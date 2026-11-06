@@ -20,9 +20,15 @@ is a small launcher script (keeps `codesign --verify --deep --strict` clean).
 
 ## First run
 
-The app is ad-hoc signed, not notarized. On first launch right click the app and choose Open, or run:
+The app is ad-hoc signed, not notarized, so recent macOS versions block it with "WiiVCInjector.app was not opened"
+(right click > Open no longer bypasses this). Click **OK** (not "Move to Trash") and do one of:
 
-    xattr -dr com.apple.quarantine WiiVCInjector.app
+- System Settings > Privacy & Security, scroll to Security, click **Open Anyway** next to the WiiVCInjector message and confirm; or
+- run this in Terminal (adjust the path):
+
+      xattr -dr com.apple.quarantine ~/Downloads/WiiVCInjector.app
+
+Removing the quarantine flag is the only thing the command does. Notarization needs a paid Apple Developer account and is not set up.
 
 ## Headless render check
 

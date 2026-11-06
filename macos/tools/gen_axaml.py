@@ -95,6 +95,7 @@ EVMAP = {"Click": "Click", "CheckedChanged": "IsCheckedChanged", "LinkClicked": 
          "SelectedIndexChanged": "SelectionChanged", "Scroll": "ValueChanged", "DoubleClick": "DoubleTapped"}
 
 
+VERTICAL_INSET = 8  # plus the 3 px cell margin: 11 px above the radios and below the page
 HEADER_INSET = 11  # header rows and tab strip line up with the content inside the pages (x = 14)
 
 
@@ -118,7 +119,10 @@ def emit(n, ind, parent_kind, group):
     stretch = parent_kind in ("grid", "cellgrid") and t == "Button" and group == "MainTableLayout"
     if "Size" in p and t not in ("TableLayoutPanel", "TabPage") and (p.get("AutoSize") != "true" or t == "TabControl"):
         w, h = nums(p["Size"])
-        size = f' Height="{int(h)}"' if stretch or (t == "TabControl" and group == "MainTableLayout") else f' Width="{int(w)}" Height="{int(h)}"'
+        if t == "TabControl" and group == "MainTableLayout":
+            size = ""  # fills the row, so the bottom margin is the grid's, like the top one
+        else:
+            size = f' Height="{int(h)}"' if stretch else f' Width="{int(w)}" Height="{int(h)}"'
     elif t == "TableLayoutPanel" and n == "MainTableLayout":
         size = ""  # fills the window; the header inset is a margin on the grid
     elif t == "TableLayoutPanel" and "Location" in p and "Size" in p:
@@ -214,7 +218,7 @@ def emit(n, ind, parent_kind, group):
         cs = ",".join(f"{float(v):.4f}*" if k == "Percent" else f"{float(v or 0):g}" for k, v in styles("Column", n))
         rs = ",".join("*" if k == "Percent" else f"{float(v or 0):g}" for k, v in styles("Row", n))
         cellb = "CellBorderStyle" in p
-        inset = f' Margin="{HEADER_INSET},0,{HEADER_INSET},0"' if n == "MainTableLayout" else ""
+        inset = f' Margin="{HEADER_INSET},{VERTICAL_INSET},{HEADER_INSET},{VERTICAL_INSET}"' if n == "MainTableLayout" else ""
         out.append(f'{sp}<Grid{q("Name", n)}{pos}{size}{inset} ColumnDefinitions="{cs}" RowDefinitions="{rs}">')
         if cellb:
             for r in range(len(styles("Row", n))):

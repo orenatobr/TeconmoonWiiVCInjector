@@ -2,9 +2,9 @@
         xmlns:local="using:WiiVCInjector"
         x:Class="WiiVCInjector.MainWindow" Width="485" Height="451" MinWidth="485" MinHeight="427" CanResize="False"
         Title="TeconMoon's WiiVC Injector - [{0}]" Background="#F0F0F0" FontSize="11">
-    <Grid Name="MainTableLayout" Margin="11,0,11,0" ColumnDefinitions="33.3333*,33.3333*,33.3333*" RowDefinitions="25,25,*">
+    <Grid Name="MainTableLayout" Margin="11,8,11,8" ColumnDefinitions="33.3333*,33.3333*,33.3333*" RowDefinitions="25,25,*">
       <RadioButton Name="WiiRetail" Grid.Column="0" Grid.Row="0" Margin="3,3,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Foreground="Black" IsCheckedChanged="WiiRetail_CheckedChanged" GroupName="MainTableLayout" IsChecked="True" Content="Wii Retail Injection"/>
-      <TabControl Name="MainTabs" Grid.Column="0" Grid.Row="2" Grid.ColumnSpan="3" Margin="-8,3,-8,3" Height="371" SelectionChanged="MainTabs_SelectedIndexChanged" Classes="wf">
+      <TabControl Name="MainTabs" Grid.Column="0" Grid.Row="2" Grid.ColumnSpan="3" Margin="-8,3,-8,3" SelectionChanged="MainTabs_SelectedIndexChanged" Classes="wf">
         <TabItem Name="SourceFilesTab" Header="Required Source Files">
           <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto" Background="Gainsboro">
             <Canvas Background="Gainsboro" Width="471" Height="345">

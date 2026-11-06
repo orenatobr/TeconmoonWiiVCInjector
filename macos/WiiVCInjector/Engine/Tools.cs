@@ -14,8 +14,13 @@ internal static class Tools
         {
             var env = Environment.GetEnvironmentVariable("WIIVC_TOOLS");
             if (!string.IsNullOrEmpty(env)) return env;
-            var app = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "Resources", "tools"));
-            return Directory.Exists(app) ? app : DevTools;
+            // Inside the .app the managed code lives in Contents/Resources/app, tools in Contents/Resources/tools.
+            foreach (var rel in new[] { Path.Combine("..", "tools"), Path.Combine("..", "Resources", "tools") })
+            {
+                var cand = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, rel));
+                if (Directory.Exists(Path.Combine(cand, "bin"))) return cand;
+            }
+            return DevTools;
         }
     }
 

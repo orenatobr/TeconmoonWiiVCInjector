@@ -79,9 +79,12 @@ internal static class Tools
         if (cwd != null) psi.WorkingDirectory = cwd;
         foreach (var a in args) psi.ArgumentList.Add(a);
         var tail = new Queue<string>();
+        var sawError = false;
         void OnLine(object _, DataReceivedEventArgs e)
         {
             if (e.Data == null) return;
+            // nfs2iso2nfs prints "ERROR: ..." and still exits with code 0
+            if (e.Data.StartsWith("ERROR:", StringComparison.Ordinal)) sawError = true;
             lock (tail) { tail.Enqueue(e.Data); if (tail.Count > 30) tail.Dequeue(); }
             BuildEngine.Emit(e.Data);
         }
@@ -96,10 +99,10 @@ internal static class Tools
         using var reg = ct.Register(() => { try { p.Kill(true); } catch { } });
         p.WaitForExit();
         ct.ThrowIfCancellationRequested();
-        if (p.ExitCode != 0)
+        if (p.ExitCode != 0 || sawError)
         {
             string t; lock (tail) t = string.Join("\n", tail);
-            throw new InvalidOperationException($"{Path.GetFileName(exe)} exited with code {p.ExitCode}:\n{t}");
+            throw new InvalidOperationException($"{Path.GetFileName(exe)} failed (exit code {p.ExitCode}):\n{t}");
         }
     }
 

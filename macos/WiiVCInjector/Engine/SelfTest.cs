@@ -138,7 +138,7 @@ internal static class SelfTest
                 System = "dol", GamePath = dol, OutputDir = Path.Combine(tmp, "out"), Title1 = "Test DOL", IconPath = icon, BannerPath = icon,
                 CommonKey = commonKey, TitleKey = titleKey, BootSoundPath = wav,
             };
-            VerifyPackage("dol build", BuildEngine.RunAsync(o, prog).GetAwaiter().GetResult(), "0005000248415858", Path.Combine(tmp, "out"));
+            VerifyPackage("dol build", RunTracked(o, prog), "0005000248415858", Path.Combine(tmp, "out"));
 
             // synthetic Wii ISO: wit copy of BASE with a main.dol, header carries the disc id
             var wit = Tools.Native("wit");
@@ -155,7 +155,7 @@ internal static class SelfTest
                 System = "wii", GamePath = iso, OutputDir = Path.Combine(tmp, "out"), Title1 = "Test Wii", Title2 = "Line 2", IconPath = icon, BannerPath = icon,
                 CommonKey = commonKey, TitleKey = titleKey, ForceCC = true,
             };
-            VerifyPackage("wii build (ForceCC)", BuildEngine.RunAsync(o, prog).GetAwaiter().GetResult(), "00050002" + Convert.ToHexString(Encoding.Latin1.GetBytes(id)), Path.Combine(tmp, "out"));
+            VerifyPackage("wii build (ForceCC)", RunTracked(o, prog), "00050002" + Convert.ToHexString(Encoding.Latin1.GetBytes(id)), Path.Combine(tmp, "out"));
 
             // WBFS input: same disc as a .wbfs, goes through the extra `wit copy --iso` step
             var wbfsDir = Path.Combine(tmp, "wbfs"); Directory.CreateDirectory(wbfsDir);
@@ -167,7 +167,7 @@ internal static class SelfTest
                 System = "wii", GamePath = wbfs, OutputDir = Path.Combine(tmp, "out-wbfs"), Title1 = "Test WBFS", IconPath = icon, BannerPath = icon,
                 CommonKey = commonKey, TitleKey = titleKey,
             };
-            VerifyPackage("wbfs build", BuildEngine.RunAsync(o, prog).GetAwaiter().GetResult(), "00050002" + Convert.ToHexString(Encoding.Latin1.GetBytes(id)), Path.Combine(tmp, "out-wbfs"));
+            VerifyPackage("wbfs build", RunTracked(o, prog), "00050002" + Convert.ToHexString(Encoding.Latin1.GetBytes(id)), Path.Combine(tmp, "out-wbfs"));
 
             // GameCube: a 1 MiB file whose header carries GALE01 (the booter, not the disc, is executed on a console)
             var gcm = Path.Combine(tmp, "game.gcm");
@@ -178,7 +178,7 @@ internal static class SelfTest
                 System = "gcn", GamePath = gcm, OutputDir = Path.Combine(tmp, "out-gcn"), Title1 = "Test GC", IconPath = icon, BannerPath = icon,
                 CommonKey = commonKey, TitleKey = titleKey,
             };
-            VerifyPackage("gcn build", BuildEngine.RunAsync(o, prog).GetAwaiter().GetResult(), "00050002" + Convert.ToHexString("GALE"u8.ToArray()), Path.Combine(tmp, "out-gcn"));
+            VerifyPackage("gcn build", RunTracked(o, prog), "00050002" + Convert.ToHexString("GALE"u8.ToArray()), Path.Combine(tmp, "out-gcn"));
 
             // WiiWare / vWii NAND title launcher: only a 4 character title id
             o = new BuildOptions
@@ -186,7 +186,7 @@ internal static class SelfTest
                 System = "wiiware", WiiwareTitle = "WTST", OutputDir = Path.Combine(tmp, "out-ww"), Title1 = "Test WiiWare", IconPath = icon, BannerPath = icon,
                 CommonKey = commonKey, TitleKey = titleKey,
             };
-            VerifyPackage("wiiware build", BuildEngine.RunAsync(o, prog).GetAwaiter().GetResult(), "00050002" + Convert.ToHexString("WTST"u8.ToArray()), Path.Combine(tmp, "out-ww"));
+            VerifyPackage("wiiware build", RunTracked(o, prog), "00050002" + Convert.ToHexString("WTST"u8.ToArray()), Path.Combine(tmp, "out-ww"));
             VideoModeBuild(tmp, icon, commonKey, titleKey, prog);
             C2wStep();
         }
@@ -267,6 +267,26 @@ internal static class SelfTest
         finally { Directory.Delete(dir, true); }
     }
 
+    static long _isoLen;
+
+    /// <summary>Bytes actually allocated on disk (the synthetic ISOs are sparse, so their length overstates the content).</summary>
+    static long AllocatedBytes(string path)
+    {
+        var psi = new System.Diagnostics.ProcessStartInfo("du", ["-k", path]) { RedirectStandardOutput = true };
+        using var p = System.Diagnostics.Process.Start(psi)!;
+        var kb = long.Parse(p.StandardOutput.ReadToEnd().Split('\t')[0]);
+        p.WaitForExit();
+        return kb * 1024;
+    }
+
+    /// <summary>Runs one build and remembers the size of the ISO that went into nfs2iso2nfs.</summary>
+    static string RunTracked(BuildOptions o, IProgress<(int Percent, string Status)> prog)
+    {
+        _isoLen = 0;
+        BuildEngine.IsoReady = p => _isoLen = AllocatedBytes(p);
+        try { return BuildEngine.RunAsync(o, prog).GetAwaiter().GetResult(); } finally { BuildEngine.IsoReady = null; }
+    }
+
     static void VerifyPackage(string name, string pkg, string titleId, string outRoot)
     {
         Console.WriteLine($"    package: {Path.GetFileName(pkg)}");
@@ -276,7 +296,10 @@ internal static class SelfTest
         var tmd = File.ReadAllBytes(Path.Combine(pkg, "title.tmd"));
         var got = Convert.ToHexString(tmd.AsSpan(0x18C, 8));
         Check($"{name}: title.tmd/tik/cert present", has("title.tmd") && has("title.tik") && has("title.cert"));
-        Check($"{name}: 15 .app files (got {apps})", apps == 15);
+        Check($"{name}: at least 15 .app files (got {apps})", apps >= 15);
+        // the game lives in the .app files built from content/hif_000000.nfs: the package must be at least as big as the ISO's allocated size
+        var total = files.Sum(f => new FileInfo(f).Length);
+        Check($"{name}: package holds the game ({total / 1048576.0:F1} MiB >= ISO {_isoLen / 1048576.0:F1} MiB)", _isoLen == 0 || total >= _isoLen);
         Check($"{name}: TMD title id {got} == {titleId}", got.Equals(titleId, StringComparison.OrdinalIgnoreCase));
     }
 }

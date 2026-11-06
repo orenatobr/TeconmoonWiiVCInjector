@@ -93,6 +93,8 @@ public static class BuildEngine
             var outPath = Path.Combine(o.OutputDir, $"{Sanitize(o.Title1)} WUP-N-{ids.Text}_{ids.Packed}");
             Directory.CreateDirectory(outPath);
             Exec(Tools.Java(), ["-jar", Tools.Jar("NUSPacker"), "-in", "BUILDDIR", "-out", outPath, "-encryptKeyWith", o.CommonKey], work);
+            foreach (var f in new[] { "title.tmd", "title.tik", "title.cert" })
+                if (!File.Exists(Path.Combine(outPath, f))) throw new InvalidOperationException($"NUSPacker did not produce {f}.");
             P(100, "Conversion complete...");
             return outPath;
         }

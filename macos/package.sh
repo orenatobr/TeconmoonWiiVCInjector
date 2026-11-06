@@ -61,6 +61,7 @@ chmod +x "$TOOLS/bin/"*
 echo "==> nfs2iso2nfs (self-contained)"
 mkdir -p "$WORK/nfs-src"
 cp "$NFS_SRC/Program.cs" "$NFS_SRC/nfs2iso2nfs.csproj" "$WORK/nfs-src/"
+sh "$(dirname "$0")/tools/patch_nfs_source.sh" "$WORK/nfs-src/Program.cs"
 dotnet publish "$WORK/nfs-src" -c Release -r osx-arm64 --self-contained -p:PublishSingleFile=true -o "$TOOLS/nfs" -v q
 rm -f "$TOOLS/nfs/"*.pdb
 

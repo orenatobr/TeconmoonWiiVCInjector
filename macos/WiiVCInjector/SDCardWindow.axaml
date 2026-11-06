@@ -1,6 +1,6 @@
 <Window xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:local="using:WiiVCInjector"
-        x:Class="WiiVCInjector.SDCardWindow" Width="280" Height="512" CanResize="False"
+        x:Class="WiiVCInjector.SDCardWindow" Width="280" Height="512" MinWidth="280" MinHeight="512" CanResize="False"
         Title="Nintendont SD Card Menu..." Background="#F0F0F0" FontSize="11">
     <Canvas>
       <Grid Name="nintendontConfigGroupBox" Canvas.Left="8" Canvas.Top="139" Width="265" Height="361">

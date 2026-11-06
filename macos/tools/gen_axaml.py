@@ -190,10 +190,15 @@ def emit(n, ind, parent_kind, group):
     elif t == "TabPage":
         bg = color(p["BackColor"]) if "BackColor" in p else "White"
         out.append(f'{sp}<TabItem{q("Name", n)} Header={quoteattr(text)}>')
-        out.append(f'{sp}  <Canvas Background="{bg}">')
+        # The page scrolls when fonts or the tab strip make the content area smaller than the design.
+        tw, th = nums(p["Size"]) if "Size" in p else (0, 0)
+        cvs = f' Width="{int(tw)}" Height="{int(th)}"' if tw else ""
+        out.append(f'{sp}  <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto" Background="{bg}">')
+        out.append(f'{sp}    <Canvas Background="{bg}"{cvs}>')
         for c in children.get(n, []):
-            emit(c, ind + 4, "canvas", n)
-        out.append(f"{sp}  </Canvas>")
+            emit(c, ind + 6, "canvas", n)
+        out.append(f"{sp}    </Canvas>")
+        out.append(f"{sp}  </ScrollViewer>")
         out.append(f"{sp}</TabItem>")
     elif t == "TableLayoutPanel":
         cs = ",".join(f"{float(v):.4f}*" if k == "Percent" else f"{float(v or 0):g}" for k, v in styles("Column", n))
@@ -224,9 +229,10 @@ form_text = lit(form["Text"]) if "Text" in form else ""
 cw, ch = re.search(r"this\.ClientSize = new System\.Drawing\.Size\((\d+), (\d+)\)", body).groups()
 dialogs = {n: {k: lit(v) for k, v in props[n].items() if k in ("Filter", "Title", "FileName")}
            for n, t in types.items() if t == "OpenFileDialog"}
+SLACK = 24 if args.cls.endswith('MainWindow') else 0  # room for the tab strip metrics of the macOS fonts
 xaml = f'''<Window xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:local="using:WiiVCInjector"
-        x:Class="{args.cls}" Width="{cw}" Height="{ch}" CanResize="False"
+        x:Class="{args.cls}" Width="{cw}" Height="{int(ch) + SLACK}" MinWidth="{cw}" MinHeight="{ch}" CanResize="False"
         Title={quoteattr(form_text)} Background="#F0F0F0" FontSize="11">
 {body_xaml}
 </Window>

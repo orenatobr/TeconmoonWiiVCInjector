@@ -37,7 +37,7 @@ public partial class MainWindow : Window
     public MainWindow()
     {
         InitializeComponent();
-        Title = string.Format(Title ?? "{0}", typeof(MainWindow).Assembly.GetName().Version);
+        Title = $"TeconMoon's WiiVC Injector - [{typeof(MainWindow).Assembly.GetName().Version}]";
         Directory.CreateDirectory(TempSourcePath);
         WiiVMC.IsCheckedChanged += WiiVMC_CheckedChanged;
         _ready = true;

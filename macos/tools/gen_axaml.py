@@ -123,6 +123,11 @@ def emit(n, ind, parent_kind, group):
             size = ""  # fills the row, so the bottom margin is the grid's, like the top one
         else:
             size = f' Height="{int(h)}"' if stretch else f' Width="{int(w)}" Height="{int(h)}"'
+    elif t == "Button" and parent_kind == "canvas" and p.get("AutoSize") == "true":
+        # AutoSize buttons (the two Save Key buttons) would shrink to the text; give them a real button size
+        # and center them on the neighbouring 20 px text box
+        size = ' Width="64" Height="22"'
+        pos = re.sub(r'Canvas\.Top="(\d+)"', lambda m: f'Canvas.Top="{int(m.group(1)) - 1}"', pos)
     elif t == "TableLayoutPanel" and n == "MainTableLayout":
         size = ""  # fills the window; the header inset is a margin on the grid
     elif t == "TableLayoutPanel" and "Location" in p and "Size" in p:

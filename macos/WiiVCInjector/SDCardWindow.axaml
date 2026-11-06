@@ -30,7 +30,7 @@
             <ComboBoxItem Content="3"/>
             <ComboBoxItem Content="4"/>
           </ComboBox>
-          <Button Name="GenerateConfig" Canvas.Left="4" Canvas.Top="323" Click="GenerateConfig_Click" Classes="wf"><TextBlock Text="Generate Nintendont Config File (nincfg.bin)" TextWrapping="Wrap" TextAlignment="Center" TextTrimming="None"/></Button>
+          <Button Name="GenerateConfig" Canvas.Left="4" Canvas.Top="322" Width="64" Height="22" Click="GenerateConfig_Click" Classes="wf"><TextBlock Text="Generate Nintendont Config File (nincfg.bin)" TextWrapping="Wrap" TextAlignment="Center" TextTrimming="None"/></Button>
           <local:WfLabel Name="gamepadSlotLabel" Canvas.Left="6" Canvas.Top="267" Width="124" Height="18" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" BorderBrush="Gray" BorderThickness="1" Padding="5,1,5,0" Text="Wii U Gamepad Slot"/>
           <ComboBox Name="LanguageBox" Canvas.Left="6" Canvas.Top="236" Width="124" Height="21" Classes="wf">
             <ComboBoxItem Content="Automatic"/>
@@ -73,8 +73,8 @@
       </Grid>
       <local:WfLink Name="Format" Canvas.Left="118" Canvas.Top="61" Click="Format_LinkClicked" Text="Use this to format your SD Card" Foreground="#0066CC" Cursor="Hand"/>
       <local:WfLabel Name="ActionStatus" Canvas.Left="5" Canvas.Top="82" Width="253" Height="20" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" Text=""/>
-      <Button Name="NintendontUpdate" Canvas.Left="14" Canvas.Top="103" Click="NintendontUpdate_Click" Classes="wf"><TextBlock Text="Download Latest Nintendont from GitHub" TextWrapping="Wrap" TextAlignment="Center" TextTrimming="None"/></Button>
-      <Button Name="ReloadDrives" Canvas.Left="14" Canvas.Top="56" Click="ReloadDrives_Click" Classes="wf"><TextBlock Text="Reload Drive List" TextWrapping="Wrap" TextAlignment="Center" TextTrimming="None"/></Button>
+      <Button Name="NintendontUpdate" Canvas.Left="14" Canvas.Top="102" Width="64" Height="22" Click="NintendontUpdate_Click" Classes="wf"><TextBlock Text="Download Latest Nintendont from GitHub" TextWrapping="Wrap" TextAlignment="Center" TextTrimming="None"/></Button>
+      <Button Name="ReloadDrives" Canvas.Left="14" Canvas.Top="55" Width="64" Height="22" Click="ReloadDrives_Click" Classes="wf"><TextBlock Text="Reload Drive List" TextWrapping="Wrap" TextAlignment="Center" TextTrimming="None"/></Button>
       <local:WfLabel Name="SDCardText" Canvas.Left="11" Canvas.Top="9" Width="145" Height="17" Text="Choose your SD Card"/>
       <ComboBox Name="DriveBox" Canvas.Left="14" Canvas.Top="29" Width="253" Height="21" SelectionChanged="DriveBox_SelectedIndexChanged" Classes="wf">
       </ComboBox>

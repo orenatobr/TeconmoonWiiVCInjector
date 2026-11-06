@@ -96,6 +96,10 @@ EVMAP = {"Click": "Click", "CheckedChanged": "IsCheckedChanged", "LinkClicked": 
 
 
 VERTICAL_INSET = 8  # plus the 3 px cell margin: 11 px above the radios and below the page
+# Texts that describe Windows behaviour and are wrong on macOS
+TEXT_OVERRIDES = {
+    "WiiVMC": "Patch video mode (Wii Retail only, picks the mode when ticked, experimental)",
+}
 HEADER_INSET = 11  # header rows and tab strip line up with the content inside the pages (x = 14)
 
 
@@ -134,6 +138,7 @@ def emit(n, ind, parent_kind, group):
         w, h = nums(p["Size"])
         size = f' Width="{int(w)}" Height="{int(h)}"'
     text = lit(p["Text"]) if "Text" in p else ""
+    text = TEXT_OVERRIDES.get(n, text)
     common = q("Name", n) + pos + size
     extra = ""
     if "BackColor" in p and t != "TabPage":

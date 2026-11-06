@@ -1,0 +1,123 @@
+<Window xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:local="using:WiiVCInjector"
+        x:Class="WiiVCInjector.MainWindow" Width="485" Height="427" CanResize="False"
+        Title="TeconMoon's WiiVC Injector - [{0}]" Background="#F0F0F0" FontSize="11">
+    <Grid Name="MainTableLayout" Width="485" Height="427" ColumnDefinitions="33.3333*,33.3333*,33.3333*" RowDefinitions="25,25,*">
+      <RadioButton Name="WiiRetail" Grid.Column="0" Grid.Row="0" Margin="3,3,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Foreground="Black" IsCheckedChanged="WiiRetail_CheckedChanged" GroupName="MainTableLayout" IsChecked="True" Content="Wii Retail Injection"/>
+      <TabControl Name="MainTabs" Grid.Column="0" Grid.Row="2" Grid.ColumnSpan="3" Margin="3" Width="479" Height="371" SelectionChanged="MainTabs_SelectedIndexChanged" Classes="wf">
+        <TabItem Name="SourceFilesTab" Header="Required Source Files">
+          <Canvas Background="Gainsboro">
+            <Button Name="RepoDownload" Canvas.Left="8" Canvas.Top="140" Width="128" Height="49" Background="Silver" Click="RepoDownload_Click" Classes="wf"><TextBlock Text="Download images from cucholix's repo" TextWrapping="Wrap" TextAlignment="Center" TextTrimming="None"/></Button>
+            <local:WfLabel Name="TitleIDLabel" Canvas.Left="132" Canvas.Top="111" Width="212" Height="16" Background="LightGray" BorderBrush="Gray" BorderThickness="1" Text=""/>
+            <local:WfLabel Name="GameNameLabel" Canvas.Left="132" Canvas.Top="93" Width="212" Height="16" Background="LightGray" BorderBrush="Gray" BorderThickness="1" Text=""/>
+            <local:WfLabel Name="ITIDText" Canvas.Left="13" Canvas.Top="112" Text="Internal Game Title ID:"/>
+            <local:WfLabel Name="IGNText" Canvas.Left="13" Canvas.Top="94" Width="113" Height="13" Text="Internal Game Name:"/>
+            <local:WfLabel Name="BannerPreviewText" Canvas.Left="144" Canvas.Top="140" Width="320" Height="15" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" Text="Banner Preview (1280x720)"/>
+            <Border Name="BannerPreviewBox" Canvas.Left="144" Canvas.Top="158" Width="320" Height="180" BorderBrush="Gray" BorderThickness="1" Background="DimGray"><Image Name="BannerPreviewBoxImg" Stretch="Fill"/></Border>
+            <local:WfLabel Name="IconPreviewText" Canvas.Left="8" Canvas.Top="192" Width="128" Height="15" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" Text="Icon Preview (128x128)"/>
+            <Border Name="IconPreviewBox" Canvas.Left="8" Canvas.Top="210" Width="128" Height="128" BorderBrush="Gray" BorderThickness="1" Background="DimGray"><Image Name="IconPreviewBoxImg" Stretch="Fill"/></Border>
+            <local:WfLabel Name="BannerSourceDirectory" Canvas.Left="72" Canvas.Top="68" Width="395" Height="16" Background="LightGray" Foreground="Red" BorderBrush="Gray" BorderThickness="1" TextTrimming="CharacterEllipsis" Text="Banner has not been specified"/>
+            <Button Name="BannerSourceButton" Canvas.Left="6" Canvas.Top="64" Width="60" Height="23" Background="Silver" Click="BannerSourceButton_Click" Classes="wf"><TextBlock Text="Banner..." TextWrapping="Wrap" TextAlignment="Center" TextTrimming="None"/></Button>
+            <local:WfLabel Name="IconSourceDirectory" Canvas.Left="71" Canvas.Top="40" Width="395" Height="16" Background="LightGray" Foreground="Red" BorderBrush="Gray" BorderThickness="1" TextTrimming="CharacterEllipsis" Text="Icon has not been specified"/>
+            <Button Name="IconSourceButton" Canvas.Left="6" Canvas.Top="35" Width="60" Height="23" Background="Silver" Click="IconSourceButton_Click" Classes="wf"><TextBlock Text="Icon..." TextWrapping="Wrap" TextAlignment="Center" TextTrimming="None"/></Button>
+            <local:WfLabel Name="GameSourceDirectory" Canvas.Left="71" Canvas.Top="10" Width="395" Height="16" Background="LightGray" Foreground="Red" BorderBrush="Gray" BorderThickness="1" TextTrimming="CharacterEllipsis" Text="Game file has not been specified"/>
+            <Button Name="GameSourceButton" Canvas.Left="6" Canvas.Top="6" Width="60" Height="23" Background="Silver" Click="GameSourceButton_Click" Classes="wf"><TextBlock Text="Game..." TextWrapping="Wrap" TextAlignment="Center" TextTrimming="None"/></Button>
+          </Canvas>
+        </TabItem>
+        <TabItem Name="SourceFilesTab2" Header="Optional Source Files">
+          <Canvas Background="Gainsboro">
+            <local:WfLabel Name="GC2SourceDirectory" Canvas.Left="122" Canvas.Top="10" Width="342" Height="16" Background="LightGray" Foreground="Red" BorderBrush="Gray" BorderThickness="1" TextTrimming="CharacterEllipsis" Text="2nd GameCube Disc Image has not been specified"/>
+            <Button Name="GC2SourceButton" Canvas.Left="6" Canvas.Top="6" Width="110" Height="23" Background="Silver" IsEnabled="False" Click="GC2SourceButton_Click" Classes="wf"><TextBlock Text="2nd GC Disc" TextWrapping="Wrap" TextAlignment="Center" TextTrimming="None"/></Button>
+            <CheckBox Name="ToggleBootSoundLoop" Canvas.Left="7" Canvas.Top="119" Width="110" Height="17" IsCheckedChanged="ToggleBootSoundLoop_CheckedChanged" Content="Loop Boot Sound"/>
+            <local:WfLabel Name="BootSoundPreviewText" Canvas.Left="8" Canvas.Top="192" Width="128" Height="15" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" Text="Sound Preview"/>
+            <local:WfLabel Name="LogoPreviewText" Canvas.Left="8" Canvas.Top="139" Width="128" Height="16" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" Text="Logo Preview (170x42)"/>
+            <Border Name="LogoPreviewBox" Canvas.Left="8" Canvas.Top="158" Width="128" Height="30" BorderBrush="Gray" BorderThickness="1" Background="DimGray"><Image Name="LogoPreviewBoxImg" Stretch="Fill"/></Border>
+            <local:WfLabel Name="DrcPreviewText" Canvas.Left="144" Canvas.Top="140" Width="320" Height="15" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" Text="GamePad Banner Preview (854x480)"/>
+            <Border Name="DrcPreviewBox" Canvas.Left="144" Canvas.Top="158" Width="320" Height="180" BorderBrush="Gray" BorderThickness="1" Background="DimGray"><Image Name="DrcPreviewBoxImg" Stretch="Fill"/></Border>
+            <local:WfLabel Name="BootSoundDirectory" Canvas.Left="122" Canvas.Top="97" Width="342" Height="16" Background="LightGray" Foreground="Red" BorderBrush="Gray" BorderThickness="1" TextTrimming="CharacterEllipsis" Text="Boot Sound has not been specified"/>
+            <Button Name="BootSoundButton" Canvas.Left="6" Canvas.Top="93" Width="110" Height="23" Background="Silver" Click="BootSoundButton_Click" Classes="wf"><TextBlock Text="Boot Sound..." TextWrapping="Wrap" TextAlignment="Center" TextTrimming="None"/></Button>
+            <local:WfLabel Name="LogoSourceDirectory" Canvas.Left="122" Canvas.Top="68" Width="342" Height="16" Background="LightGray" Foreground="Red" BorderBrush="Gray" BorderThickness="1" TextTrimming="CharacterEllipsis" Text="Boot Logo has not been specified"/>
+            <Button Name="LogoSourceButton" Canvas.Left="6" Canvas.Top="64" Width="110" Height="23" Background="Silver" Click="LogoSourceButton_Click" Classes="wf"><TextBlock Text="Boot Logo..." TextWrapping="Wrap" TextAlignment="Center" TextTrimming="None"/></Button>
+            <local:WfLabel Name="DrcSourceDirectory" Canvas.Left="122" Canvas.Top="40" Width="342" Height="16" Background="LightGray" Foreground="Red" BorderBrush="Gray" BorderThickness="1" TextTrimming="CharacterEllipsis" Text="GamePad Banner has not been specified"/>
+            <Button Name="DrcSourceButton" Canvas.Left="6" Canvas.Top="35" Width="110" Height="23" Background="Silver" Click="DrcSourceButton_Click" Classes="wf"><TextBlock Text="GamePad Banner..." TextWrapping="Wrap" TextAlignment="Center" TextTrimming="None"/></Button>
+            <Button Name="BootSoundPreviewButton" Canvas.Left="8" Canvas.Top="210" Width="128" Height="128" Background="Silver" IsEnabled="False" Click="BootSoundPreviewButton_Click" Classes="wf"><TextBlock Text="Play Sound" TextWrapping="Wrap" TextAlignment="Center" TextTrimming="None"/></Button>
+          </Canvas>
+        </TabItem>
+        <TabItem Name="MetaTab" Header="GamePad/Meta Options">
+          <Canvas Background="Gainsboro">
+            <CheckBox Name="LRPatch" Canvas.Left="9" Canvas.Top="228" IsEnabled="False" Content="Swap L &amp;&amp; R with ZL &amp;&amp; ZR"/>
+            <local:WfLink Name="TutorialLink" Canvas.Left="392" Canvas.Top="327" Background="Gainsboro" Click="TutorialLink_LinkClicked" Text="Instructions" Foreground="#0066CC" Cursor="Hand"/>
+            <local:WfLabel Name="AdvancedLabel5" Canvas.Left="6" Canvas.Top="248" Width="457" Height="93" Text="*Wii Remote Emulation modes don't support infrared pointing or motion detection.&#10;&#10;**The force options should only be used if your game doesn't detect your controller mode properly. (For example, Resident Evil 4 Wii Edition supports the Classic Controller, but it won't work without being patched)&#10;**When using the force options, Wii Retail Injections will be patched automatically. For vWii NAND Titles, you may also need to patch your WAD before installing it to NAND:"/>
+            <Grid Name="GamePadEmuLayout" Canvas.Left="8" Canvas.Top="140" Width="455" Height="81" ColumnDefinitions="53.1250*,46.8750*" RowDefinitions="*,*,*">
+              <Border Grid.Column="0" Grid.Row="0" BorderBrush="#A0A0A0" BorderThickness="1"/>
+              <Border Grid.Column="1" Grid.Row="0" BorderBrush="#A0A0A0" BorderThickness="1"/>
+              <Border Grid.Column="0" Grid.Row="1" BorderBrush="#A0A0A0" BorderThickness="1"/>
+              <Border Grid.Column="1" Grid.Row="1" BorderBrush="#A0A0A0" BorderThickness="1"/>
+              <Border Grid.Column="0" Grid.Row="2" BorderBrush="#A0A0A0" BorderThickness="1"/>
+              <Border Grid.Column="1" Grid.Row="2" BorderBrush="#A0A0A0" BorderThickness="1"/>
+              <RadioButton Name="ForceCC" Grid.Column="0" Grid.Row="2" Margin="6,6,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" IsCheckedChanged="ForceCC_CheckedChanged" GroupName="GamePadEmuLayout" Content="**Force Classic Controller Connected"/>
+              <RadioButton Name="NoGamePadEmu" Grid.Column="0" Grid.Row="0" Margin="6,6,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" IsCheckedChanged="NoGamePadEmu_CheckedChanged" GroupName="GamePadEmuLayout" IsChecked="True" Content="No GamePad emulation, Wii Remotes only"/>
+              <RadioButton Name="CCEmu" Grid.Column="1" Grid.Row="0" Margin="6,6,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" IsCheckedChanged="CCEmu_CheckedChanged" GroupName="GamePadEmuLayout" Content="Classic Controller Emulation"/>
+              <RadioButton Name="ForceNoCC" Grid.Column="1" Grid.Row="2" Margin="6,6,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" IsCheckedChanged="ForceWiiMote_CheckedChanged" GroupName="GamePadEmuLayout" Content="**Force No Classic Controller"/>
+              <RadioButton Name="HorWiiMote" Grid.Column="1" Grid.Row="1" Margin="6,6,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" IsCheckedChanged="HorWiiMote_CheckedChanged" GroupName="GamePadEmuLayout" Content="*Horizontal Wii Remote emulation"/>
+              <RadioButton Name="VerWiiMote" Grid.Column="0" Grid.Row="1" Margin="6,6,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" IsCheckedChanged="VerWiiMote_CheckedChanged" GroupName="GamePadEmuLayout" Content="*Vertical Wii Remote Emulation"/>
+            </Grid>
+            <local:WfLabel Name="GamePadModeText" Canvas.Left="0" Canvas.Top="124" Width="471" Height="13" HorizontalContentAlignment="Center" Text="GamePad Emulation Mode (Only applicable for Wii Retail Injections / vWii NAND Title Launcher)"/>
+            <TextBox Name="PackedTitleIDLine" Canvas.Left="6" Canvas.Top="91" Width="265" Height="20" MaxLength="16" Text="" Classes="wf"/>
+            <local:WfLabel Name="PackedTitleIDText" Canvas.Left="3" Canvas.Top="74" Text="Pre-generated Title ID (Changing this is not recommended)"/>
+            <CheckBox Name="EnablePackedLine2" Canvas.Left="279" Canvas.Top="52" IsCheckedChanged="EnablePackedLine2_CheckedChanged" Content="Use Line 2"/>
+            <TextBox Name="PackedTitleLine2" Canvas.Left="6" Canvas.Top="50" Width="265" Height="20" Background="Silver" IsReadOnly="True" MaxLength="32" Text="(Optional) Line 2" Classes="wf"/>
+            <TextBox Name="PackedTitleLine1" Canvas.Left="6" Canvas.Top="23" Width="265" Height="20" MaxLength="32" Text="" Classes="wf"/>
+            <local:WfLabel Name="PackedTitleText" Canvas.Left="3" Canvas.Top="6" Text="Name to use for Packaged Title (ACCENT CHARACTERS NOT SUPPORTED)"/>
+          </Canvas>
+        </TabItem>
+        <TabItem Name="AdvancedTab" Header="Advanced">
+          <Canvas Background="Gainsboro">
+            <CheckBox Name="Wiimmfi" Canvas.Left="10" Canvas.Top="307" Content="Patch game to use the Wiimmfi server for online play (Wii Retail only)"/>
+            <CheckBox Name="WiiVMC" Canvas.Left="10" Canvas.Top="284" Content="Patch video mode with Wii-VMC (Wii Retail only, opens a new window during conversion)"/>
+            <CheckBox Name="DisableGamePad" Canvas.Left="10" Canvas.Top="137" IsCheckedChanged="DisableGamePad_CheckedChanged" Content="Don't use GamePad as controller (Won't prompt for usage)"/>
+            <local:WfLabel Name="label2" Canvas.Left="6" Canvas.Top="245" FontSize="11.0" FontWeight="Bold" Text="Wii Retail Injection / vWii NAND Title Launcher Patches"/>
+            <Button Name="SaveAncastKeyButton" Canvas.Left="281" Canvas.Top="181" Width="63" Height="23" Background="Silver" IsEnabled="False" Click="SaveAncastKeyButton_Click" Classes="wf"><TextBlock Text="Save Key" TextWrapping="Wrap" TextAlignment="Center" TextTrimming="None"/></Button>
+            <CheckBox Name="DisableNintendontAutoboot" Canvas.Left="10" Canvas.Top="70" IsCheckedChanged="NintendontAutoboot_CheckedChanged" Content="Disable Autoboot"/>
+            <CheckBox Name="DisableTrimming" Canvas.Left="10" Canvas.Top="261" IsCheckedChanged="DisableTrimming_CheckedChanged" Content="Don't trim game output (Wii Retail only)"/>
+            <CheckBox Name="Force43NAND" Canvas.Left="225" Canvas.Top="261" Content="Force 4:3 (vWii NAND Titles only)"/>
+            <CheckBox Name="DisablePassthrough" Canvas.Left="10" Canvas.Top="114" IsCheckedChanged="DisablePassthrough_CheckedChanged" Content="Disable Wii Remote passthrough in GamePad mode"/>
+            <local:WfLabel Name="MainDolLabel" Canvas.Left="255" Canvas.Top="44" Width="211" Height="20" Background="LightGray" VerticalContentAlignment="Center" BorderBrush="Gray" BorderThickness="1" TextTrimming="CharacterEllipsis" Text="&lt;- Specify custom main.dol file"/>
+            <CheckBox Name="CustomMainDol" Canvas.Left="10" Canvas.Top="47" IsCheckedChanged="CustomMainDol_CheckedChanged" Content="Specify custom Nintendont Forwarder"/>
+            <Button Name="MainDolSourceButton" Canvas.Left="223" Canvas.Top="41" Background="LightGray" IsEnabled="False" Click="MainDolSourceButton_Click" Classes="wf"><TextBlock Text="..." TextWrapping="Wrap" TextAlignment="Center" TextTrimming="None"/></Button>
+            <local:WfLabel Name="label1" Canvas.Left="6" Canvas.Top="8" FontSize="11.0" FontWeight="Bold" Text="Nintendont Options"/>
+            <CheckBox Name="Force43NINTENDONT" Canvas.Left="10" Canvas.Top="24" ToolTip.Tip='Disables "Force Widescreen" and "WiiU Widescreen" Flags' IsCheckedChanged="Force43NINTENDONT_CheckedChanged" Content="Force 4:3 for Nintendont"/>
+            <CheckBox Name="ForceInterlacedNINTENDONT" Canvas.Left="225" Canvas.Top="24" ToolTip.Tip='Disables "Force Progressive" Flag' IsCheckedChanged="ForceInterlacedNINTENDONT_CheckedChanged" Content="Force interlaced for Nintendont"/>
+            <local:WfLink Name="sign_c2w_patcher_link" Canvas.Left="303" Canvas.Top="219" Click="sign_c2w_patcher_link_LinkClicked" Text="sign_c2w_patcher" Foreground="#0066CC" Cursor="Hand"/>
+            <local:WfLabel Name="AdvancedLabel2" Canvas.Left="7" Canvas.Top="206" Width="457" Height="32" Text="cafe2wii patching unlocks the vWii clock speed for supported homebrew like WiiSXR or Nintendont. cafe2wii patched titles MUST be launched using:"/>
+            <CheckBox Name="C2WPatchFlag" Canvas.Left="10" Canvas.Top="160" IsCheckedChanged="C2WPatchFlag_CheckedChanged" Content="Enable cafe2wii patching (NOT RECOMMENDED)"/>
+            <TextBox Name="AncastKey" Canvas.Left="9" Canvas.Top="183" Width="266" Height="20" Background="Silver" IsReadOnly="True" MaxLength="32" Text="Wii U Starbuck Ancast Key Required" Classes="wf"/>
+            <local:WfLabel Name="AdvancedLabel1" Canvas.Left="7" Canvas.Top="98" FontSize="11.0" FontWeight="Bold" Text="Wii Homebrew Patches"/>
+          </Canvas>
+        </TabItem>
+        <TabItem Name="BuildTab" Header="Build Title">
+          <Canvas Background="Gainsboro">
+            <local:WfLabel Name="AdvanceCheck" Canvas.Left="8" Canvas.Top="170" Background="Transparent" Foreground="Red" Text="No advanced options conflicting"/>
+            <local:WfLabel Name="BuildStatus" Canvas.Left="8" Canvas.Top="196" Width="455" Height="13" Background="Gainsboro" Text=""/>
+            <ProgressBar Name="BuildProgress" Canvas.Left="7" Canvas.Top="213" Width="456" Height="28" Minimum="0" Maximum="100" Value="0"/>
+            <Button Name="SaveTitleKeyButton" Canvas.Left="300" Canvas.Top="78" Background="Silver" Click="SaveTitleKeyButton_Click" Classes="wf"><TextBlock Text="Save Key" TextWrapping="Wrap" TextAlignment="Center" TextTrimming="None"/></Button>
+            <Button Name="SaveCommonKeyButton" Canvas.Left="300" Canvas.Top="22" Background="Silver" Click="SaveCommonKeyButton_Click" Classes="wf"><TextBlock Text="Save Key" TextWrapping="Wrap" TextAlignment="Center" TextTrimming="None"/></Button>
+            <Button Name="TheBigOneTM" Canvas.Left="7" Canvas.Top="248" Width="457" Height="90" Background="Silver" IsEnabled="False" FontSize="66.67" FontWeight="Bold" Click="TheBigOneTM_Click" Classes="wf"><TextBlock Text="BUILD" TextWrapping="Wrap" TextAlignment="Center" TextTrimming="None"/></Button>
+            <local:WfLabel Name="KeysCheck" Canvas.Left="8" Canvas.Top="183" Background="Transparent" Foreground="Red" Text="Required keys are properly specified"/>
+            <local:WfLabel Name="MetaCheck" Canvas.Left="8" Canvas.Top="157" Background="Transparent" Foreground="Red" Text="Meta options are valid"/>
+            <local:WfLabel Name="SourceCheck" Canvas.Left="8" Canvas.Top="144" Background="Transparent" Foreground="Red" Text="Source Files are properly specified"/>
+            <local:WfLabel Name="RequirementsLabel" Canvas.Left="4" Canvas.Top="131" Background="Transparent" Text="Requirements: RED = NOT MET / GREEN = MET"/>
+            <TextBox Name="TitleKey" Canvas.Left="6" Canvas.Top="78" Width="288" Height="20" MaxLength="32" Text="" Classes="wf"/>
+            <local:WfLabel Name="RHFKeyLabel" Canvas.Left="6" Canvas.Top="62" Background="Transparent" Text='Rhythm Heaven Fever [USA] Title Key - (Find it on "that one title key site")'/>
+            <local:WfLabel Name="CommonLabel" Canvas.Left="6" Canvas.Top="6" Background="Transparent" Text="Wii U Common Key - (Google it)"/>
+            <TextBox Name="WiiUCommonKey" Canvas.Left="6" Canvas.Top="22" Width="288" Height="20" MaxLength="32" Text="" Classes="wf"/>
+          </Canvas>
+        </TabItem>
+      </TabControl>
+      <Button Name="SettingsButton" Grid.Column="1" Grid.Row="1" Margin="3,3,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Width="155" Height="19" Click="SettingsButton_Click" Classes="wf"><TextBlock Text="Settings" TextWrapping="Wrap" TextAlignment="Center" TextTrimming="None"/></Button>
+      <Button Name="SDCardStuff" Grid.Column="2" Grid.Row="1" Margin="3,3,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Width="157" Height="19" Click="SDCardStuff_Click" Classes="wf"><TextBlock Text="Nintendont SD Card Menu" TextWrapping="Wrap" TextAlignment="Center" TextTrimming="None"/></Button>
+      <RadioButton Name="GCRetail" Grid.Column="2" Grid.Row="0" Margin="3,3,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" IsCheckedChanged="GCRetail_CheckedChanged" GroupName="MainTableLayout" Content="GC Retail Injection"/>
+      <RadioButton Name="WiiNAND" Grid.Column="0" Grid.Row="1" Margin="3,3,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" IsCheckedChanged="WiiNAND_CheckedChanged" GroupName="MainTableLayout" Content="vWii NAND Title Launcher"/>
+      <RadioButton Name="WiiHomebrew" Grid.Column="1" Grid.Row="0" Margin="3,3,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" IsCheckedChanged="WiiHomebrew_CheckedChanged" GroupName="MainTableLayout" Content="Wii Homebrew Injection"/>
+    </Grid>
+</Window>

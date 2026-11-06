@@ -1,0 +1,88 @@
+<Application xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             x:Class="WiiVCInjector.App" RequestedThemeVariant="Light">
+  <Application.Styles>
+    <FluentTheme />
+    <Style Selector="Button.wf">
+      <Setter Property="Background" Value="#E1E1E1" />
+      <Setter Property="BorderBrush" Value="#ADADAD" />
+      <Setter Property="BorderThickness" Value="1" />
+      <Setter Property="CornerRadius" Value="0" />
+      <Setter Property="Padding" Value="0" />
+      <Setter Property="HorizontalContentAlignment" Value="Center" />
+      <Setter Property="VerticalContentAlignment" Value="Center" />
+      <Setter Property="Foreground" Value="Black" />
+    </Style>
+    <Style Selector="TextBox.wf">
+      <Setter Property="CornerRadius" Value="0" />
+      <Setter Property="Padding" Value="2,0" />
+      <Setter Property="MinHeight" Value="0" />
+      <Setter Property="VerticalContentAlignment" Value="Center" />
+    </Style>
+    <Style Selector="TabItem">
+      <Setter Property="FontSize" Value="11" />
+      <Setter Property="MinHeight" Value="0" />
+      <Setter Property="MinWidth" Value="0" />
+      <Setter Property="Padding" Value="4,2" />
+      <Setter Property="Margin" Value="0" />
+      <Setter Property="Foreground" Value="Black" />
+    </Style>
+    <Style Selector="TabItem /template/ ContentPresenter#PART_ContentPresenter">
+      <Setter Property="FontSize" Value="11" />
+    </Style>
+    <Style Selector="TabControl.wf">
+      <Setter Property="Padding" Value="0" />
+      <Setter Property="ItemsPanel">
+        <ItemsPanelTemplate><StackPanel Orientation="Horizontal" /></ItemsPanelTemplate>
+      </Setter>
+    </Style>
+    <Style Selector="ComboBox.wf">
+      <Setter Property="MinHeight" Value="0" />
+      <Setter Property="Padding" Value="4,0" />
+      <Setter Property="CornerRadius" Value="0" />
+      <Setter Property="FontSize" Value="11" />
+    </Style>
+    <Style Selector="ListBoxItem">
+      <Setter Property="MinHeight" Value="0" />
+      <Setter Property="Padding" Value="0" />
+    </Style>
+    <Style Selector="Button.wf:disabled TextBlock">
+      <Setter Property="Foreground" Value="#838383" />
+    </Style>
+    <!-- Compact WinForms-size radio and check boxes (13px glyph, wrapping text) -->
+    <Style Selector="RadioButton">
+      <Setter Property="Template">
+        <ControlTemplate>
+          <Border Background="Transparent">
+            <Grid ColumnDefinitions="Auto,*">
+              <Grid Width="13" Height="13" VerticalAlignment="Top">
+                <Ellipse Fill="White" Stroke="#333333" StrokeThickness="1" />
+                <Ellipse Name="dot" Fill="#222222" Margin="3" IsVisible="False" />
+              </Grid>
+              <TextBlock Grid.Column="1" Margin="3,0,0,0" Text="{TemplateBinding Content}" TextWrapping="Wrap" VerticalAlignment="Top"
+                         Foreground="{TemplateBinding Foreground}" />
+            </Grid>
+          </Border>
+        </ControlTemplate>
+      </Setter>
+    </Style>
+    <Style Selector="RadioButton:checked /template/ Ellipse#dot"><Setter Property="IsVisible" Value="True" /></Style>
+    <Style Selector="CheckBox">
+      <Setter Property="Template">
+        <ControlTemplate>
+          <Border Background="Transparent">
+            <Grid ColumnDefinitions="Auto,*">
+              <Grid Width="13" Height="13" VerticalAlignment="Top">
+                <Rectangle Fill="White" Stroke="#333333" StrokeThickness="1" />
+                <Path Name="tick" Data="M3,6.5 L5.5,9 L10,3.5" Stroke="#222222" StrokeThickness="1.6" IsVisible="False" />
+              </Grid>
+              <TextBlock Grid.Column="1" Margin="3,0,0,0" Text="{TemplateBinding Content}" TextWrapping="Wrap" VerticalAlignment="Top"
+                         Foreground="{TemplateBinding Foreground}" />
+            </Grid>
+          </Border>
+        </ControlTemplate>
+      </Setter>
+    </Style>
+    <Style Selector="CheckBox:checked /template/ Path#tick"><Setter Property="IsVisible" Value="True" /></Style>
+    <Style Selector="RadioButton:disabled, CheckBox:disabled"><Setter Property="Opacity" Value="0.5" /></Style>
+  </Application.Styles>
+</Application>

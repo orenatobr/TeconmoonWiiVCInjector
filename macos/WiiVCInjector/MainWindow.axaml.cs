@@ -346,6 +346,9 @@ public partial class MainWindow : Window
         string? error = null;
         if (SystemType == "wii" && GameType != GameHeader.WiiType) error = "This is not a Wii image. It will not be loaded.";
         if (SystemType == "gcn" && GameType != GameHeader.GcType) error = "This is not a GameCube image. It will not be loaded.";
+        if (error == null && (FlagNKIT || FlagNASOS))
+            error = "NKit and NASOS images are not supported on macOS yet (the Windows app converts them with NKit). " +
+                    "Convert the game to a plain ISO or WBFS first, then select that file.";
         if (error != null)
         {
             ResetGame();

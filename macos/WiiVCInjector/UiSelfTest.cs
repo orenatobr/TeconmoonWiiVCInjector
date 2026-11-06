@@ -104,6 +104,16 @@ public static class UiSelfTest
             var nk = Iso("GALE01", "Nk", GameHeader.GcType);
             "NKIT"u8.CopyTo(nk.AsSpan(0x200));
             T("nkit header", GameHeader.Parse(new MemoryStream(nk)).Nkit);
+            var nkWii = Iso("RSPE01", "Nk", GameHeader.WiiType);
+            "NKIT"u8.CopyTo(nkWii.AsSpan(0x200));
+            var nkPath = Path.Combine(tmp, "game.nkit.iso");
+            File.WriteAllBytes(nkPath, nkWii);
+            w.WiiRetail.IsChecked = true;
+            string? shown = null;
+            Dialogs.Auto = (_, text) => { shown = text; return "Yes"; };
+            w.LoadGameFile(nkPath).GetAwaiter().GetResult();
+            Dialogs.Auto = (_, _) => "Yes";
+            T("nkit image is rejected with a notice", !w.FlagGameSpecified && shown != null && shown.Contains("NKit"), shown ?? "no dialog");
 
             // --- C2W and Wii-VMC
             w.WiiRetail.IsChecked = true;

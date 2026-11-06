@@ -1,0 +1,42 @@
+name: macos-release
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+permissions:
+  contents: write
+jobs:
+  build:
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '17'
+      - name: Download prebuilt tools archive (wit, jars, getexttypepatcher, nfs source)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          mkdir -p "$RUNNER_TEMP/tools"
+          # asset wiivc-mac-tools.tar.gz must be attached to a release of this repo (e.g. tag "tools")
+          gh release download --repo "$GITHUB_REPOSITORY" --pattern wiivc-mac-tools.tar.gz --dir "$RUNNER_TEMP" --clobber
+          tar -xzf "$RUNNER_TEMP/wiivc-mac-tools.tar.gz" -C "$RUNNER_TEMP/tools"
+      - name: Package
+        env:
+          VERSION: ${{ github.ref_type == 'tag' && github.ref_name || '0.0.0-dev' }}
+        run: |
+          VERSION="${VERSION#v}"
+          export VERSION TOOLS_SRC="$RUNNER_TEMP/tools" JDK_HOME="$JAVA_HOME"
+          macos/package.sh
+      - uses: actions/upload-artifact@v4
+        with:
+          name: WiiVCInjector-macos-arm64
+          path: dist/WiiVCInjector-macos-arm64.zip
+      - uses: softprops/action-gh-release@v2
+        if: github.ref_type == 'tag'
+        with:
+          files: dist/WiiVCInjector-macos-arm64.zip

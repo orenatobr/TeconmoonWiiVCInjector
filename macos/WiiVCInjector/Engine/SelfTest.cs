@@ -20,9 +20,12 @@ internal static class SelfTest
         var prog = new SyncProgress<(int Percent, string Status)>(p => { if (p.Percent != last) { last = p.Percent; Console.WriteLine($"    {p.Percent}% {p.Status}"); } });
         var ck = Environment.GetEnvironmentVariable("WIIVC_COMMON_KEY") ?? ""; var tk = Environment.GetEnvironmentVariable("WIIVC_TITLE_KEY") ?? "";
         BaseFiles.EnsureAsync(ck, tk, prog).GetAwaiter().GetResult();
-        var icon = Png(Path.Combine(tmp, "icon.png"));
+        var icon = Environment.GetEnvironmentVariable("WIIVC_ICON") is { Length: > 0 } ic ? ic : Png(Path.Combine(tmp, "icon.png"));
+        var banner = Environment.GetEnvironmentVariable("WIIVC_BANNER") is { Length: > 0 } bn ? bn : icon;
         var outDir = Environment.GetEnvironmentVariable("WIIVC_OUT") ?? Path.Combine(tmp, "out");
-        var o = new BuildOptions { System = "wii", GamePath = game, OutputDir = outDir, Title1 = Path.GetFileNameWithoutExtension(game), IconPath = icon, BannerPath = icon, CommonKey = ck, TitleKey = tk };
+        var system = Environment.GetEnvironmentVariable("WIIVC_SYSTEM") ?? "wii";   // wii, dol, gcn
+        var title = Environment.GetEnvironmentVariable("WIIVC_TITLE") ?? Path.GetFileNameWithoutExtension(game);
+        var o = new BuildOptions { System = system, GamePath = game, OutputDir = outDir, Title1 = title, IconPath = icon, BannerPath = banner, CommonKey = ck, TitleKey = tk };
         var pkg = BuildEngine.RunAsync(o, prog).GetAwaiter().GetResult();
         var bytes = Directory.GetFiles(pkg).Sum(f => new FileInfo(f).Length);
         Console.WriteLine($"package: {pkg}\nfiles: {Directory.GetFiles(pkg).Length}, total {bytes / 1048576.0:F1} MiB");

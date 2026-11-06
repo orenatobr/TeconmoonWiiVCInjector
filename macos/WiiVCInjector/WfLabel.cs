@@ -47,6 +47,12 @@ public class WfLabel : Border
         set => _t.TextAlignment = value == Avalonia.Layout.HorizontalAlignment.Center ? TextAlignment.Center : TextAlignment.Left;
     }
 
+    public Avalonia.Layout.VerticalAlignment VerticalContentAlignment
+    {
+        get => _t.VerticalAlignment;
+        set => _t.VerticalAlignment = value;
+    }
+
     public IBrush? Background
     {
         get => base.Background;

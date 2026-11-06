@@ -27,3 +27,25 @@ The app is ad-hoc signed, not notarized. On first launch right click the app and
 ## Headless render check
 
     WIIVC_SNAPSHOT=/tmp/x.png WiiVCInjector.app/Contents/MacOS/WiiVCInjector
+
+## UI port
+
+UI port of TeconMoon's WiiVC Injector. The three windows (`MainWindow`, `SettingsWindow`, `SDCardWindow`)
+are generated from the WinForms designers by `macos/tools/regen.sh` (never hand-edit the `.axaml` files).
+Event handlers live in the matching `*.axaml.cs` files.
+
+## Differences from the Windows app
+
+- Settings and keys are stored in `~/Library/Application Support/WiiVCInjector/settings.json` instead of the registry.
+- Wii-VMC: the external wii-vmc.exe window is replaced by a dialog that picks the target video mode
+  (NTSC 480i, PAL60, PAL50, 480p). It patches the video mode tables of the game's main.dol (experimental).
+- C2W patch: ported to C# (`Engine/C2wPatcher.cs`, from FIX94's c2w_patcher). Needs your own ancast key. Verified only on a synthetic image.
+- NKit/NASOS input (the original's NKit converter) is not supported on macOS; use ISO or WBFS.
+- Boot sound and TGA conversion are done in C# (no sox, no png2tgacmd); not compared byte for byte with the originals.
+- Boot sound preview uses `afplay`; TGA images are decoded in-process.
+- Nintendont SD card menu: SD cards are the volumes mounted under `/Volumes`. The "format" link opens Disk Utility.
+
+## Checks
+
+- `WIIVC_SNAPSHOT=out.png [WIIVC_TAB=n] dotnet bin/Release/net10.0/WiiVCInjector.dll` renders a tab to a PNG and exits.
+- `WIIVC_UITEST=1 dotnet bin/Release/net10.0/WiiVCInjector.dll` runs the UI logic self-test (uses a temporary settings file).

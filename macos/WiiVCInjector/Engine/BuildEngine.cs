@@ -78,8 +78,16 @@ public static class BuildEngine
             var patch = o.NfsPatch;
             if (o.System == "wii" && o.ForceCC && string.IsNullOrWhiteSpace(patch)) patch = "-instantcc";
             var nfs = Tools.NfsCommand();
-            Exec(nfs[0], [.. nfs.Skip(1), .. Metadata.NfsArgs(o.System, iso, patch, o.LrPatch, o.Passthrough)], Path.Combine(buildDir, "content"));
+            // The nfs2iso2nfs sources do not embed the Wii common key (the original Windows binary does) and look for
+            // wii_common_key.bin in the working directory. Write it for the run and remove it so NUSPacker does not pack it.
+            var wiiKeyFile = Path.Combine(buildDir, "content", "wii_common_key.bin");
+            File.WriteAllBytes(wiiKeyFile, WiiCommonKey);
+            try { Exec(nfs[0], [.. nfs.Skip(1), .. Metadata.NfsArgs(o.System, iso, patch, o.LrPatch, o.Passthrough)], Path.Combine(buildDir, "content")); }
+            finally { File.Delete(wiiKeyFile); }
             if (iso.StartsWith(work)) File.Delete(iso);
+            var nfsFile = Path.Combine(buildDir, "content", "hif_000000.nfs");
+            if (!File.Exists(nfsFile) || new FileInfo(nfsFile).Length == 0)
+                throw new InvalidOperationException("nfs2iso2nfs did not produce content/hif_000000.nfs, so the package would not contain the game.");
 
             P(85, "Encrypting contents into installable WUP Package...");
             var outPath = Path.Combine(o.OutputDir, $"{Sanitize(o.Title1)} WUP-N-{ids.Text}_{ids.Packed}");
@@ -90,6 +98,9 @@ public static class BuildEngine
         }
         finally { try { Directory.Delete(work, true); } catch { } }
     }
+
+    /// <summary>Retail Wii common key (public). Checked by decrypting the first block of a disc partition: it starts with the game id.</summary>
+    static readonly byte[] WiiCommonKey = Convert.FromHexString("EBE42A225E8593E448D9C5457381AAF7");
 
     static string PrepareIso(BuildOptions o, string work, string wit, Action<string, IEnumerable<string>, string?> exec)
     {

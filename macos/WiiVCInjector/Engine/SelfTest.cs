@@ -11,8 +11,28 @@ internal static class SelfTest
 
     static int Count(string xml) => System.Xml.Linq.XDocument.Parse(xml).Root!.Elements().Count();
 
+    /// <summary>WIIVC_BUILDFILE=game.wbfs|iso builds one real Wii game with the engine (keys from WIIVC_COMMON_KEY / WIIVC_TITLE_KEY) and prints the package size.</summary>
+    static int BuildFile(string game)
+    {
+        var tmp = Path.Combine(Path.GetTempPath(), "wiivc-bf-" + Guid.NewGuid().ToString("N")); Directory.CreateDirectory(tmp);
+        BuildEngine.Log += l => { if (Environment.GetEnvironmentVariable("WIIVC_VERBOSE") == "1") Console.WriteLine("    " + l); };
+        var last = -1;
+        var prog = new SyncProgress<(int Percent, string Status)>(p => { if (p.Percent != last) { last = p.Percent; Console.WriteLine($"    {p.Percent}% {p.Status}"); } });
+        var ck = Environment.GetEnvironmentVariable("WIIVC_COMMON_KEY") ?? ""; var tk = Environment.GetEnvironmentVariable("WIIVC_TITLE_KEY") ?? "";
+        BaseFiles.EnsureAsync(ck, tk, prog).GetAwaiter().GetResult();
+        var icon = Png(Path.Combine(tmp, "icon.png"));
+        var outDir = Environment.GetEnvironmentVariable("WIIVC_OUT") ?? Path.Combine(tmp, "out");
+        var o = new BuildOptions { System = "wii", GamePath = game, OutputDir = outDir, Title1 = Path.GetFileNameWithoutExtension(game), IconPath = icon, BannerPath = icon, CommonKey = ck, TitleKey = tk };
+        var pkg = BuildEngine.RunAsync(o, prog).GetAwaiter().GetResult();
+        var bytes = Directory.GetFiles(pkg).Sum(f => new FileInfo(f).Length);
+        Console.WriteLine($"package: {pkg}\nfiles: {Directory.GetFiles(pkg).Length}, total {bytes / 1048576.0:F1} MiB");
+        try { Directory.Delete(tmp, true); } catch { }
+        return 0;
+    }
+
     public static int Run()
     {
+        if (Environment.GetEnvironmentVariable("WIIVC_BUILDFILE") is { Length: > 0 } bf) return BuildFile(bf);
         try { Units(); Builds(); }
         catch (Exception e) { Console.WriteLine("[FAIL] exception: " + e); _fail++; }
         Console.WriteLine(_fail == 0 ? "ALL OK" : $"{_fail} FAILED");

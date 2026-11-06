@@ -41,6 +41,7 @@ Event handlers live in the matching `*.axaml.cs` files.
   (NTSC 480i, PAL60, PAL50, 480p). It patches the video mode tables of the game's main.dol (experimental).
 - C2W patch: ported to C# (`Engine/C2wPatcher.cs`, from FIX94's c2w_patcher). Needs your own ancast key. Verified only on a synthetic image.
 - NKit/NASOS input (the original's NKit converter) is not supported on macOS; use ISO or WBFS.
+- Engine self-test (`WIIVC_SELFTEST=1`) also runs WBFS, GameCube (synthetic header) and WiiWare builds; none used a real game.
 - Boot sound and TGA conversion are done in C# (no sox, no png2tgacmd); not compared byte for byte with the originals.
 - Boot sound preview uses `afplay`; TGA images are decoded in-process.
 - Nintendont SD card menu: SD cards are the volumes mounted under `/Volumes`. The "format" link opens Disk Utility.

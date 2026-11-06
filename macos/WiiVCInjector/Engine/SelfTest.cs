@@ -136,6 +136,37 @@ internal static class SelfTest
                 CommonKey = commonKey, TitleKey = titleKey, ForceCC = true,
             };
             VerifyPackage("wii build (ForceCC)", BuildEngine.RunAsync(o, prog).GetAwaiter().GetResult(), "00050002" + Convert.ToHexString(Encoding.Latin1.GetBytes(id)), Path.Combine(tmp, "out"));
+
+            // WBFS input: same disc as a .wbfs, goes through the extra `wit copy --iso` step
+            var wbfsDir = Path.Combine(tmp, "wbfs"); Directory.CreateDirectory(wbfsDir);
+            var wbfs = Path.Combine(wbfsDir, "test.wbfs");
+            Tools.Run(wit, ["copy", iso, wbfs, "--wbfs"], null, default);
+            Check("wbfs file created", File.Exists(wbfs) && File.ReadAllBytes(wbfs).AsSpan(0, 4).SequenceEqual("WBFS"u8.ToArray()));
+            o = new BuildOptions
+            {
+                System = "wii", GamePath = wbfs, OutputDir = Path.Combine(tmp, "out-wbfs"), Title1 = "Test WBFS", IconPath = icon, BannerPath = icon,
+                CommonKey = commonKey, TitleKey = titleKey,
+            };
+            VerifyPackage("wbfs build", BuildEngine.RunAsync(o, prog).GetAwaiter().GetResult(), "00050002" + Convert.ToHexString(Encoding.Latin1.GetBytes(id)), Path.Combine(tmp, "out-wbfs"));
+
+            // GameCube: a 1 MiB file whose header carries GALE01 (the booter, not the disc, is executed on a console)
+            var gcm = Path.Combine(tmp, "game.gcm");
+            var gcBytes = new byte[1 << 20]; Encoding.ASCII.GetBytes("GALE01").CopyTo(gcBytes, 0);
+            File.WriteAllBytes(gcm, gcBytes);
+            o = new BuildOptions
+            {
+                System = "gcn", GamePath = gcm, OutputDir = Path.Combine(tmp, "out-gcn"), Title1 = "Test GC", IconPath = icon, BannerPath = icon,
+                CommonKey = commonKey, TitleKey = titleKey,
+            };
+            VerifyPackage("gcn build", BuildEngine.RunAsync(o, prog).GetAwaiter().GetResult(), "00050002" + Convert.ToHexString("GALE"u8.ToArray()), Path.Combine(tmp, "out-gcn"));
+
+            // WiiWare / vWii NAND title launcher: only a 4 character title id
+            o = new BuildOptions
+            {
+                System = "wiiware", WiiwareTitle = "WTST", OutputDir = Path.Combine(tmp, "out-ww"), Title1 = "Test WiiWare", IconPath = icon, BannerPath = icon,
+                CommonKey = commonKey, TitleKey = titleKey,
+            };
+            VerifyPackage("wiiware build", BuildEngine.RunAsync(o, prog).GetAwaiter().GetResult(), "00050002" + Convert.ToHexString("WTST"u8.ToArray()), Path.Combine(tmp, "out-ww"));
             VideoModeBuild(tmp, icon, commonKey, titleKey, prog);
             C2wStep();
         }

@@ -20,9 +20,12 @@ internal static class SelfTest
         var prog = new SyncProgress<(int Percent, string Status)>(p => { if (p.Percent != last) { last = p.Percent; Console.WriteLine($"    {p.Percent}% {p.Status}"); } });
         var ck = Environment.GetEnvironmentVariable("WIIVC_COMMON_KEY") ?? ""; var tk = Environment.GetEnvironmentVariable("WIIVC_TITLE_KEY") ?? "";
         BaseFiles.EnsureAsync(ck, tk, prog).GetAwaiter().GetResult();
-        var icon = Png(Path.Combine(tmp, "icon.png"));
+        var icon = Environment.GetEnvironmentVariable("WIIVC_ICON") is { Length: > 0 } ic ? ic : Png(Path.Combine(tmp, "icon.png"));
+        var banner = Environment.GetEnvironmentVariable("WIIVC_BANNER") is { Length: > 0 } bn ? bn : icon;
         var outDir = Environment.GetEnvironmentVariable("WIIVC_OUT") ?? Path.Combine(tmp, "out");
-        var o = new BuildOptions { System = "wii", GamePath = game, OutputDir = outDir, Title1 = Path.GetFileNameWithoutExtension(game), IconPath = icon, BannerPath = icon, CommonKey = ck, TitleKey = tk };
+        var system = Environment.GetEnvironmentVariable("WIIVC_SYSTEM") ?? "wii";   // wii, dol, gcn
+        var title = Environment.GetEnvironmentVariable("WIIVC_TITLE") ?? Path.GetFileNameWithoutExtension(game);
+        var o = new BuildOptions { System = system, GamePath = game, OutputDir = outDir, Title1 = title, IconPath = icon, BannerPath = banner, CommonKey = ck, TitleKey = tk };
         var pkg = BuildEngine.RunAsync(o, prog).GetAwaiter().GetResult();
         var bytes = Directory.GetFiles(pkg).Sum(f => new FileInfo(f).Length);
         Console.WriteLine($"package: {pkg}\nfiles: {Directory.GetFiles(pkg).Length}, total {bytes / 1048576.0:F1} MiB");
@@ -30,9 +33,29 @@ internal static class SelfTest
         return 0;
     }
 
+    /// <summary>WIIVC_VALIDATE=package_dir validates an existing WUP package (optional WIIVC_COMMON_KEY).</summary>
+    static int ValidateDir(string dir)
+    {
+        var sw = System.Diagnostics.Stopwatch.StartNew();
+        var rep = WupValidator.Validate(dir, Environment.GetEnvironmentVariable("WIIVC_COMMON_KEY"), (p, s) => Console.WriteLine($"    {p}% {s}"));
+        foreach (var l in rep.Info) Console.WriteLine("  info: " + l);
+        foreach (var l in rep.Warnings) Console.WriteLine("  warning: " + l);
+        foreach (var l in rep.Errors) Console.WriteLine("  ERROR: " + l);
+        Console.WriteLine(rep.Ok ? $"VALID ({sw.Elapsed.TotalSeconds:F1}s)" : $"INVALID ({rep.Errors.Count} errors)");
+        return rep.Ok ? 0 : 1;
+    }
+
     public static int Run()
     {
         if (Environment.GetEnvironmentVariable("WIIVC_BUILDFILE") is { Length: > 0 } bf) return BuildFile(bf);
+        if (Environment.GetEnvironmentVariable("WIIVC_VALIDATE") is { Length: > 0 } vd) return ValidateDir(vd);
+        if (Environment.GetEnvironmentVariable("WIIVC_TGATEST") is { Length: > 0 } td)
+        {   // WIIVC_TGATEST=dir with iconTex.png and bootTvTex.png: writes our TGAs next to them for a byte comparison
+            Media.WriteTga(Path.Combine(td, "iconTex.png"), Path.Combine(td, "iconTex.tga"), 128, 128, 32);
+            Media.WriteTga(Path.Combine(td, "bootTvTex.png"), Path.Combine(td, "bootTvTex.tga"), 1280, 720, 24);
+            Media.WriteTga(Path.Combine(td, "bootTvTex.png"), Path.Combine(td, "bootDrcTex.tga"), 854, 480, 24);
+            return 0;
+        }
         try { Units(); Builds(); }
         catch (Exception e) { Console.WriteLine("[FAIL] exception: " + e); _fail++; }
         Console.WriteLine(_fail == 0 ? "ALL OK" : $"{_fail} FAILED");
@@ -85,9 +108,9 @@ internal static class SelfTest
             Media.WriteTga(png, Path.Combine(tmp, "i.tga"), 128, 128, 32);
             Media.WriteTga(png, Path.Combine(tmp, "b.tga"), 854, 480, 24);
             var i = File.ReadAllBytes(Path.Combine(tmp, "i.tga")); var b = File.ReadAllBytes(Path.Combine(tmp, "b.tga"));
-            Check("tga files size/header", i.Length == 18 + 128 * 128 * 4 && i[2] == 2 && i[16] == 32 && i[17] == 8 && b.Length == 18 + 854 * 480 * 3 && b[16] == 24 && b[17] == 0);
+            Check("tga files size/header", i.Length == 18 + 128 * 128 * 4 + 26 && i[2] == 2 && i[16] == 32 && i[17] == 8 && b.Length == 18 + 854 * 480 * 3 + 26 && b[16] == 24 && b[17] == 0);
             // bottom-left origin: PNG top half red, bottom half blue => first stored row (bottom) is blue (BGR = FF 00 00)
-            Check("tga rows bottom-up", b[18] == 0xFF && b[19] == 0 && b[20] == 0 && b[^3] == 0 && b[^1] == 0xFF);
+            Check("tga rows bottom-up", b[18] == 0xFF && b[19] == 0 && b[20] == 0 && b[^29] == 0 && b[^27] == 0xFF && System.Text.Encoding.ASCII.GetString(b, b.Length - 18, 17) == "TRUEVISION-XFILE.");
         }
         finally { Directory.Delete(tmp, true); }
     }

@@ -1,6 +1,12 @@
 using System.Security.Cryptography;
 using WiiVCInjector;
 
+if (args.Length == 4 && args[0] == "patch")
+{
+    File.WriteAllBytes(args[3], C2wPatcher.Patch(File.ReadAllBytes(args[1]), File.ReadAllText(args[2])));
+    return 0;
+}
+
 // Builds a synthetic cafe2wii image (ELF header at 0x804, the two patch patterns), encrypts it
 // with a random key, patches it, decrypts the result and checks every byte and the SHA-1 field.
 var key = RandomNumberGenerator.GetBytes(16);

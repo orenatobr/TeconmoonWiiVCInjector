@@ -30,9 +30,22 @@ internal static class SelfTest
         return 0;
     }
 
+    /// <summary>WIIVC_VALIDATE=package_dir validates an existing WUP package (optional WIIVC_COMMON_KEY).</summary>
+    static int ValidateDir(string dir)
+    {
+        var sw = System.Diagnostics.Stopwatch.StartNew();
+        var rep = WupValidator.Validate(dir, Environment.GetEnvironmentVariable("WIIVC_COMMON_KEY"), (p, s) => Console.WriteLine($"    {p}% {s}"));
+        foreach (var l in rep.Info) Console.WriteLine("  info: " + l);
+        foreach (var l in rep.Warnings) Console.WriteLine("  warning: " + l);
+        foreach (var l in rep.Errors) Console.WriteLine("  ERROR: " + l);
+        Console.WriteLine(rep.Ok ? $"VALID ({sw.Elapsed.TotalSeconds:F1}s)" : $"INVALID ({rep.Errors.Count} errors)");
+        return rep.Ok ? 0 : 1;
+    }
+
     public static int Run()
     {
         if (Environment.GetEnvironmentVariable("WIIVC_BUILDFILE") is { Length: > 0 } bf) return BuildFile(bf);
+        if (Environment.GetEnvironmentVariable("WIIVC_VALIDATE") is { Length: > 0 } vd) return ValidateDir(vd);
         try { Units(); Builds(); }
         catch (Exception e) { Console.WriteLine("[FAIL] exception: " + e); _fail++; }
         Console.WriteLine(_fail == 0 ? "ALL OK" : $"{_fail} FAILED");
@@ -85,9 +98,9 @@ internal static class SelfTest
             Media.WriteTga(png, Path.Combine(tmp, "i.tga"), 128, 128, 32);
             Media.WriteTga(png, Path.Combine(tmp, "b.tga"), 854, 480, 24);
             var i = File.ReadAllBytes(Path.Combine(tmp, "i.tga")); var b = File.ReadAllBytes(Path.Combine(tmp, "b.tga"));
-            Check("tga files size/header", i.Length == 18 + 128 * 128 * 4 && i[2] == 2 && i[16] == 32 && i[17] == 8 && b.Length == 18 + 854 * 480 * 3 && b[16] == 24 && b[17] == 0);
+            Check("tga files size/header", i.Length == 18 + 128 * 128 * 4 + 26 && i[2] == 2 && i[16] == 32 && i[17] == 8 && b.Length == 18 + 854 * 480 * 3 + 26 && b[16] == 24 && b[17] == 0);
             // bottom-left origin: PNG top half red, bottom half blue => first stored row (bottom) is blue (BGR = FF 00 00)
-            Check("tga rows bottom-up", b[18] == 0xFF && b[19] == 0 && b[20] == 0 && b[^3] == 0 && b[^1] == 0xFF);
+            Check("tga rows bottom-up", b[18] == 0xFF && b[19] == 0 && b[20] == 0 && b[^29] == 0 && b[^27] == 0xFF && System.Text.Encoding.ASCII.GetString(b, b.Length - 18, 17) == "TRUEVISION-XFILE.");
         }
         finally { Directory.Delete(tmp, true); }
     }

@@ -1,13 +1,12 @@
 #!/bin/bash
 # Builds dist/WiiVCInjector.app (arm64, self-contained, ad-hoc signed) and a zip.
-# Env: VERSION (default 1.0.0), TOOLS_SRC (dir with bin jar BASE DOL share, and nfs-src unless
-# NFS_SRC set; default: the local tcmoon-mac/tools), JDK_HOME (default openjdk@17 from Homebrew).
+# Env: VERSION (default 1.0.0), TOOLS_SRC (dir with bin jar BASE DOL share; default: the local
+# tcmoon-mac/tools), JDK_HOME (default openjdk@17 from Homebrew). nfs2iso2nfs is downloaded and built here.
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 VERSION="${VERSION:-1.0.0}"
 TOOLS_SRC="${TOOLS_SRC:-/Volumes/Renato/Wii U/tcmoon-mac/tools}"
-NFS_SRC="${NFS_SRC:-$TOOLS_SRC/nfs-src}"
 JDK_HOME="${JDK_HOME:-$(/usr/libexec/java_home -v 17 2>/dev/null || echo /opt/homebrew/opt/openjdk@17/libexec/openjdk.jdk/Contents/Home)}"
 DIST="$ROOT/dist"
 APP="$DIST/WiiVCInjector.app"
@@ -59,8 +58,16 @@ for d in BASE DOL share; do mkdir -p "$TOOLS/$d"; cp_clean "$TOOLS_SRC/$d" "$TOO
 chmod +x "$TOOLS/bin/"*
 
 echo "==> nfs2iso2nfs (self-contained)"
+# FIX94/nfs2iso2nfs v0.5.6, the version the original Windows app ships (its nfs2iso2nfs.exe has the same strings and
+# the -horizontal, -instantcc and -nocc options). The older 0.5.4 fork this port first used lacks them. Pinned and checked.
+NFS_COMMIT=b47a6bb5eb96a193928979f1540cf59b6151ec52
+NFS_SHA256=609d06d154ed333793cc34d86b84aeec2dd4ad38d0c986e62323fb8e7428a0a4
 mkdir -p "$WORK/nfs-src"
-cp "$NFS_SRC/Program.cs" "$NFS_SRC/nfs2iso2nfs.csproj" "$WORK/nfs-src/"
+curl -fsSL "https://raw.githubusercontent.com/FIX94/nfs2iso2nfs/$NFS_COMMIT/Program.cs" -o "$WORK/nfs-src/Program.cs"
+echo "$NFS_SHA256  $WORK/nfs-src/Program.cs" | shasum -a 256 -c - >/dev/null
+cat > "$WORK/nfs-src/nfs2iso2nfs.csproj" <<'CSPROJ'
+<Project Sdk="Microsoft.NET.Sdk"><PropertyGroup><OutputType>Exe</OutputType><TargetFramework>net10.0</TargetFramework><AssemblyName>nfs2iso2nfs</AssemblyName></PropertyGroup></Project>
+CSPROJ
 sh "$(dirname "$0")/tools/patch_nfs_source.sh" "$WORK/nfs-src/Program.cs"
 dotnet publish "$WORK/nfs-src" -c Release -r osx-arm64 --self-contained -p:PublishSingleFile=true -o "$TOOLS/nfs" -v q
 rm -f "$TOOLS/nfs/"*.pdb

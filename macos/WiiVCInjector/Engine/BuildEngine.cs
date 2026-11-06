@@ -95,6 +95,15 @@ public static class BuildEngine
             Exec(Tools.Java(), ["-jar", Tools.Jar("NUSPacker"), "-in", "BUILDDIR", "-out", outPath, "-encryptKeyWith", o.CommonKey], work);
             foreach (var f in new[] { "title.tmd", "title.tik", "title.cert" })
                 if (!File.Exists(Path.Combine(outPath, f))) throw new InvalidOperationException($"NUSPacker did not produce {f}.");
+            P(96, "Validating the WUP package...");
+            var report = WupValidator.Validate(outPath, o.CommonKey);
+            foreach (var l in report.Info) Emit("[wup] " + l);
+            foreach (var l in report.Warnings) Emit("[wup] warning: " + l);
+            if (!report.Ok)
+            {
+                foreach (var l in report.Errors) Emit("[wup] ERROR: " + l);
+                throw new InvalidOperationException("The generated WUP failed validation, do not install it:\n" + string.Join("\n", report.Errors));
+            }
             P(100, "Conversion complete...");
             return outPath;
         }

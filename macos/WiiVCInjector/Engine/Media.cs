@@ -17,7 +17,7 @@ internal static class Media
             ?? throw new InvalidOperationException("resize failed: " + src);
         var px = scaled.GetPixelSpan();
         var bytes = bpp / 8;
-        var outp = new byte[18 + w * h * bytes];
+        var outp = new byte[18 + w * h * bytes + TgaFooter.Length];
         TgaHeader(w, h, bpp).CopyTo(outp, 0);
         var o = 18;
         for (var y = h - 1; y >= 0; y--)
@@ -35,8 +35,12 @@ internal static class Media
                     for (var c = 0; c < 3; c++) outp[o++] = (byte)Math.Min(255, px[i + c] + 255 - a);
                 }
             }
+        TgaFooter.CopyTo(outp, o);
         File.WriteAllBytes(dst, outp);
     }
+
+    /// <summary>TGA 2.0 footer (no extension or developer area), as written by FreeImage (the original png2tgacmd) and found in Nintendo's own TGA files.</summary>
+    internal static readonly byte[] TgaFooter = [.. new byte[8], .. "TRUEVISION-XFILE."u8.ToArray(), 0];
 
     /// <summary>PCM WAV (8/16/24/32-bit int or float, any channels and rate) to 16-bit stereo 48 kHz, first <paramref name="maxSeconds"/> s.</summary>
     public static short[] WavToStereo48k(byte[] d, int maxSeconds = 6)

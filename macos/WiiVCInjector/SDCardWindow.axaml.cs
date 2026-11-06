@@ -84,7 +84,10 @@ public partial class SDCardWindow : Window
         }
     }
 
-    private void VideoWidth_Scroll(object? s, Avalonia.Controls.Primitives.RangeBaseValueChangedEventArgs e) => WidthNumber.Text = ((int)VideoWidth.Value).ToString();
+    private void VideoWidth_Scroll(object? s, Avalonia.Controls.Primitives.RangeBaseValueChangedEventArgs e) {
+        // fires while the XAML is still being populated, before WidthNumber exists
+        if (WidthNumber != null) WidthNumber.Text = ((int)VideoWidth.Value).ToString();
+    }
 
     private void VideoTypeMode_SelectedIndexChanged(object? s, SelectionChangedEventArgs e)
     {

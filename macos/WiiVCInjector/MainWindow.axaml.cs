@@ -49,6 +49,20 @@ public partial class MainWindow : Window
         var tab = Environment.GetEnvironmentVariable("WIIVC_TAB");
         if (int.TryParse(tab, out var ti)) MainTabs.SelectedIndex = ti;
         var snap = Environment.GetEnvironmentVariable("WIIVC_SNAPSHOT");
+        // WIIVC_WINDOW=settings|sdcard renders that window instead of the main one
+        var other = Environment.GetEnvironmentVariable("WIIVC_WINDOW");
+        if (!string.IsNullOrEmpty(snap) && !string.IsNullOrEmpty(other))
+            Opened += async (_, _) =>
+            {
+                Window win = other == "sdcard" ? new SDCardWindow() : new SettingsWindow();
+                win.Show();
+                await Task.Delay(500);
+                using var bmp = new Avalonia.Media.Imaging.RenderTargetBitmap(new PixelSize((int)win.Width, (int)win.Height));
+                bmp.Render(win);
+                bmp.Save(snap);
+                _closeConfirmed = true;
+                Environment.Exit(0);
+            };
         if (!string.IsNullOrEmpty(snap))
             Opened += async (_, _) =>
             {

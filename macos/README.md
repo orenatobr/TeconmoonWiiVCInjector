@@ -55,7 +55,7 @@ Render a page without opening a window (`WIIVC_THEME=light|dark` pins the theme,
 
 ## Converting several games at once
 
-On the Build tab, "Choose games and convert..." (Wii Retail or GC Retail modes, valid keys) builds every game you pick in one run.
+On the Source files tab, "Choose games and convert..." (Wii Retail or GC Retail modes; the keys must already be saved on the Build tab) builds every game you pick in one run.
 All of them use the GamePad Emulation Mode and the advanced options currently set in the window, and the icon and banner of
 each game are always downloaded from Cucholix's repo. A game the repo has no images for, a wrong system, an NKit/NASOS image
 or a failed build is skipped and listed in the final summary; the other games still convert.

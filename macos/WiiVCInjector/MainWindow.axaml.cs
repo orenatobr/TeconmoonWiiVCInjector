@@ -11,7 +11,13 @@ namespace WiiVCInjector;
 public partial class MainWindow : Window
 {
     // State of the original Form1 (names kept)
-    internal string SystemType = "wii";
+    string _systemType = "wii";
+    /// <summary>The selected mode; the batch button only makes sense for Wii and GameCube retail discs.</summary>
+    internal string SystemType
+    {
+        get => _systemType;
+        set { _systemType = value; BatchButton.IsEnabled = value is "wii" or "gcn"; }
+    }
     internal string TitleIDHex = "", TitleIDText = "", InternalGameName = "", CucholixRepoID = "";
     internal bool FlagWBFS, FlagNKIT, FlagNASOS, FlagGameSpecified, FlagGC2Specified, FlagIconSpecified, FlagBannerSpecified;
     internal bool FlagDrcSpecified, FlagLogoSpecified, FlagBootSoundSpecified, FlagRepo;
@@ -315,8 +321,6 @@ public partial class MainWindow : Window
         BuildFlagKeys = C2WPatchFlag.IsChecked != true ? CommonKeyGood && TitleKeyGood : CommonKeyGood && TitleKeyGood && AncastKeyGood;
         KeysCheck.Status = BuildFlagKeys;
         TheBigOneTM.IsEnabled = BuildFlagSource && BuildFlagMeta && BuildFlagAdvance && BuildFlagKeys;
-        // a batch picks its own games, so it only needs a Wii or GameCube mode and valid keys
-        BatchButton.IsEnabled = SystemType is "wii" or "gcn" && BuildFlagAdvance && BuildFlagKeys;
     }
 
     private void MainTabs_SelectedIndexChanged(object? s, SelectionChangedEventArgs e)
@@ -947,7 +951,22 @@ public partial class MainWindow : Window
         new[] { NoGamePadEmu, CCEmu, VerWiiMote, HorWiiMote, ForceCC, ForceNoCC }
             .FirstOrDefault(r => r.IsChecked == true)?.Content?.ToString()?.TrimStart('*') ?? "default";
 
-    private async void BatchButton_Click(object? s, RoutedEventArgs e) => await BatchClick();
+    /// <summary>Why a batch cannot start yet (the keys live on the Build tab), or null.</summary>
+    internal string? BatchBlocker()
+    {
+        Settings = AppSettings.Load();
+        if (!KeyCheck.CommonKey(Settings.WiiUCommonKey.ToUpperInvariant()) || !KeyCheck.TitleKey(Settings.TitleKey.ToUpperInvariant()))
+            return "Save a valid Wii U Common Key and Title Key on the Build tab first, then try again.";
+        if (CustomMainDol.IsChecked == true && Path.GetExtension(MainDolPath) != ".dol")
+            return "The custom main.dol you ticked in the Advanced tab is not specified. Untick it or choose the file.";
+        return null;
+    }
+
+    private async void BatchButton_Click(object? s, RoutedEventArgs e)
+    {
+        if (BatchBlocker() is { } why) { await Dialogs.Info(this, why, "Convert several games"); return; }
+        await BatchClick();
+    }
 
     static async Task<byte[]?> FetchRepoFile(string url)
     {

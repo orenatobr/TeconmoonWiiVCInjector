@@ -209,13 +209,12 @@ public static class UiSelfTest
             T("batch: Build tab goes back to the single-game wording", w.SourceCheck.Text == "Source Files are properly specified" && w.MetaCheck.Text == "Meta options are valid");
             w.MainTabs.SelectedItem = w.SourceFilesTab;
 
-            // --- start state: maximized, never full screen; snapshot and test modes keep the XAML size
-            w.ApplyStartState(_ => null);
-            T("start: maximized, not full screen", w.WindowState == Avalonia.Controls.WindowState.Maximized);
-            w.ApplyStartState(k => k == "WIIVC_SNAPSHOT" ? "/tmp/x.png" : null);
-            T("start: snapshot mode keeps the fixed size", w.WindowState == Avalonia.Controls.WindowState.Normal);
-            w.ApplyStartState(k => k == "WIIVC_UITEST" ? "1" : null);
-            T("start: self-test mode keeps the fixed size", w.WindowState == Avalonia.Controls.WindowState.Normal);
+            // --- start state: maximized, never full screen; snapshot and test modes keep the XAML size.
+            // The decision is tested, not the property read back: a window system without a window manager (the CI xvfb) never reports Maximized.
+            T("start: maximized, not full screen", MainWindow.StartState(_ => null) == Avalonia.Controls.WindowState.Maximized);
+            T("start: snapshot mode keeps the fixed size", MainWindow.StartState(k => k == "WIIVC_SNAPSHOT" ? "/tmp/x.png" : null) == Avalonia.Controls.WindowState.Normal);
+            T("start: self-test mode keeps the fixed size", MainWindow.StartState(k => k == "WIIVC_UITEST" ? "1" : null) == Avalonia.Controls.WindowState.Normal);
+            T("start: GUI build test keeps the fixed size", MainWindow.StartState(k => k == "WIIVC_GUIBUILD" ? "1" : null) == Avalonia.Controls.WindowState.Normal);
 
             // --- keys and settings
             T("key md5 rejects zeros", !KeyCheck.CommonKey(AppSettings.Zeros) && !KeyCheck.TitleKey(AppSettings.Zeros) && !KeyCheck.AncastKey(AppSettings.Zeros));

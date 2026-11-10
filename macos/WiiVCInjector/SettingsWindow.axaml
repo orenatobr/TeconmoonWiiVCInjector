@@ -1,14 +1,29 @@
 <Window xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:local="using:WiiVCInjector"
-        x:Class="WiiVCInjector.SettingsWindow" Width="369" Height="295" MinWidth="369" MinHeight="295" CanResize="False"
-        Title="Application Settings" Background="#F0F0F0" FontSize="11">
-    <Canvas>
-      <local:WfLabel Name="OutputDirLabel" Canvas.Left="12" Canvas.Top="60" Width="262" Height="15" Text="Output Directory (leave empty to always ask)"/>
-      <TextBox Name="OutputDir" Canvas.Left="12" Canvas.Top="78" Width="255" Height="20" Text="" Classes="wf"/>
-      <local:WfLabel Name="BannersRepositoryLabel" Canvas.Left="12" Canvas.Top="9" Width="118" Height="16" Text="Banners Repository"/>
-      <TextBox Name="BannersRepository" Canvas.Left="12" Canvas.Top="28" Width="345" Height="20" Text="" Classes="wf"/>
-      <Button Name="OutputDirButton" Canvas.Left="273" Canvas.Top="74" Width="84" Height="26" Click="OutputDirButton_Click" Classes="wf"><TextBlock Text="Browse..." TextWrapping="Wrap" TextAlignment="Center" TextTrimming="None"/></Button>
-      <Button Name="OkButton" Canvas.Left="183" Canvas.Top="257" Width="84" Height="26" Click="OkButton_Click" Classes="wf"><TextBlock Text="OK" TextWrapping="Wrap" TextAlignment="Center" TextTrimming="None"/></Button>
-      <Button Name="Cancel" Canvas.Left="273" Canvas.Top="257" Width="84" Height="26" Classes="wf"><TextBlock Text="Cancel" TextWrapping="Wrap" TextAlignment="Center" TextTrimming="None"/></Button>
-    </Canvas>
+        x:Class="WiiVCInjector.SettingsWindow" Width="560" Height="340" CanResize="False"
+        Title="Application Settings" FontSize="13">
+  <Grid RowDefinitions="*,Auto" Margin="24">
+    <StackPanel Spacing="14">
+      <TextBlock Classes="h2" Text="Application settings" />
+      <Border Classes="card">
+        <StackPanel Spacing="16">
+          <StackPanel Spacing="6">
+            <local:WfLabel Name="BannersRepositoryLabel" FontWeight="SemiBold" Text="Banners Repository" />
+            <TextBox Name="BannersRepository" Text="" />
+          </StackPanel>
+          <StackPanel Spacing="6">
+            <local:WfLabel Name="OutputDirLabel" FontWeight="SemiBold" Text="Output Directory (leave empty to always ask)" />
+            <Grid ColumnDefinitions="*,Auto" ColumnSpacing="10">
+              <TextBox Name="OutputDir" Text="" />
+              <Button Name="OutputDirButton" Grid.Column="1" Classes="browse" Click="OutputDirButton_Click" Content="Browse..." />
+            </Grid>
+          </StackPanel>
+        </StackPanel>
+      </Border>
+    </StackPanel>
+    <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Right" Spacing="10">
+      <Button Name="Cancel" MinWidth="96" Content="Cancel" />
+      <Button Name="OkButton" Classes="accent" MinWidth="96" Click="OkButton_Click" Content="OK" />
+    </StackPanel>
+  </Grid>
 </Window>

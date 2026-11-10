@@ -1,82 +1,124 @@
 <Window xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:local="using:WiiVCInjector"
-        x:Class="WiiVCInjector.SDCardWindow" Width="280" Height="512" MinWidth="280" MinHeight="512" CanResize="False"
-        Title="Nintendont SD Card Menu..." Background="#F0F0F0" FontSize="11">
-    <Canvas>
-      <Grid Name="nintendontConfigGroupBox" Canvas.Left="8" Canvas.Top="139" Width="265" Height="361">
-        <Border Margin="0,7,0,0" BorderBrush="#DCDCDC" BorderThickness="1"/>
-        <TextBlock Text="Nintendont Configuration" Margin="8,0,0,0" Padding="2,0" HorizontalAlignment="Left" VerticalAlignment="Top" Background="#F0F0F0"/>
-        <Canvas>
-          <ListBox Name="NintendontOptions" Canvas.Left="6" Canvas.Top="19" Width="253" Height="109" SelectionChanged="NintendontOptions_SelectedIndexChanged" DoubleTapped="NintendontOptions_DoubleClick" Classes="wf" BorderBrush="Gray" BorderThickness="1">
-            <ListBox.ItemsPanel><ItemsPanelTemplate><WrapPanel Orientation="Vertical"/></ItemsPanelTemplate></ListBox.ItemsPanel>
-            <CheckBox Name="NintendontOptions_0" Content="Memcard Emulation" Width="120"/>
-            <CheckBox Name="NintendontOptions_1" Content="Cheats" Width="120"/>
-            <CheckBox Name="NintendontOptions_2" Content="Cheat Path" Width="120"/>
-            <CheckBox Name="NintendontOptions_3" Content="Unlock Read Speed" Width="120"/>
-            <CheckBox Name="NintendontOptions_4" Content="Wiimote CC Rumble" Width="120"/>
-            <CheckBox Name="NintendontOptions_5" Content="TRI Arcade Mode" Width="120"/>
-            <CheckBox Name="NintendontOptions_6" Content="BBA Emulation" Width="120"/>
-            <CheckBox Name="NintendontOptions_7" Content="Auto Video Width" Width="120"/>
-            <CheckBox Name="NintendontOptions_8" Content="Patch PAL50" Width="120"/>
-            <CheckBox Name="NintendontOptions_9" Content="Force Widescreen" Width="120"/>
-            <CheckBox Name="NintendontOptions_10" Content="Force Progressive" Width="120"/>
-            <CheckBox Name="NintendontOptions_11" Content="Skip IPL" Width="120"/>
-            <CheckBox Name="NintendontOptions_12" Content="OSReport" Width="120"/>
-            <CheckBox Name="NintendontOptions_13" Content="Log" Width="120"/>
-          </ListBox>
-          <ComboBox Name="wiiUGamepadSlotBox" Canvas.Left="6" Canvas.Top="290" Width="124" Height="21" Classes="wf">
-            <ComboBoxItem Content="1"/>
-            <ComboBoxItem Content="2"/>
-            <ComboBoxItem Content="3"/>
-            <ComboBoxItem Content="4"/>
-          </ComboBox>
-          <Button Name="GenerateConfig" Canvas.Left="4" Canvas.Top="322" Width="64" Height="22" Click="GenerateConfig_Click" Classes="wf"><TextBlock Text="Generate Nintendont Config File (nincfg.bin)" TextWrapping="Wrap" TextAlignment="Center" TextTrimming="None"/></Button>
-          <local:WfLabel Name="gamepadSlotLabel" Canvas.Left="6" Canvas.Top="267" Width="124" Height="18" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" BorderBrush="Gray" BorderThickness="1" Padding="5,1,5,0" Text="Wii U Gamepad Slot"/>
-          <ComboBox Name="LanguageBox" Canvas.Left="6" Canvas.Top="236" Width="124" Height="21" Classes="wf">
-            <ComboBoxItem Content="Automatic"/>
-            <ComboBoxItem Content="English"/>
-            <ComboBoxItem Content="German"/>
-            <ComboBoxItem Content="French"/>
-            <ComboBoxItem Content="Spanish"/>
-            <ComboBoxItem Content="Italian"/>
-            <ComboBoxItem Content="Dutch"/>
-          </ComboBox>
-          <local:WfLabel Name="LanguageText" Canvas.Left="6" Canvas.Top="213" Width="124" Height="18" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" BorderBrush="Gray" BorderThickness="1" Padding="5,1,5,0" Text="Language"/>
-          <CheckBox Name="MemcardMulti" Canvas.Left="6" Canvas.Top="184" Width="124" Height="26" Content="Memcard Multi"/>
-          <ComboBox Name="VideoForceMode" Canvas.Left="136" Canvas.Top="157" Width="123" Height="21" SelectionChanged="VideoForceMode_SelectedIndexChanged" Classes="wf">
-            <ComboBoxItem Content="Auto"/>
-            <ComboBoxItem Content="Force"/>
-            <ComboBoxItem Content="Force (Deflicker)"/>
-            <ComboBoxItem Content="None"/>
-          </ComboBox>
-          <ComboBox Name="MemcardBlocks" Canvas.Left="6" Canvas.Top="157" Width="124" Height="21" Classes="wf">
-            <ComboBoxItem Content="59"/>
-            <ComboBoxItem Content="123"/>
-            <ComboBoxItem Content="251"/>
-            <ComboBoxItem Content="507 (Unstable)"/>
-            <ComboBoxItem Content="1019 (Unstable)"/>
-            <ComboBoxItem Content="2043 (Unstable)"/>
-          </ComboBox>
-          <local:WfLabel Name="VideoText" Canvas.Left="135" Canvas.Top="136" Width="124" Height="18" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" BorderBrush="Gray" BorderThickness="1" Padding="5,1,5,0" Text="Video Mode"/>
-          <local:WfLabel Name="MemcardText" Canvas.Left="6" Canvas.Top="136" Width="124" Height="18" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" BorderBrush="Gray" BorderThickness="1" Padding="5,1,5,0" Text="Memcard Blocks"/>
-          <ComboBox Name="VideoTypeMode" Canvas.Left="136" Canvas.Top="184" Width="123" Height="21" SelectionChanged="VideoTypeMode_SelectedIndexChanged" Classes="wf">
-            <ComboBoxItem Content="Auto"/>
-            <ComboBoxItem Content="NTSC"/>
-            <ComboBoxItem Content="MPAL"/>
-            <ComboBoxItem Content="PAL50"/>
-            <ComboBoxItem Content="PAL60"/>
-          </ComboBox>
-          <local:WfLabel Name="WidthNumber" Canvas.Left="132" Canvas.Top="229" Width="127" Height="14" HorizontalContentAlignment="Center" Text="Auto"/>
-          <Slider Name="VideoWidth" Canvas.Left="136" Canvas.Top="234" Width="123" Height="26" Background="#F0F0F0" IsEnabled="False" ValueChanged="VideoWidth_Scroll" Minimum="640" Maximum="720" Value="640" SmallChange="2" LargeChange="10"/>
-          <local:WfLabel Name="VideoWidthText" Canvas.Left="136" Canvas.Top="213" Width="123" Height="18" IsEnabled="False" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" BorderBrush="Gray" BorderThickness="1" Padding="5,1,5,0" Text="Video Width"/>
-        </Canvas>
-      </Grid>
-      <local:WfLink Name="Format" Canvas.Left="118" Canvas.Top="61" Click="Format_LinkClicked" Text="Use this to format your SD Card" Foreground="#0066CC" Cursor="Hand"/>
-      <local:WfLabel Name="ActionStatus" Canvas.Left="5" Canvas.Top="82" Width="253" Height="20" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" Text=""/>
-      <Button Name="NintendontUpdate" Canvas.Left="14" Canvas.Top="102" Width="64" Height="22" Click="NintendontUpdate_Click" Classes="wf"><TextBlock Text="Download Latest Nintendont from GitHub" TextWrapping="Wrap" TextAlignment="Center" TextTrimming="None"/></Button>
-      <Button Name="ReloadDrives" Canvas.Left="14" Canvas.Top="55" Width="64" Height="22" Click="ReloadDrives_Click" Classes="wf"><TextBlock Text="Reload Drive List" TextWrapping="Wrap" TextAlignment="Center" TextTrimming="None"/></Button>
-      <local:WfLabel Name="SDCardText" Canvas.Left="11" Canvas.Top="9" Width="145" Height="17" Text="Choose your SD Card"/>
-      <ComboBox Name="DriveBox" Canvas.Left="14" Canvas.Top="29" Width="253" Height="21" SelectionChanged="DriveBox_SelectedIndexChanged" Classes="wf">
-      </ComboBox>
-    </Canvas>
+        x:Class="WiiVCInjector.SDCardWindow" Width="600" Height="850" MinHeight="520"
+        Title="Nintendont SD Card Menu..." FontSize="13">
+  <ScrollViewer>
+    <StackPanel Margin="24" Spacing="14">
+      <TextBlock Classes="h2" Text="Nintendont SD card" />
+
+      <Border Classes="card">
+        <StackPanel Spacing="14">
+          <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12">
+            <Border Classes="iconbox" VerticalAlignment="Top"><Path Classes="icon" Data="{StaticResource IconSdCard}" /></Border>
+            <StackPanel Grid.Column="1" Spacing="6">
+              <local:WfLabel Name="SDCardText" FontWeight="SemiBold" Text="Choose your SD Card" />
+              <Grid ColumnDefinitions="*,Auto" ColumnSpacing="10">
+                <ComboBox Name="DriveBox" SelectionChanged="DriveBox_SelectedIndexChanged" />
+                <Button Name="ReloadDrives" Grid.Column="1" Click="ReloadDrives_Click" Content="Reload Drive List" />
+              </Grid>
+              <local:WfLink Name="Format" Click="Format_LinkClicked" Text="Use this to format your SD Card" Foreground="{DynamicResource AccentStroke}" Cursor="Hand" />
+            </StackPanel>
+          </Grid>
+          <Grid ColumnDefinitions="Auto,*" ColumnSpacing="12">
+            <Button Name="NintendontUpdate" Click="NintendontUpdate_Click">
+              <StackPanel Orientation="Horizontal" Spacing="8">
+                <Path Classes="icon muted" Data="{StaticResource IconDownload}" />
+                <TextBlock Text="Download Latest Nintendont from GitHub" />
+              </StackPanel>
+            </Button>
+            <local:WfLabel Name="ActionStatus" Grid.Column="1" Classes="sub" VerticalAlignment="Center" Text="" />
+          </Grid>
+        </StackPanel>
+      </Border>
+
+      <Border Classes="card">
+        <StackPanel Spacing="14">
+          <TextBlock Name="nintendontConfigGroupBox" Classes="label" Text="Nintendont Configuration" />
+          <UniformGrid Name="NintendontOptions" Columns="2">
+            <CheckBox Name="NintendontOptions_0" Content="Memcard Emulation" />
+            <CheckBox Name="NintendontOptions_1" Content="Cheats" />
+            <CheckBox Name="NintendontOptions_2" Content="Cheat Path" />
+            <CheckBox Name="NintendontOptions_3" Content="Unlock Read Speed" />
+            <CheckBox Name="NintendontOptions_4" Content="Wiimote CC Rumble" />
+            <CheckBox Name="NintendontOptions_5" Content="TRI Arcade Mode" />
+            <CheckBox Name="NintendontOptions_6" Content="BBA Emulation" />
+            <CheckBox Name="NintendontOptions_7" Content="Auto Video Width" />
+            <CheckBox Name="NintendontOptions_8" Content="Patch PAL50" />
+            <CheckBox Name="NintendontOptions_9" Content="Force Widescreen" />
+            <CheckBox Name="NintendontOptions_10" Content="Force Progressive" />
+            <CheckBox Name="NintendontOptions_11" Content="Skip IPL" />
+            <CheckBox Name="NintendontOptions_12" Content="OSReport" />
+            <CheckBox Name="NintendontOptions_13" Content="Log" />
+          </UniformGrid>
+
+          <CheckBox Name="MemcardMulti" Content="Memcard Multi" />
+
+          <Grid ColumnDefinitions="*,*" ColumnSpacing="16" RowSpacing="12" RowDefinitions="Auto,Auto,Auto">
+            <StackPanel Spacing="6">
+              <local:WfLabel Name="MemcardText" Classes="sub" Text="Memcard Blocks" />
+              <ComboBox Name="MemcardBlocks">
+                <ComboBoxItem Content="59" />
+                <ComboBoxItem Content="123" />
+                <ComboBoxItem Content="251" />
+                <ComboBoxItem Content="507 (Unstable)" />
+                <ComboBoxItem Content="1019 (Unstable)" />
+                <ComboBoxItem Content="2043 (Unstable)" />
+              </ComboBox>
+            </StackPanel>
+            <StackPanel Grid.Column="1" Spacing="6">
+              <local:WfLabel Name="VideoText" Classes="sub" Text="Video Mode" />
+              <ComboBox Name="VideoForceMode" SelectionChanged="VideoForceMode_SelectedIndexChanged">
+                <ComboBoxItem Content="Auto" />
+                <ComboBoxItem Content="Force" />
+                <ComboBoxItem Content="Force (Deflicker)" />
+                <ComboBoxItem Content="None" />
+              </ComboBox>
+            </StackPanel>
+
+            <StackPanel Grid.Row="1" Spacing="6">
+              <local:WfLabel Name="LanguageText" Classes="sub" Text="Language" />
+              <ComboBox Name="LanguageBox">
+                <ComboBoxItem Content="Automatic" />
+                <ComboBoxItem Content="English" />
+                <ComboBoxItem Content="German" />
+                <ComboBoxItem Content="French" />
+                <ComboBoxItem Content="Spanish" />
+                <ComboBoxItem Content="Italian" />
+                <ComboBoxItem Content="Dutch" />
+              </ComboBox>
+            </StackPanel>
+            <StackPanel Grid.Row="1" Grid.Column="1" Spacing="6">
+              <TextBlock Classes="sub" Text="Video Type" />
+              <ComboBox Name="VideoTypeMode" SelectionChanged="VideoTypeMode_SelectedIndexChanged">
+                <ComboBoxItem Content="Auto" />
+                <ComboBoxItem Content="NTSC" />
+                <ComboBoxItem Content="MPAL" />
+                <ComboBoxItem Content="PAL50" />
+                <ComboBoxItem Content="PAL60" />
+              </ComboBox>
+            </StackPanel>
+
+            <StackPanel Grid.Row="2" Spacing="6">
+              <local:WfLabel Name="gamepadSlotLabel" Classes="sub" Text="Wii U Gamepad Slot" />
+              <ComboBox Name="wiiUGamepadSlotBox">
+                <ComboBoxItem Content="1" />
+                <ComboBoxItem Content="2" />
+                <ComboBoxItem Content="3" />
+                <ComboBoxItem Content="4" />
+              </ComboBox>
+            </StackPanel>
+            <StackPanel Grid.Row="2" Grid.Column="1" Spacing="2">
+              <Grid ColumnDefinitions="*,Auto">
+                <local:WfLabel Name="VideoWidthText" Classes="sub" IsEnabled="False" Text="Video Width" />
+                <local:WfLabel Name="WidthNumber" Grid.Column="1" Classes="sub" Text="Auto" />
+              </Grid>
+              <Slider Name="VideoWidth" IsEnabled="False" ValueChanged="VideoWidth_Scroll" Minimum="640" Maximum="720" Value="640" SmallChange="2" LargeChange="10" />
+            </StackPanel>
+          </Grid>
+
+          <Button Name="GenerateConfig" Classes="accent" HorizontalAlignment="Stretch" MinHeight="40" Click="GenerateConfig_Click" Content="Generate Nintendont Config File (nincfg.bin)" />
+        </StackPanel>
+      </Border>
+    </StackPanel>
+  </ScrollViewer>
 </Window>

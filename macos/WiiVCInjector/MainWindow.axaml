@@ -1,133 +1,432 @@
 <Window xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:local="using:WiiVCInjector"
-        x:Class="WiiVCInjector.MainWindow" Width="485" Height="451" MinWidth="485" MinHeight="427" CanResize="False"
-        Title="TeconMoon's WiiVC Injector - [{0}]" Background="#F0F0F0" FontSize="11">
-    <Grid Name="MainTableLayout" Margin="11,8,11,8" ColumnDefinitions="33.3333*,33.3333*,33.3333*" RowDefinitions="25,25,*">
-      <RadioButton Name="WiiRetail" Grid.Column="0" Grid.Row="0" Margin="3,3,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" Foreground="Black" IsCheckedChanged="WiiRetail_CheckedChanged" GroupName="MainTableLayout" IsChecked="True" Content="Wii Retail Injection"/>
-      <TabControl Name="MainTabs" Grid.Column="0" Grid.Row="2" Grid.ColumnSpan="3" Margin="-8,3,-8,3" SelectionChanged="MainTabs_SelectedIndexChanged" Classes="wf">
-        <TabItem Name="SourceFilesTab" Header="Required Source Files">
-          <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto" Background="Gainsboro">
-            <Canvas Background="Gainsboro" Width="471" Height="345">
-              <Button Name="RepoDownload" Canvas.Left="8" Canvas.Top="140" Width="128" Height="49" Background="Silver" Click="RepoDownload_Click" Classes="wf"><TextBlock Text="Download images from cucholix's repo" TextWrapping="Wrap" TextAlignment="Center" TextTrimming="None"/></Button>
-              <local:WfLabel Name="TitleIDLabel" Canvas.Left="132" Canvas.Top="111" Width="212" Height="16" Background="LightGray" VerticalContentAlignment="Center" BorderBrush="Gray" BorderThickness="1" Padding="5,1,5,0" Text=""/>
-              <local:WfLabel Name="GameNameLabel" Canvas.Left="132" Canvas.Top="93" Width="212" Height="16" Background="LightGray" VerticalContentAlignment="Center" BorderBrush="Gray" BorderThickness="1" Padding="5,1,5,0" Text=""/>
-              <local:WfLabel Name="ITIDText" Canvas.Left="13" Canvas.Top="112" Text="Internal Game Title ID:"/>
-              <local:WfLabel Name="IGNText" Canvas.Left="13" Canvas.Top="94" Width="113" Height="13" Text="Internal Game Name:"/>
-              <local:WfLabel Name="BannerPreviewText" Canvas.Left="144" Canvas.Top="140" Width="320" Height="15" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" Text="Banner Preview (1280x720)"/>
-              <Border Name="BannerPreviewBox" Canvas.Left="144" Canvas.Top="158" Width="320" Height="180" BorderBrush="Gray" BorderThickness="1" Background="DimGray"><Image Name="BannerPreviewBoxImg" Stretch="Fill"/></Border>
-              <local:WfLabel Name="IconPreviewText" Canvas.Left="8" Canvas.Top="192" Width="128" Height="15" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" Text="Icon Preview (128x128)"/>
-              <Border Name="IconPreviewBox" Canvas.Left="8" Canvas.Top="210" Width="128" Height="128" BorderBrush="Gray" BorderThickness="1" Background="DimGray"><Image Name="IconPreviewBoxImg" Stretch="Fill"/></Border>
-              <local:WfLabel Name="BannerSourceDirectory" Canvas.Left="72" Canvas.Top="68" Width="395" Height="16" Background="LightGray" Foreground="Red" VerticalContentAlignment="Center" BorderBrush="Gray" BorderThickness="1" Padding="5,1,5,0" TextTrimming="CharacterEllipsis" Text="Banner has not been specified"/>
-              <Button Name="BannerSourceButton" Canvas.Left="6" Canvas.Top="64" Width="60" Height="23" Background="Silver" Click="BannerSourceButton_Click" Classes="wf"><TextBlock Text="Banner..." TextWrapping="Wrap" TextAlignment="Center" TextTrimming="None"/></Button>
-              <local:WfLabel Name="IconSourceDirectory" Canvas.Left="71" Canvas.Top="40" Width="395" Height="16" Background="LightGray" Foreground="Red" VerticalContentAlignment="Center" BorderBrush="Gray" BorderThickness="1" Padding="5,1,5,0" TextTrimming="CharacterEllipsis" Text="Icon has not been specified"/>
-              <Button Name="IconSourceButton" Canvas.Left="6" Canvas.Top="35" Width="60" Height="23" Background="Silver" Click="IconSourceButton_Click" Classes="wf"><TextBlock Text="Icon..." TextWrapping="Wrap" TextAlignment="Center" TextTrimming="None"/></Button>
-              <local:WfLabel Name="GameSourceDirectory" Canvas.Left="71" Canvas.Top="10" Width="395" Height="16" Background="LightGray" Foreground="Red" VerticalContentAlignment="Center" BorderBrush="Gray" BorderThickness="1" Padding="5,1,5,0" TextTrimming="CharacterEllipsis" Text="Game file has not been specified"/>
-              <Button Name="GameSourceButton" Canvas.Left="6" Canvas.Top="6" Width="60" Height="23" Background="Silver" Click="GameSourceButton_Click" Classes="wf"><TextBlock Text="Game..." TextWrapping="Wrap" TextAlignment="Center" TextTrimming="None"/></Button>
-            </Canvas>
-          </ScrollViewer>
-        </TabItem>
-        <TabItem Name="SourceFilesTab2" Header="Optional Source Files">
-          <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto" Background="Gainsboro">
-            <Canvas Background="Gainsboro" Width="471" Height="345">
-              <local:WfLabel Name="GC2SourceDirectory" Canvas.Left="122" Canvas.Top="10" Width="342" Height="16" Background="LightGray" Foreground="Red" VerticalContentAlignment="Center" BorderBrush="Gray" BorderThickness="1" Padding="5,1,5,0" TextTrimming="CharacterEllipsis" Text="2nd GameCube Disc Image has not been specified"/>
-              <Button Name="GC2SourceButton" Canvas.Left="6" Canvas.Top="6" Width="110" Height="23" Background="Silver" IsEnabled="False" Click="GC2SourceButton_Click" Classes="wf"><TextBlock Text="2nd GC Disc" TextWrapping="Wrap" TextAlignment="Center" TextTrimming="None"/></Button>
-              <CheckBox Name="ToggleBootSoundLoop" Canvas.Left="7" Canvas.Top="119" Width="110" Height="17" IsCheckedChanged="ToggleBootSoundLoop_CheckedChanged" Content="Loop Boot Sound"/>
-              <local:WfLabel Name="BootSoundPreviewText" Canvas.Left="8" Canvas.Top="192" Width="128" Height="15" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" Text="Sound Preview"/>
-              <local:WfLabel Name="LogoPreviewText" Canvas.Left="8" Canvas.Top="139" Width="128" Height="16" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" Text="Logo Preview (170x42)"/>
-              <Border Name="LogoPreviewBox" Canvas.Left="8" Canvas.Top="158" Width="128" Height="30" BorderBrush="Gray" BorderThickness="1" Background="DimGray"><Image Name="LogoPreviewBoxImg" Stretch="Fill"/></Border>
-              <local:WfLabel Name="DrcPreviewText" Canvas.Left="144" Canvas.Top="140" Width="320" Height="15" HorizontalContentAlignment="Center" VerticalContentAlignment="Center" Text="GamePad Banner Preview (854x480)"/>
-              <Border Name="DrcPreviewBox" Canvas.Left="144" Canvas.Top="158" Width="320" Height="180" BorderBrush="Gray" BorderThickness="1" Background="DimGray"><Image Name="DrcPreviewBoxImg" Stretch="Fill"/></Border>
-              <local:WfLabel Name="BootSoundDirectory" Canvas.Left="122" Canvas.Top="97" Width="342" Height="16" Background="LightGray" Foreground="Red" VerticalContentAlignment="Center" BorderBrush="Gray" BorderThickness="1" Padding="5,1,5,0" TextTrimming="CharacterEllipsis" Text="Boot Sound has not been specified"/>
-              <Button Name="BootSoundButton" Canvas.Left="6" Canvas.Top="93" Width="110" Height="23" Background="Silver" Click="BootSoundButton_Click" Classes="wf"><TextBlock Text="Boot Sound..." TextWrapping="Wrap" TextAlignment="Center" TextTrimming="None"/></Button>
-              <local:WfLabel Name="LogoSourceDirectory" Canvas.Left="122" Canvas.Top="68" Width="342" Height="16" Background="LightGray" Foreground="Red" VerticalContentAlignment="Center" BorderBrush="Gray" BorderThickness="1" Padding="5,1,5,0" TextTrimming="CharacterEllipsis" Text="Boot Logo has not been specified"/>
-              <Button Name="LogoSourceButton" Canvas.Left="6" Canvas.Top="64" Width="110" Height="23" Background="Silver" Click="LogoSourceButton_Click" Classes="wf"><TextBlock Text="Boot Logo..." TextWrapping="Wrap" TextAlignment="Center" TextTrimming="None"/></Button>
-              <local:WfLabel Name="DrcSourceDirectory" Canvas.Left="122" Canvas.Top="40" Width="342" Height="16" Background="LightGray" Foreground="Red" VerticalContentAlignment="Center" BorderBrush="Gray" BorderThickness="1" Padding="5,1,5,0" TextTrimming="CharacterEllipsis" Text="GamePad Banner has not been specified"/>
-              <Button Name="DrcSourceButton" Canvas.Left="6" Canvas.Top="35" Width="110" Height="23" Background="Silver" Click="DrcSourceButton_Click" Classes="wf"><TextBlock Text="GamePad Banner..." TextWrapping="Wrap" TextAlignment="Center" TextTrimming="None"/></Button>
-              <Button Name="BootSoundPreviewButton" Canvas.Left="8" Canvas.Top="210" Width="128" Height="128" Background="Silver" IsEnabled="False" Click="BootSoundPreviewButton_Click" Classes="wf"><TextBlock Text="Play Sound" TextWrapping="Wrap" TextAlignment="Center" TextTrimming="None"/></Button>
-            </Canvas>
-          </ScrollViewer>
-        </TabItem>
-        <TabItem Name="MetaTab" Header="GamePad/Meta Options">
-          <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto" Background="Gainsboro">
-            <Canvas Background="Gainsboro" Width="471" Height="345">
-              <CheckBox Name="LRPatch" Canvas.Left="9" Canvas.Top="228" IsEnabled="False" Content="Swap L &amp;&amp; R with ZL &amp;&amp; ZR"/>
-              <local:WfLink Name="TutorialLink" Canvas.Left="392" Canvas.Top="327" Background="Gainsboro" Click="TutorialLink_LinkClicked" Text="Instructions" Foreground="#0066CC" Cursor="Hand"/>
-              <local:WfLabel Name="AdvancedLabel5" Canvas.Left="6" Canvas.Top="248" Width="457" Height="93" Text="*Wii Remote Emulation modes don't support infrared pointing or motion detection.&#10;&#10;**The force options should only be used if your game doesn't detect your controller mode properly. (For example, Resident Evil 4 Wii Edition supports the Classic Controller, but it won't work without being patched)&#10;**When using the force options, Wii Retail Injections will be patched automatically. For vWii NAND Titles, you may also need to patch your WAD before installing it to NAND:"/>
-              <Grid Name="GamePadEmuLayout" Canvas.Left="8" Canvas.Top="140" Width="455" Height="81" ColumnDefinitions="53.1250*,46.8750*" RowDefinitions="*,*,*">
-                <Border Grid.Column="0" Grid.Row="0" BorderBrush="#A0A0A0" BorderThickness="1"/>
-                <Border Grid.Column="1" Grid.Row="0" BorderBrush="#A0A0A0" BorderThickness="1"/>
-                <Border Grid.Column="0" Grid.Row="1" BorderBrush="#A0A0A0" BorderThickness="1"/>
-                <Border Grid.Column="1" Grid.Row="1" BorderBrush="#A0A0A0" BorderThickness="1"/>
-                <Border Grid.Column="0" Grid.Row="2" BorderBrush="#A0A0A0" BorderThickness="1"/>
-                <Border Grid.Column="1" Grid.Row="2" BorderBrush="#A0A0A0" BorderThickness="1"/>
-                <RadioButton Name="ForceCC" Grid.Column="0" Grid.Row="2" Margin="6,6,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" IsCheckedChanged="ForceCC_CheckedChanged" GroupName="GamePadEmuLayout" Content="**Force Classic Controller Connected"/>
-                <RadioButton Name="NoGamePadEmu" Grid.Column="0" Grid.Row="0" Margin="6,6,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" IsCheckedChanged="NoGamePadEmu_CheckedChanged" GroupName="GamePadEmuLayout" IsChecked="True" Content="No GamePad emulation, Wii Remotes only"/>
-                <RadioButton Name="CCEmu" Grid.Column="1" Grid.Row="0" Margin="6,6,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" IsCheckedChanged="CCEmu_CheckedChanged" GroupName="GamePadEmuLayout" Content="Classic Controller Emulation"/>
-                <RadioButton Name="ForceNoCC" Grid.Column="1" Grid.Row="2" Margin="6,6,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" IsCheckedChanged="ForceWiiMote_CheckedChanged" GroupName="GamePadEmuLayout" Content="**Force No Classic Controller"/>
-                <RadioButton Name="HorWiiMote" Grid.Column="1" Grid.Row="1" Margin="6,6,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" IsCheckedChanged="HorWiiMote_CheckedChanged" GroupName="GamePadEmuLayout" Content="*Horizontal Wii Remote emulation"/>
-                <RadioButton Name="VerWiiMote" Grid.Column="0" Grid.Row="1" Margin="6,6,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" IsCheckedChanged="VerWiiMote_CheckedChanged" GroupName="GamePadEmuLayout" Content="*Vertical Wii Remote Emulation"/>
+        x:Class="WiiVCInjector.MainWindow" Width="1020" Height="740" MinWidth="900" MinHeight="660"
+        Title="WiiVC Injector" FontSize="13">
+  <Grid RowDefinitions="Auto,*">
+
+    <!-- header band: brand, mode tiles, tools -->
+    <Border Grid.Row="0" Background="{DynamicResource BandBackground}" BorderBrush="{DynamicResource CardBorder}" BorderThickness="0,0,0,1" Padding="24,18,24,18">
+      <StackPanel Spacing="16">
+        <Grid ColumnDefinitions="Auto,*,Auto">
+          <Border Width="40" Height="40" CornerRadius="11" VerticalAlignment="Center">
+            <Border.Background>
+              <LinearGradientBrush StartPoint="0%,0%" EndPoint="100%,100%">
+                <GradientStop Offset="0" Color="{DynamicResource LogoStart}" />
+                <GradientStop Offset="1" Color="{DynamicResource LogoEnd}" />
+              </LinearGradientBrush>
+            </Border.Background>
+            <Path Classes="icon" Stroke="White" Width="22" Height="22" Data="{StaticResource IconBox}" />
+          </Border>
+          <StackPanel Grid.Column="1" Margin="14,0,0,0" VerticalAlignment="Center" Spacing="1">
+            <TextBlock Classes="h1" Text="WiiVC Injector" />
+            <TextBlock Name="VersionText" Classes="sub" Text="TeconMoon's injector for macOS" />
+          </StackPanel>
+          <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="8" VerticalAlignment="Center">
+            <Button Name="SettingsButton" Classes="ghost" Click="SettingsButton_Click">
+              <StackPanel Orientation="Horizontal" Spacing="8">
+                <Path Classes="icon muted" Data="{StaticResource IconSliders}" />
+                <TextBlock Text="Settings" />
+              </StackPanel>
+            </Button>
+            <Button Name="SDCardStuff" Classes="ghost" Click="SDCardStuff_Click">
+              <StackPanel Orientation="Horizontal" Spacing="8">
+                <Path Classes="icon muted" Data="{StaticResource IconSdCard}" />
+                <TextBlock Text="Nintendont SD Card Menu" />
+              </StackPanel>
+            </Button>
+          </StackPanel>
+        </Grid>
+
+        <UniformGrid Columns="4">
+          <RadioButton Name="WiiRetail" Classes="tile" GroupName="Mode" IsChecked="True" IsCheckedChanged="WiiRetail_CheckedChanged">
+            <StackPanel Spacing="2">
+              <TextBlock Classes="label" Text="Wii Retail Injection" />
+              <TextBlock Classes="sub" Text="Wii disc image (ISO, WBFS)" />
+            </StackPanel>
+          </RadioButton>
+          <RadioButton Name="WiiHomebrew" Classes="tile" GroupName="Mode" IsCheckedChanged="WiiHomebrew_CheckedChanged">
+            <StackPanel Spacing="2">
+              <TextBlock Classes="label" Text="Wii Homebrew Injection" />
+              <TextBlock Classes="sub" Text="Homebrew program (DOL)" />
+            </StackPanel>
+          </RadioButton>
+          <RadioButton Name="GCRetail" Classes="tile" GroupName="Mode" IsCheckedChanged="GCRetail_CheckedChanged">
+            <StackPanel Spacing="2">
+              <TextBlock Classes="label" Text="GC Retail Injection" />
+              <TextBlock Classes="sub" Text="GameCube disc (via Nintendont)" />
+            </StackPanel>
+          </RadioButton>
+          <RadioButton Name="WiiNAND" Classes="tile" Margin="0" GroupName="Mode" IsCheckedChanged="WiiNAND_CheckedChanged">
+            <StackPanel Spacing="2">
+              <TextBlock Classes="label" Text="vWii NAND Title Launcher" />
+              <TextBlock Classes="sub" Text="Channel installed on the vWii" />
+            </StackPanel>
+          </RadioButton>
+        </UniformGrid>
+      </StackPanel>
+    </Border>
+
+    <TabControl Name="MainTabs" Grid.Row="1" Classes="steps" TabStripPlacement="Left" Margin="16,12,0,0" SelectionChanged="MainTabs_SelectedIndexChanged">
+
+      <!-- 1. required source files -->
+      <TabItem Name="SourceFilesTab">
+        <TabItem.Header>
+          <Grid ColumnDefinitions="Auto,*" Width="190">
+            <Border Classes="stepnum" VerticalAlignment="Center"><TextBlock Text="1" /></Border>
+            <StackPanel Grid.Column="1" Margin="12,0,0,0" VerticalAlignment="Center">
+              <TextBlock Classes="label" Text="Source files" />
+              <TextBlock Classes="sub" Text="Game, icon and banner" />
+            </StackPanel>
+          </Grid>
+        </TabItem.Header>
+        <ScrollViewer>
+          <StackPanel Margin="8,4,24,24" Spacing="14">
+            <TextBlock Classes="h2" Text="Required source files" />
+
+            <Border Classes="card">
+              <StackPanel Spacing="16">
+                <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12">
+                  <Border Classes="iconbox" VerticalAlignment="Top"><Path Classes="icon" Data="{StaticResource IconDisc}" /></Border>
+                  <StackPanel Grid.Column="1" Spacing="3" VerticalAlignment="Center">
+                    <TextBlock Classes="label" Text="Game" />
+                    <local:WfLabel Name="GameSourceDirectory" ShowDot="True" Status="False" TextTrimming="CharacterEllipsis" Text="Game file has not been specified" />
+                  </StackPanel>
+                  <Button Name="GameSourceButton" Grid.Column="2" Classes="browse" VerticalAlignment="Center" Click="GameSourceButton_Click" Content="Browse..." />
+                </Grid>
+                <Grid ColumnDefinitions="*,*" ColumnSpacing="14">
+                  <StackPanel Spacing="4">
+                    <TextBlock Name="IGNText" Classes="sub" Text="Internal game name" />
+                    <Border Background="{DynamicResource FieldBackground}" BorderBrush="{DynamicResource CardBorder}" BorderThickness="1" CornerRadius="8" Padding="10,7">
+                      <local:WfLabel Name="GameNameLabel" TextTrimming="CharacterEllipsis" Text="" />
+                    </Border>
+                  </StackPanel>
+                  <StackPanel Grid.Column="1" Spacing="4">
+                    <TextBlock Name="ITIDText" Classes="sub" Text="Internal game title ID" />
+                    <Border Background="{DynamicResource FieldBackground}" BorderBrush="{DynamicResource CardBorder}" BorderThickness="1" CornerRadius="8" Padding="10,7">
+                      <local:WfLabel Name="TitleIDLabel" TextTrimming="CharacterEllipsis" Text="" />
+                    </Border>
+                  </StackPanel>
+                </Grid>
+              </StackPanel>
+            </Border>
+
+            <Border Classes="card">
+              <StackPanel Spacing="16">
+                <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12">
+                  <Border Classes="iconbox" VerticalAlignment="Top"><Path Classes="icon" Data="{StaticResource IconStar}" /></Border>
+                  <StackPanel Grid.Column="1" Spacing="3" VerticalAlignment="Center">
+                    <TextBlock Classes="label" Text="Icon" />
+                    <local:WfLabel Name="IconSourceDirectory" ShowDot="True" Status="False" TextTrimming="CharacterEllipsis" Text="Icon has not been specified" />
+                  </StackPanel>
+                  <Button Name="IconSourceButton" Grid.Column="2" Classes="browse" VerticalAlignment="Center" Click="IconSourceButton_Click" Content="Icon..." />
+                </Grid>
+                <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12">
+                  <Border Classes="iconbox" VerticalAlignment="Top"><Path Classes="icon" Data="{StaticResource IconTv}" /></Border>
+                  <StackPanel Grid.Column="1" Spacing="3" VerticalAlignment="Center">
+                    <TextBlock Classes="label" Text="Banner" />
+                    <local:WfLabel Name="BannerSourceDirectory" ShowDot="True" Status="False" TextTrimming="CharacterEllipsis" Text="Banner has not been specified" />
+                  </StackPanel>
+                  <Button Name="BannerSourceButton" Grid.Column="2" Classes="browse" VerticalAlignment="Center" Click="BannerSourceButton_Click" Content="Banner..." />
+                </Grid>
+
+                <Grid ColumnDefinitions="Auto,Auto,*" ColumnSpacing="20" Margin="0,4,0,0">
+                  <StackPanel Spacing="6">
+                    <local:WfLabel Name="IconPreviewText" Classes="sub" Text="Icon preview (128x128)" />
+                    <Border Name="IconPreviewBox" Classes="preview" Width="144" Height="144">
+                      <Grid>
+                        <Path Classes="icon muted" Width="28" Height="28" Data="{StaticResource IconImage}" />
+                        <Image Name="IconPreviewBoxImg" Stretch="Uniform" />
+                      </Grid>
+                    </Border>
+                  </StackPanel>
+                  <StackPanel Grid.Column="1" Spacing="6">
+                    <local:WfLabel Name="BannerPreviewText" Classes="sub" Text="Banner preview (1280x720)" />
+                    <Border Name="BannerPreviewBox" Classes="preview" Width="256" Height="144">
+                      <Grid>
+                        <Path Classes="icon muted" Width="28" Height="28" Data="{StaticResource IconTv}" />
+                        <Image Name="BannerPreviewBoxImg" Stretch="Uniform" />
+                      </Grid>
+                    </Border>
+                  </StackPanel>
+                  <StackPanel Grid.Column="2" Spacing="8" VerticalAlignment="Bottom" HorizontalAlignment="Right">
+                    <TextBlock Classes="sub" TextAlignment="Right" MaxWidth="190" Text="No artwork of your own? Fetch it from the community repository." />
+                    <Button Name="RepoDownload" HorizontalAlignment="Right" Click="RepoDownload_Click">
+                      <StackPanel Orientation="Horizontal" Spacing="8">
+                        <Path Classes="icon muted" Data="{StaticResource IconDownload}" />
+                        <TextBlock Text="Download from cucholix's repo" />
+                      </StackPanel>
+                    </Button>
+                  </StackPanel>
+                </Grid>
+              </StackPanel>
+            </Border>
+          </StackPanel>
+        </ScrollViewer>
+      </TabItem>
+
+      <!-- 2. optional source files -->
+      <TabItem Name="SourceFilesTab2">
+        <TabItem.Header>
+          <Grid ColumnDefinitions="Auto,*" Width="190">
+            <Border Classes="stepnum" VerticalAlignment="Center"><TextBlock Text="2" /></Border>
+            <StackPanel Grid.Column="1" Margin="12,0,0,0" VerticalAlignment="Center">
+              <TextBlock Classes="label" Text="Extras" />
+              <TextBlock Classes="sub" Text="Optional files" />
+            </StackPanel>
+          </Grid>
+        </TabItem.Header>
+        <ScrollViewer>
+          <StackPanel Margin="8,4,24,24" Spacing="14">
+            <TextBlock Classes="h2" Text="Optional source files" />
+
+            <Border Classes="card">
+              <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12">
+                <Border Classes="iconbox" VerticalAlignment="Top"><Path Classes="icon" Data="{StaticResource IconDisc}" /></Border>
+                <StackPanel Grid.Column="1" Spacing="3" VerticalAlignment="Center">
+                  <TextBlock Classes="label" Text="2nd GameCube disc" />
+                  <local:WfLabel Name="GC2SourceDirectory" ShowDot="True" Status="False" TextTrimming="CharacterEllipsis" Text="2nd GameCube Disc Image has not been specified" />
+                </StackPanel>
+                <Button Name="GC2SourceButton" Grid.Column="2" Classes="browse" VerticalAlignment="Center" IsEnabled="False" Click="GC2SourceButton_Click" Content="2nd GC Disc" />
               </Grid>
-              <local:WfLabel Name="GamePadModeText" Canvas.Left="0" Canvas.Top="124" Width="471" Height="13" HorizontalContentAlignment="Center" Text="GamePad Emulation Mode (Only applicable for Wii Retail Injections / vWii NAND Title Launcher)"/>
-              <TextBox Name="PackedTitleIDLine" Canvas.Left="6" Canvas.Top="91" Width="265" Height="20" MaxLength="16" Text="" Classes="wf"/>
-              <local:WfLabel Name="PackedTitleIDText" Canvas.Left="3" Canvas.Top="74" Text="Pre-generated Title ID (Changing this is not recommended)"/>
-              <CheckBox Name="EnablePackedLine2" Canvas.Left="279" Canvas.Top="52" IsCheckedChanged="EnablePackedLine2_CheckedChanged" Content="Use Line 2"/>
-              <TextBox Name="PackedTitleLine2" Canvas.Left="6" Canvas.Top="50" Width="265" Height="20" Background="Silver" IsReadOnly="True" MaxLength="32" Text="(Optional) Line 2" Classes="wf"/>
-              <TextBox Name="PackedTitleLine1" Canvas.Left="6" Canvas.Top="23" Width="265" Height="20" MaxLength="32" Text="" Classes="wf"/>
-              <local:WfLabel Name="PackedTitleText" Canvas.Left="3" Canvas.Top="6" Text="Name to use for Packaged Title (ACCENT CHARACTERS NOT SUPPORTED)"/>
-            </Canvas>
-          </ScrollViewer>
-        </TabItem>
-        <TabItem Name="AdvancedTab" Header="Advanced">
-          <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto" Background="Gainsboro">
-            <Canvas Background="Gainsboro" Width="471" Height="345">
-              <CheckBox Name="Wiimmfi" Canvas.Left="10" Canvas.Top="307" Content="Patch game to use the Wiimmfi server for online play (Wii Retail only)"/>
-              <CheckBox Name="WiiVMC" Canvas.Left="10" Canvas.Top="284" Content="Patch video mode (Wii Retail only, picks the mode when ticked, experimental)"/>
-              <CheckBox Name="DisableGamePad" Canvas.Left="10" Canvas.Top="137" IsCheckedChanged="DisableGamePad_CheckedChanged" Content="Don't use GamePad as controller (Won't prompt for usage)"/>
-              <local:WfLabel Name="label2" Canvas.Left="6" Canvas.Top="245" FontSize="11.0" FontWeight="Bold" Text="Wii Retail Injection / vWii NAND Title Launcher Patches"/>
-              <Button Name="SaveAncastKeyButton" Canvas.Left="281" Canvas.Top="181" Width="63" Height="23" Background="Silver" IsEnabled="False" Click="SaveAncastKeyButton_Click" Classes="wf"><TextBlock Text="Save Key" TextWrapping="Wrap" TextAlignment="Center" TextTrimming="None"/></Button>
-              <CheckBox Name="DisableNintendontAutoboot" Canvas.Left="10" Canvas.Top="70" IsCheckedChanged="NintendontAutoboot_CheckedChanged" Content="Disable Autoboot"/>
-              <CheckBox Name="DisableTrimming" Canvas.Left="10" Canvas.Top="261" IsCheckedChanged="DisableTrimming_CheckedChanged" Content="Don't trim game output (Wii Retail only)"/>
-              <CheckBox Name="Force43NAND" Canvas.Left="225" Canvas.Top="261" Content="Force 4:3 (vWii NAND Titles only)"/>
-              <CheckBox Name="DisablePassthrough" Canvas.Left="10" Canvas.Top="114" IsCheckedChanged="DisablePassthrough_CheckedChanged" Content="Disable Wii Remote passthrough in GamePad mode"/>
-              <local:WfLabel Name="MainDolLabel" Canvas.Left="255" Canvas.Top="44" Width="211" Height="20" Background="LightGray" VerticalContentAlignment="Center" BorderBrush="Gray" BorderThickness="1" Padding="5,1,5,0" TextTrimming="CharacterEllipsis" Text="&lt;- Specify custom main.dol file"/>
-              <CheckBox Name="CustomMainDol" Canvas.Left="10" Canvas.Top="47" IsCheckedChanged="CustomMainDol_CheckedChanged" Content="Specify custom Nintendont Forwarder"/>
-              <Button Name="MainDolSourceButton" Canvas.Left="223" Canvas.Top="41" Width="26" Height="23" Padding="0" Background="LightGray" IsEnabled="False" Click="MainDolSourceButton_Click" Classes="wf"><TextBlock Text="..." TextWrapping="Wrap" TextAlignment="Center" TextTrimming="None"/></Button>
-              <local:WfLabel Name="label1" Canvas.Left="6" Canvas.Top="8" FontSize="11.0" FontWeight="Bold" Text="Nintendont Options"/>
-              <CheckBox Name="Force43NINTENDONT" Canvas.Left="10" Canvas.Top="24" ToolTip.Tip='Disables "Force Widescreen" and "WiiU Widescreen" Flags' IsCheckedChanged="Force43NINTENDONT_CheckedChanged" Content="Force 4:3 for Nintendont"/>
-              <CheckBox Name="ForceInterlacedNINTENDONT" Canvas.Left="225" Canvas.Top="24" ToolTip.Tip='Disables "Force Progressive" Flag' IsCheckedChanged="ForceInterlacedNINTENDONT_CheckedChanged" Content="Force interlaced for Nintendont"/>
-              <local:WfLink Name="sign_c2w_patcher_link" Canvas.Left="303" Canvas.Top="219" Click="sign_c2w_patcher_link_LinkClicked" Text="sign_c2w_patcher" Foreground="#0066CC" Cursor="Hand"/>
-              <local:WfLabel Name="AdvancedLabel2" Canvas.Left="7" Canvas.Top="206" Width="457" Height="32" Text="cafe2wii patching unlocks the vWii clock speed for supported homebrew like WiiSXR or Nintendont. cafe2wii patched titles MUST be launched using:"/>
-              <CheckBox Name="C2WPatchFlag" Canvas.Left="10" Canvas.Top="160" IsCheckedChanged="C2WPatchFlag_CheckedChanged" Content="Enable cafe2wii patching (NOT RECOMMENDED)"/>
-              <TextBox Name="AncastKey" Canvas.Left="9" Canvas.Top="183" Width="266" Height="20" Background="Silver" IsReadOnly="True" MaxLength="32" Text="Wii U Starbuck Ancast Key Required" Classes="wf"/>
-              <local:WfLabel Name="AdvancedLabel1" Canvas.Left="7" Canvas.Top="98" FontSize="11.0" FontWeight="Bold" Text="Wii Homebrew Patches"/>
-            </Canvas>
-          </ScrollViewer>
-        </TabItem>
-        <TabItem Name="BuildTab" Header="Build Title">
-          <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto" Background="Gainsboro">
-            <Canvas Background="Gainsboro" Width="471" Height="345">
-              <local:WfLabel Name="AdvanceCheck" Canvas.Left="8" Canvas.Top="170" Background="Transparent" Foreground="Red" Text="No advanced options conflicting"/>
-              <local:WfLabel Name="BuildStatus" Canvas.Left="8" Canvas.Top="196" Width="455" Height="13" Background="Gainsboro" Text=""/>
-              <ProgressBar Name="BuildProgress" Canvas.Left="7" Canvas.Top="213" Width="456" Height="28" Minimum="0" Maximum="100" Value="0"/>
-              <Button Name="SaveTitleKeyButton" Canvas.Left="300" Canvas.Top="77" Width="64" Height="22" Background="Silver" Click="SaveTitleKeyButton_Click" Classes="wf"><TextBlock Text="Save Key" TextWrapping="Wrap" TextAlignment="Center" TextTrimming="None"/></Button>
-              <Button Name="SaveCommonKeyButton" Canvas.Left="300" Canvas.Top="21" Width="64" Height="22" Background="Silver" Click="SaveCommonKeyButton_Click" Classes="wf"><TextBlock Text="Save Key" TextWrapping="Wrap" TextAlignment="Center" TextTrimming="None"/></Button>
-              <Button Name="TheBigOneTM" Canvas.Left="7" Canvas.Top="248" Width="457" Height="90" Background="Silver" IsEnabled="False" FontSize="66.67" FontWeight="Bold" Click="TheBigOneTM_Click" Classes="wf"><TextBlock Text="BUILD" TextWrapping="Wrap" TextAlignment="Center" TextTrimming="None"/></Button>
-              <local:WfLabel Name="KeysCheck" Canvas.Left="8" Canvas.Top="183" Background="Transparent" Foreground="Red" Text="Required keys are properly specified"/>
-              <local:WfLabel Name="MetaCheck" Canvas.Left="8" Canvas.Top="157" Background="Transparent" Foreground="Red" Text="Meta options are valid"/>
-              <local:WfLabel Name="SourceCheck" Canvas.Left="8" Canvas.Top="144" Background="Transparent" Foreground="Red" Text="Source Files are properly specified"/>
-              <local:WfLabel Name="RequirementsLabel" Canvas.Left="4" Canvas.Top="131" Background="Transparent" Text="Requirements: RED = NOT MET / GREEN = MET"/>
-              <TextBox Name="TitleKey" Canvas.Left="6" Canvas.Top="78" Width="288" Height="20" MaxLength="32" Text="" Classes="wf"/>
-              <local:WfLabel Name="RHFKeyLabel" Canvas.Left="6" Canvas.Top="62" Background="Transparent" Text='Rhythm Heaven Fever [USA] Title Key - (Find it on "that one title key site")'/>
-              <local:WfLabel Name="CommonLabel" Canvas.Left="6" Canvas.Top="6" Background="Transparent" Text="Wii U Common Key - (Google it)"/>
-              <TextBox Name="WiiUCommonKey" Canvas.Left="6" Canvas.Top="22" Width="288" Height="20" MaxLength="32" Text="" Classes="wf"/>
-            </Canvas>
-          </ScrollViewer>
-        </TabItem>
-      </TabControl>
-      <Button Name="SettingsButton" Grid.Column="1" Grid.Row="1" Margin="3" HorizontalAlignment="Stretch" VerticalAlignment="Top" Height="19" Click="SettingsButton_Click" Classes="wf"><TextBlock Text="Settings" TextWrapping="Wrap" TextAlignment="Center" TextTrimming="None"/></Button>
-      <Button Name="SDCardStuff" Grid.Column="2" Grid.Row="1" Margin="3" HorizontalAlignment="Stretch" VerticalAlignment="Top" Height="19" Click="SDCardStuff_Click" Classes="wf"><TextBlock Text="Nintendont SD Card Menu" TextWrapping="Wrap" TextAlignment="Center" TextTrimming="None"/></Button>
-      <RadioButton Name="GCRetail" Grid.Column="2" Grid.Row="0" Margin="3,3,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" IsCheckedChanged="GCRetail_CheckedChanged" GroupName="MainTableLayout" Content="GC Retail Injection"/>
-      <RadioButton Name="WiiNAND" Grid.Column="0" Grid.Row="1" Margin="3,3,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" IsCheckedChanged="WiiNAND_CheckedChanged" GroupName="MainTableLayout" Content="vWii NAND Title Launcher"/>
-      <RadioButton Name="WiiHomebrew" Grid.Column="1" Grid.Row="0" Margin="3,3,0,0" HorizontalAlignment="Left" VerticalAlignment="Top" IsCheckedChanged="WiiHomebrew_CheckedChanged" GroupName="MainTableLayout" Content="Wii Homebrew Injection"/>
-    </Grid>
+            </Border>
+
+            <Border Classes="card">
+              <StackPanel Spacing="16">
+                <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12">
+                  <Border Classes="iconbox" VerticalAlignment="Top"><Path Classes="icon" Data="{StaticResource IconStar}" /></Border>
+                  <StackPanel Grid.Column="1" Spacing="3" VerticalAlignment="Center">
+                    <TextBlock Classes="label" Text="Boot logo" />
+                    <local:WfLabel Name="LogoSourceDirectory" ShowDot="True" Status="False" TextTrimming="CharacterEllipsis" Text="Boot Logo has not been specified" />
+                  </StackPanel>
+                  <Button Name="LogoSourceButton" Grid.Column="2" Classes="browse" VerticalAlignment="Center" Click="LogoSourceButton_Click" Content="Boot Logo..." />
+                </Grid>
+                <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12">
+                  <Border Classes="iconbox" VerticalAlignment="Top"><Path Classes="icon" Data="{StaticResource IconGamepad}" /></Border>
+                  <StackPanel Grid.Column="1" Spacing="3" VerticalAlignment="Center">
+                    <TextBlock Classes="label" Text="GamePad banner" />
+                    <local:WfLabel Name="DrcSourceDirectory" ShowDot="True" Status="False" TextTrimming="CharacterEllipsis" Text="GamePad Banner has not been specified" />
+                  </StackPanel>
+                  <Button Name="DrcSourceButton" Grid.Column="2" Classes="browse" VerticalAlignment="Center" Click="DrcSourceButton_Click" Content="GamePad Banner..." />
+                </Grid>
+                <Grid ColumnDefinitions="Auto,Auto,*" ColumnSpacing="20" Margin="0,4,0,0">
+                  <StackPanel Spacing="6">
+                    <local:WfLabel Name="LogoPreviewText" Classes="sub" Text="Logo preview (170x42)" />
+                    <Border Name="LogoPreviewBox" Classes="preview" Width="170" Height="42">
+                      <Grid>
+                        <Path Classes="icon muted" Width="20" Height="20" Data="{StaticResource IconStar}" />
+                        <Image Name="LogoPreviewBoxImg" Stretch="Uniform" />
+                      </Grid>
+                    </Border>
+                  </StackPanel>
+                  <StackPanel Grid.Column="1" Spacing="6">
+                    <local:WfLabel Name="DrcPreviewText" Classes="sub" Text="GamePad banner preview (854x480)" />
+                    <Border Name="DrcPreviewBox" Classes="preview" Width="256" Height="144">
+                      <Grid>
+                        <Path Classes="icon muted" Width="28" Height="28" Data="{StaticResource IconGamepad}" />
+                        <Image Name="DrcPreviewBoxImg" Stretch="Uniform" />
+                      </Grid>
+                    </Border>
+                  </StackPanel>
+                </Grid>
+              </StackPanel>
+            </Border>
+
+            <Border Classes="card">
+              <Grid ColumnDefinitions="Auto,*,Auto" ColumnSpacing="12">
+                <Border Classes="iconbox" VerticalAlignment="Top"><Path Classes="icon" Data="{StaticResource IconSound}" /></Border>
+                <StackPanel Grid.Column="1" Spacing="6" VerticalAlignment="Center">
+                  <TextBlock Classes="label" Text="Boot sound" />
+                  <local:WfLabel Name="BootSoundDirectory" ShowDot="True" Status="False" TextTrimming="CharacterEllipsis" Text="Boot Sound has not been specified" />
+                  <StackPanel Orientation="Horizontal" Spacing="12" Margin="0,4,0,0">
+                    <Button Name="BootSoundPreviewButton" IsEnabled="False" Click="BootSoundPreviewButton_Click" Content="Play Sound" />
+                    <CheckBox Name="ToggleBootSoundLoop" VerticalAlignment="Center" IsCheckedChanged="ToggleBootSoundLoop_CheckedChanged" Content="Loop boot sound" />
+                    <local:WfLabel Name="BootSoundPreviewText" Classes="sub" VerticalAlignment="Center" Text="WAV, cut off after 6 seconds" />
+                  </StackPanel>
+                </StackPanel>
+                <Button Name="BootSoundButton" Grid.Column="2" Classes="browse" VerticalAlignment="Top" Click="BootSoundButton_Click" Content="Boot Sound..." />
+              </Grid>
+            </Border>
+          </StackPanel>
+        </ScrollViewer>
+      </TabItem>
+
+      <!-- 3. title and gamepad -->
+      <TabItem Name="MetaTab">
+        <TabItem.Header>
+          <Grid ColumnDefinitions="Auto,*" Width="190">
+            <Border Classes="stepnum" VerticalAlignment="Center"><TextBlock Text="3" /></Border>
+            <StackPanel Grid.Column="1" Margin="12,0,0,0" VerticalAlignment="Center">
+              <TextBlock Classes="label" Text="Title and GamePad" />
+              <TextBlock Classes="sub" Text="Name, ID and controls" />
+            </StackPanel>
+          </Grid>
+        </TabItem.Header>
+        <ScrollViewer>
+          <StackPanel Margin="8,4,24,24" Spacing="14">
+            <TextBlock Classes="h2" Text="GamePad and meta options" />
+
+            <Border Classes="card">
+              <StackPanel Spacing="14">
+                <StackPanel Spacing="6">
+                  <local:WfLabel Name="PackedTitleText" FontWeight="SemiBold" Text="Name to use for Packaged Title (ACCENT CHARACTERS NOT SUPPORTED)" />
+                  <TextBox Name="PackedTitleLine1" MaxLength="32" Text="" />
+                  <Grid ColumnDefinitions="*,Auto" ColumnSpacing="12">
+                    <TextBox Name="PackedTitleLine2" Classes="locked" IsReadOnly="True" MaxLength="32" Text="(Optional) Line 2" />
+                    <CheckBox Name="EnablePackedLine2" Grid.Column="1" IsCheckedChanged="EnablePackedLine2_CheckedChanged" Content="Use Line 2" />
+                  </Grid>
+                </StackPanel>
+                <StackPanel Spacing="6">
+                  <local:WfLabel Name="PackedTitleIDText" FontWeight="SemiBold" Text="Pre-generated Title ID (Changing this is not recommended)" />
+                  <TextBox Name="PackedTitleIDLine" MaxLength="16" FontFamily="Menlo,Monaco,monospace" Text="" />
+                </StackPanel>
+              </StackPanel>
+            </Border>
+
+            <Border Classes="card">
+              <StackPanel Spacing="12">
+                <StackPanel Spacing="2">
+                  <local:WfLabel Name="GamePadModeText" FontWeight="SemiBold" Text="GamePad Emulation Mode" />
+                  <TextBlock Classes="sub" Text="Only applicable for Wii Retail Injections and the vWii NAND Title Launcher." />
+                </StackPanel>
+                <UniformGrid Name="GamePadEmuLayout" Columns="2" Margin="0,0,-10,0">
+                  <RadioButton Name="NoGamePadEmu" Classes="choice" GroupName="GamePadEmuLayout" IsChecked="True" IsCheckedChanged="NoGamePadEmu_CheckedChanged" Content="No GamePad emulation, Wii Remotes only" />
+                  <RadioButton Name="CCEmu" Classes="choice" GroupName="GamePadEmuLayout" IsCheckedChanged="CCEmu_CheckedChanged" Content="Classic Controller Emulation" />
+                  <RadioButton Name="VerWiiMote" Classes="choice" GroupName="GamePadEmuLayout" IsCheckedChanged="VerWiiMote_CheckedChanged" Content="*Vertical Wii Remote Emulation" />
+                  <RadioButton Name="HorWiiMote" Classes="choice" GroupName="GamePadEmuLayout" IsCheckedChanged="HorWiiMote_CheckedChanged" Content="*Horizontal Wii Remote emulation" />
+                  <RadioButton Name="ForceCC" Classes="choice" GroupName="GamePadEmuLayout" IsCheckedChanged="ForceCC_CheckedChanged" Content="**Force Classic Controller Connected" />
+                  <RadioButton Name="ForceNoCC" Classes="choice" GroupName="GamePadEmuLayout" IsCheckedChanged="ForceWiiMote_CheckedChanged" Content="**Force No Classic Controller" />
+                </UniformGrid>
+                <CheckBox Name="LRPatch" IsEnabled="False" Content="Swap L &amp; R with ZL &amp; ZR" />
+                <local:WfLabel Name="AdvancedLabel5" Classes="sub" Text="*Wii Remote Emulation modes don't support infrared pointing or motion detection.&#10;**The force options should only be used if your game doesn't detect your controller mode properly. (For example, Resident Evil 4 Wii Edition supports the Classic Controller, but it won't work without being patched)&#10;**When using the force options, Wii Retail Injections will be patched automatically. For vWii NAND Titles, you may also need to patch your WAD before installing it to NAND:" />
+                <local:WfLink Name="TutorialLink" Click="TutorialLink_LinkClicked" Text="Instructions" Foreground="{DynamicResource AccentStroke}" Cursor="Hand" />
+              </StackPanel>
+            </Border>
+          </StackPanel>
+        </ScrollViewer>
+      </TabItem>
+
+      <!-- 4. advanced -->
+      <TabItem Name="AdvancedTab">
+        <TabItem.Header>
+          <Grid ColumnDefinitions="Auto,*" Width="190">
+            <Border Classes="stepnum" VerticalAlignment="Center"><TextBlock Text="4" /></Border>
+            <StackPanel Grid.Column="1" Margin="12,0,0,0" VerticalAlignment="Center">
+              <TextBlock Classes="label" Text="Advanced" />
+              <TextBlock Classes="sub" Text="Patches and options" />
+            </StackPanel>
+          </Grid>
+        </TabItem.Header>
+        <ScrollViewer>
+          <StackPanel Margin="8,4,24,24" Spacing="14">
+            <TextBlock Classes="h2" Text="Advanced options" />
+
+            <Border Classes="card">
+              <StackPanel Spacing="6">
+                <local:WfLabel Name="label1" FontWeight="SemiBold" FontSize="14" Text="Nintendont Options" />
+                <UniformGrid Columns="2">
+                  <CheckBox Name="Force43NINTENDONT" ToolTip.Tip="Disables &quot;Force Widescreen&quot; and &quot;WiiU Widescreen&quot; Flags" IsCheckedChanged="Force43NINTENDONT_CheckedChanged" Content="Force 4:3 for Nintendont" />
+                  <CheckBox Name="ForceInterlacedNINTENDONT" ToolTip.Tip="Disables &quot;Force Progressive&quot; Flag" IsCheckedChanged="ForceInterlacedNINTENDONT_CheckedChanged" Content="Force interlaced for Nintendont" />
+                </UniformGrid>
+                <CheckBox Name="DisableNintendontAutoboot" IsCheckedChanged="NintendontAutoboot_CheckedChanged" Content="Disable Autoboot" />
+                <Grid ColumnDefinitions="Auto,Auto,*" ColumnSpacing="10">
+                  <CheckBox Name="CustomMainDol" IsCheckedChanged="CustomMainDol_CheckedChanged" Content="Specify custom Nintendont Forwarder" />
+                  <Button Name="MainDolSourceButton" Grid.Column="1" MinWidth="40" IsEnabled="False" Click="MainDolSourceButton_Click" Content="..." />
+                  <Border Grid.Column="2" Background="{DynamicResource FieldBackground}" BorderBrush="{DynamicResource CardBorder}" BorderThickness="1" CornerRadius="8" Padding="10,6">
+                    <local:WfLabel Name="MainDolLabel" TextTrimming="CharacterEllipsis" Text="&lt;- Specify custom main.dol file" />
+                  </Border>
+                </Grid>
+              </StackPanel>
+            </Border>
+
+            <Border Classes="card">
+              <StackPanel Spacing="6">
+                <local:WfLabel Name="AdvancedLabel1" FontWeight="SemiBold" FontSize="14" Text="Wii Homebrew Patches" />
+                <CheckBox Name="DisablePassthrough" IsCheckedChanged="DisablePassthrough_CheckedChanged" Content="Disable Wii Remote passthrough in GamePad mode" />
+                <CheckBox Name="DisableGamePad" IsCheckedChanged="DisableGamePad_CheckedChanged" Content="Don't use GamePad as controller (Won't prompt for usage)" />
+                <CheckBox Name="C2WPatchFlag" IsCheckedChanged="C2WPatchFlag_CheckedChanged" Content="Enable cafe2wii patching (NOT RECOMMENDED)" />
+                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="10">
+                  <TextBox Name="AncastKey" Classes="locked" IsReadOnly="True" MaxLength="32" FontFamily="Menlo,Monaco,monospace" Text="Wii U Starbuck Ancast Key Required" />
+                  <Button Name="SaveAncastKeyButton" Grid.Column="1" IsEnabled="False" Click="SaveAncastKeyButton_Click" Content="Save Key" />
+                </Grid>
+                <local:WfLabel Name="AdvancedLabel2" Classes="sub" Text="cafe2wii patching unlocks the vWii clock speed for supported homebrew like WiiSXR or Nintendont. cafe2wii patched titles MUST be launched using:" />
+                <local:WfLink Name="sign_c2w_patcher_link" Click="sign_c2w_patcher_link_LinkClicked" Text="sign_c2w_patcher" Foreground="{DynamicResource AccentStroke}" Cursor="Hand" />
+              </StackPanel>
+            </Border>
+
+            <Border Classes="card">
+              <StackPanel Spacing="6">
+                <local:WfLabel Name="label2" FontWeight="SemiBold" FontSize="14" Text="Wii Retail Injection / vWii NAND Title Launcher Patches" />
+                <UniformGrid Columns="2">
+                  <CheckBox Name="DisableTrimming" IsCheckedChanged="DisableTrimming_CheckedChanged" Content="Don't trim game output (Wii Retail only)" />
+                  <CheckBox Name="Force43NAND" Content="Force 4:3 (vWii NAND Titles only)" />
+                </UniformGrid>
+                <CheckBox Name="WiiVMC" Content="Patch video mode (Wii Retail only, picks the mode when ticked, experimental)" />
+                <CheckBox Name="Wiimmfi" Content="Patch game to use the Wiimmfi server for online play (Wii Retail only)" />
+              </StackPanel>
+            </Border>
+          </StackPanel>
+        </ScrollViewer>
+      </TabItem>
+
+      <!-- 5. build -->
+      <TabItem Name="BuildTab">
+        <TabItem.Header>
+          <Grid ColumnDefinitions="Auto,*" Width="190">
+            <Border Classes="stepnum" VerticalAlignment="Center"><TextBlock Text="5" /></Border>
+            <StackPanel Grid.Column="1" Margin="12,0,0,0" VerticalAlignment="Center">
+              <TextBlock Classes="label" Text="Build" />
+              <TextBlock Classes="sub" Text="Keys, checks, package" />
+            </StackPanel>
+          </Grid>
+        </TabItem.Header>
+        <ScrollViewer>
+          <StackPanel Margin="8,4,24,24" Spacing="14">
+            <TextBlock Classes="h2" Text="Build title" />
+
+            <Border Classes="card">
+              <StackPanel Spacing="14">
+                <StackPanel Spacing="6">
+                  <local:WfLabel Name="CommonLabel" FontWeight="SemiBold" Text="Wii U Common Key - (Google it)" />
+                  <Grid ColumnDefinitions="*,Auto" ColumnSpacing="10">
+                    <TextBox Name="WiiUCommonKey" MaxLength="32" FontFamily="Menlo,Monaco,monospace" Text="" />
+                    <Button Name="SaveCommonKeyButton" Grid.Column="1" Click="SaveCommonKeyButton_Click" Content="Save Key" />
+                  </Grid>
+                </StackPanel>
+                <StackPanel Spacing="6">
+                  <local:WfLabel Name="RHFKeyLabel" FontWeight="SemiBold" Text="Rhythm Heaven Fever [USA] Title Key - (Find it on &quot;that one title key site&quot;)" />
+                  <Grid ColumnDefinitions="*,Auto" ColumnSpacing="10">
+                    <TextBox Name="TitleKey" MaxLength="32" FontFamily="Menlo,Monaco,monospace" Text="" />
+                    <Button Name="SaveTitleKeyButton" Grid.Column="1" Click="SaveTitleKeyButton_Click" Content="Save Key" />
+                  </Grid>
+                </StackPanel>
+              </StackPanel>
+            </Border>
+
+            <Border Classes="card">
+              <StackPanel Spacing="8">
+                <local:WfLabel Name="RequirementsLabel" FontWeight="SemiBold" FontSize="14" Text="Requirements" />
+                <local:WfLabel Name="SourceCheck" Classes="tint" ShowDot="True" Text="Source Files are properly specified" />
+                <local:WfLabel Name="MetaCheck" Classes="tint" ShowDot="True" Text="Meta options are valid" />
+                <local:WfLabel Name="AdvanceCheck" Classes="tint" ShowDot="True" Text="No advanced options conflicting" />
+                <local:WfLabel Name="KeysCheck" Classes="tint" ShowDot="True" Text="Required keys are properly specified" />
+              </StackPanel>
+            </Border>
+
+            <Border Classes="card">
+              <StackPanel Spacing="12">
+                <local:WfLabel Name="BuildStatus" Classes="sub" Text="" />
+                <ProgressBar Name="BuildProgress" Minimum="0" Maximum="100" Value="0" />
+                <Button Name="TheBigOneTM" Classes="accent" HorizontalAlignment="Stretch" MinHeight="52" FontSize="17" FontWeight="SemiBold" IsEnabled="False" Click="TheBigOneTM_Click">
+                  <StackPanel Orientation="Horizontal" Spacing="10">
+                    <Path Classes="icon" Stroke="White" Data="{StaticResource IconBox}" />
+                    <TextBlock Text="BUILD" />
+                  </StackPanel>
+                </Button>
+              </StackPanel>
+            </Border>
+          </StackPanel>
+        </ScrollViewer>
+      </TabItem>
+    </TabControl>
+  </Grid>
 </Window>

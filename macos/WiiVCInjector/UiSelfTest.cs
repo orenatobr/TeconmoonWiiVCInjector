@@ -140,9 +140,13 @@ public static class UiSelfTest
 
             // --- batch conversion: one GamePad Emulation Mode for all games, images only from the repo
             w.WiiRetail.IsChecked = true;
-            w.MainTabs.SelectedItem = w.BuildTab;
-            T("build tab: batch blocked without valid keys", !w.BatchButton.IsEnabled);
-            w.MainTabs.SelectedItem = w.SourceFilesTab;
+            T("batch button: enabled in Wii Retail", w.BatchButton.IsEnabled);
+            w.WiiHomebrew.IsChecked = true;
+            T("batch button: disabled in Wii Homebrew", !w.BatchButton.IsEnabled);
+            w.GCRetail.IsChecked = true;
+            T("batch button: enabled in GC Retail", w.BatchButton.IsEnabled);
+            w.WiiRetail.IsChecked = true;
+            T("batch: blocked without valid keys", w.BatchBlocker() is { } b && b.Contains("Build tab"));
             new AppSettings { OutputPathFixed = Path.Combine(tmp, "batch-out"), BannersRepository = "https://repo/" }.Save();
             w.CCEmu.IsChecked = true;
             w.LRPatch.IsChecked = true;

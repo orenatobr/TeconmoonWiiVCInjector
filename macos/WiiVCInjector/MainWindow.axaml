@@ -160,6 +160,14 @@
                 </Grid>
               </StackPanel>
             </Border>
+
+            <Border Classes="card">
+              <StackPanel Spacing="10">
+                <local:WfLabel FontWeight="SemiBold" FontSize="14" Text="Convert several games" />
+                <TextBlock Classes="sub" TextWrapping="Wrap" Text="Builds every game you pick with the GamePad Emulation Mode and options chosen in the other tabs (Wii Retail or GameCube Retail). Icons and banners come from Cucholix's repo. Save your keys on the Build tab first." />
+                <Button Name="BatchButton" HorizontalAlignment="Stretch" MinHeight="40" IsEnabled="False" Click="BatchButton_Click" Content="Choose games and convert..." />
+              </StackPanel>
+            </Border>
           </StackPanel>
         </ScrollViewer>
       </TabItem>
@@ -425,13 +433,6 @@
               </StackPanel>
             </Border>
 
-            <Border Classes="card">
-              <StackPanel Spacing="10">
-                <local:WfLabel FontWeight="SemiBold" FontSize="14" Text="Convert several games" />
-                <TextBlock Classes="sub" TextWrapping="Wrap" Text="Builds every game you pick with the GamePad Emulation Mode and options set above (Wii Retail or GameCube Retail). Icons and banners come from Cucholix's repo." />
-                <Button Name="BatchButton" HorizontalAlignment="Stretch" MinHeight="40" IsEnabled="False" Click="BatchButton_Click" Content="Choose games and convert..." />
-              </StackPanel>
-            </Border>
           </StackPanel>
         </ScrollViewer>
       </TabItem>

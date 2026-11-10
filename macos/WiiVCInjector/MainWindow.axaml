@@ -89,7 +89,7 @@
                   <Border Classes="iconbox" VerticalAlignment="Top"><Path Classes="icon" Data="{StaticResource IconDisc}" /></Border>
                   <StackPanel Grid.Column="1" Spacing="3" VerticalAlignment="Center">
                     <TextBlock Classes="label" Text="Game" />
-                    <local:WfLabel Name="GameSourceDirectory" ShowDot="True" TextTrimming="CharacterEllipsis" Text="Game file has not been specified" />
+                    <local:WfLabel Name="GameSourceDirectory" ShowDot="True" Status="False" TextTrimming="CharacterEllipsis" Text="Game file has not been specified" />
                   </StackPanel>
                   <Button Name="GameSourceButton" Grid.Column="2" Classes="browse" VerticalAlignment="Center" Click="GameSourceButton_Click" Content="Browse..." />
                 </Grid>
@@ -116,7 +116,7 @@
                   <Border Classes="iconbox" VerticalAlignment="Top"><Path Classes="icon" Data="{StaticResource IconStar}" /></Border>
                   <StackPanel Grid.Column="1" Spacing="3" VerticalAlignment="Center">
                     <TextBlock Classes="label" Text="Icon" />
-                    <local:WfLabel Name="IconSourceDirectory" ShowDot="True" TextTrimming="CharacterEllipsis" Text="Icon has not been specified" />
+                    <local:WfLabel Name="IconSourceDirectory" ShowDot="True" Status="False" TextTrimming="CharacterEllipsis" Text="Icon has not been specified" />
                   </StackPanel>
                   <Button Name="IconSourceButton" Grid.Column="2" Classes="browse" VerticalAlignment="Center" Click="IconSourceButton_Click" Content="Icon..." />
                 </Grid>
@@ -124,7 +124,7 @@
                   <Border Classes="iconbox" VerticalAlignment="Top"><Path Classes="icon" Data="{StaticResource IconTv}" /></Border>
                   <StackPanel Grid.Column="1" Spacing="3" VerticalAlignment="Center">
                     <TextBlock Classes="label" Text="Banner" />
-                    <local:WfLabel Name="BannerSourceDirectory" ShowDot="True" TextTrimming="CharacterEllipsis" Text="Banner has not been specified" />
+                    <local:WfLabel Name="BannerSourceDirectory" ShowDot="True" Status="False" TextTrimming="CharacterEllipsis" Text="Banner has not been specified" />
                   </StackPanel>
                   <Button Name="BannerSourceButton" Grid.Column="2" Classes="browse" VerticalAlignment="Center" Click="BannerSourceButton_Click" Content="Banner..." />
                 </Grid>
@@ -184,7 +184,7 @@
                 <Border Classes="iconbox" VerticalAlignment="Top"><Path Classes="icon" Data="{StaticResource IconDisc}" /></Border>
                 <StackPanel Grid.Column="1" Spacing="3" VerticalAlignment="Center">
                   <TextBlock Classes="label" Text="2nd GameCube disc" />
-                  <local:WfLabel Name="GC2SourceDirectory" ShowDot="True" TextTrimming="CharacterEllipsis" Text="2nd GameCube Disc Image has not been specified" />
+                  <local:WfLabel Name="GC2SourceDirectory" ShowDot="True" Status="False" TextTrimming="CharacterEllipsis" Text="2nd GameCube Disc Image has not been specified" />
                 </StackPanel>
                 <Button Name="GC2SourceButton" Grid.Column="2" Classes="browse" VerticalAlignment="Center" IsEnabled="False" Click="GC2SourceButton_Click" Content="2nd GC Disc" />
               </Grid>
@@ -196,7 +196,7 @@
                   <Border Classes="iconbox" VerticalAlignment="Top"><Path Classes="icon" Data="{StaticResource IconStar}" /></Border>
                   <StackPanel Grid.Column="1" Spacing="3" VerticalAlignment="Center">
                     <TextBlock Classes="label" Text="Boot logo" />
-                    <local:WfLabel Name="LogoSourceDirectory" ShowDot="True" TextTrimming="CharacterEllipsis" Text="Boot Logo has not been specified" />
+                    <local:WfLabel Name="LogoSourceDirectory" ShowDot="True" Status="False" TextTrimming="CharacterEllipsis" Text="Boot Logo has not been specified" />
                   </StackPanel>
                   <Button Name="LogoSourceButton" Grid.Column="2" Classes="browse" VerticalAlignment="Center" Click="LogoSourceButton_Click" Content="Boot Logo..." />
                 </Grid>
@@ -204,7 +204,7 @@
                   <Border Classes="iconbox" VerticalAlignment="Top"><Path Classes="icon" Data="{StaticResource IconGamepad}" /></Border>
                   <StackPanel Grid.Column="1" Spacing="3" VerticalAlignment="Center">
                     <TextBlock Classes="label" Text="GamePad banner" />
-                    <local:WfLabel Name="DrcSourceDirectory" ShowDot="True" TextTrimming="CharacterEllipsis" Text="GamePad Banner has not been specified" />
+                    <local:WfLabel Name="DrcSourceDirectory" ShowDot="True" Status="False" TextTrimming="CharacterEllipsis" Text="GamePad Banner has not been specified" />
                   </StackPanel>
                   <Button Name="DrcSourceButton" Grid.Column="2" Classes="browse" VerticalAlignment="Center" Click="DrcSourceButton_Click" Content="GamePad Banner..." />
                 </Grid>
@@ -236,7 +236,7 @@
                 <Border Classes="iconbox" VerticalAlignment="Top"><Path Classes="icon" Data="{StaticResource IconSound}" /></Border>
                 <StackPanel Grid.Column="1" Spacing="6" VerticalAlignment="Center">
                   <TextBlock Classes="label" Text="Boot sound" />
-                  <local:WfLabel Name="BootSoundDirectory" ShowDot="True" TextTrimming="CharacterEllipsis" Text="Boot Sound has not been specified" />
+                  <local:WfLabel Name="BootSoundDirectory" ShowDot="True" Status="False" TextTrimming="CharacterEllipsis" Text="Boot Sound has not been specified" />
                   <StackPanel Orientation="Horizontal" Spacing="12" Margin="0,4,0,0">
                     <Button Name="BootSoundPreviewButton" IsEnabled="False" Click="BootSoundPreviewButton_Click" Content="Play Sound" />
                     <CheckBox Name="ToggleBootSoundLoop" VerticalAlignment="Center" IsCheckedChanged="ToggleBootSoundLoop_CheckedChanged" Content="Loop boot sound" />

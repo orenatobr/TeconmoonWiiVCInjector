@@ -209,6 +209,14 @@ public static class UiSelfTest
             T("batch: Build tab goes back to the single-game wording", w.SourceCheck.Text == "Source Files are properly specified" && w.MetaCheck.Text == "Meta options are valid");
             w.MainTabs.SelectedItem = w.SourceFilesTab;
 
+            // --- start state: maximized, never full screen; snapshot and test modes keep the XAML size
+            w.ApplyStartState(_ => null);
+            T("start: maximized, not full screen", w.WindowState == Avalonia.Controls.WindowState.Maximized);
+            w.ApplyStartState(k => k == "WIIVC_SNAPSHOT" ? "/tmp/x.png" : null);
+            T("start: snapshot mode keeps the fixed size", w.WindowState == Avalonia.Controls.WindowState.Normal);
+            w.ApplyStartState(k => k == "WIIVC_UITEST" ? "1" : null);
+            T("start: self-test mode keeps the fixed size", w.WindowState == Avalonia.Controls.WindowState.Normal);
+
             // --- keys and settings
             T("key md5 rejects zeros", !KeyCheck.CommonKey(AppSettings.Zeros) && !KeyCheck.TitleKey(AppSettings.Zeros) && !KeyCheck.AncastKey(AppSettings.Zeros));
             var s = new AppSettings { WiiUCommonKey = "AA", TitleKey = "BB", AncastKey = "CC", BannersRepository = "https://x/", OutputPath = "/o", OutputPathFixed = "/f" };

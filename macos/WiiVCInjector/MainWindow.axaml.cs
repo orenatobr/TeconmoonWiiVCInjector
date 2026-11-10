@@ -44,6 +44,8 @@ public partial class MainWindow : Window
         var version = typeof(MainWindow).Assembly.GetName().Version;
         Title = $"TeconMoon's WiiVC Injector - [{version}]";
         VersionText.Text = $"TeconMoon's injector for macOS, version {version?.ToString(3)}";
+        // macOS ignores a window state set before the window is shown, so it is applied once the window has opened
+        Opened += (_, _) => ApplyStartState(Environment.GetEnvironmentVariable);
         Directory.CreateDirectory(TempSourcePath);
         WiiVMC.IsCheckedChanged += WiiVMC_CheckedChanged;
         _ready = true;
@@ -83,6 +85,17 @@ public partial class MainWindow : Window
                 Close();
             };
     }
+
+    /// <summary>
+    /// The window opens maximized (not full screen, so the title bar and the Dock stay). The snapshot and self-test modes keep
+    /// the fixed size from the XAML because they render and measure the window at exactly that size.
+    /// </summary>
+    internal void ApplyStartState(Func<string, string?> env) => WindowState = StartState(env);
+
+    /// <summary>The state to open in: maximized, or the XAML size when a snapshot or self-test mode is on.</summary>
+    internal static WindowState StartState(Func<string, string?> env) =>
+        new[] { "WIIVC_SNAPSHOT", "WIIVC_UITEST", "WIIVC_GUIBUILD" }.Any(k => !string.IsNullOrEmpty(env(k)))
+            ? WindowState.Normal : WindowState.Maximized;
 
     // ---------------------------------------------------------------- helpers
 

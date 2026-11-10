@@ -53,6 +53,13 @@ Render a page without opening a window (`WIIVC_THEME=light|dark` pins the theme,
 
     WIIVC_SETTINGS=/tmp/x.json WIIVC_THEME=dark WIIVC_TAB=2 WIIVC_SNAPSHOT=/tmp/x.png WiiVCInjector.app/Contents/MacOS/WiiVCInjector
 
+## Converting several games at once
+
+On the Build tab, "Choose games and convert..." (Wii Retail or GC Retail modes, valid keys) builds every game you pick in one run.
+All of them use the GamePad Emulation Mode and the advanced options currently set in the window, and the icon and banner of
+each game are always downloaded from Cucholix's repo. A game the repo has no images for, a wrong system, an NKit/NASOS image
+or a failed build is skipped and listed in the final summary; the other games still convert.
+
 ## Differences from the Windows app
 
 - Settings and keys are stored in `~/Library/Application Support/WiiVCInjector/settings.json` instead of the registry.

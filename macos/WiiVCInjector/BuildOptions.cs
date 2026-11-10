@@ -39,4 +39,7 @@ public sealed class BuildOptions
     public string AncastKey { get; set; } = "";
     public bool VideoModeChange { get; set; }
     public VideoTarget VideoTarget { get; set; } = VideoTarget.Ntsc;
+
+    /// <summary>Shallow copy, enough because every member is a value or an immutable string.</summary>
+    public BuildOptions Clone() => (BuildOptions)MemberwiseClone();
 }

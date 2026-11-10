@@ -124,15 +124,18 @@ public partial class MainWindow : Window
 
     static void Off(CheckBox c) { c.IsChecked = false; c.IsEnabled = false; }
 
-    async Task<string?> PickFile(string title, string filter, string? suggested = null)
+    async Task<string?> PickFile(string title, string filter, string? suggested = null) =>
+        (await PickFiles(title, filter, false, suggested)).FirstOrDefault();
+
+    async Task<List<string>> PickFiles(string title, string filter, bool multiple, string? suggested = null)
     {
         var types = filter.Split('|').Chunk(2).Where(c => c.Length == 2).Select(c =>
             new FilePickerFileType(c[0]) { Patterns = c[1].Split(';') }).ToList();
         var r = await StorageProvider.OpenFilePickerAsync(new FilePickerOpenOptions
         {
-            Title = title, AllowMultiple = false, FileTypeFilter = types, SuggestedFileName = suggested,
+            Title = title, AllowMultiple = multiple, FileTypeFilter = types, SuggestedFileName = suggested,
         });
-        return r.Count > 0 ? r[0].TryGetLocalPath() : null;
+        return r.Select(f => f.TryGetLocalPath()).OfType<string>().ToList();
     }
 
     static void Open(string urlOrPath)
@@ -312,6 +315,8 @@ public partial class MainWindow : Window
         BuildFlagKeys = C2WPatchFlag.IsChecked != true ? CommonKeyGood && TitleKeyGood : CommonKeyGood && TitleKeyGood && AncastKeyGood;
         KeysCheck.Status = BuildFlagKeys;
         TheBigOneTM.IsEnabled = BuildFlagSource && BuildFlagMeta && BuildFlagAdvance && BuildFlagKeys;
+        // a batch picks its own games, so it only needs a Wii or GameCube mode and valid keys
+        BatchButton.IsEnabled = SystemType is "wii" or "gcn" && BuildFlagAdvance && BuildFlagKeys;
     }
 
     private void MainTabs_SelectedIndexChanged(object? s, SelectionChangedEventArgs e)
@@ -867,12 +872,12 @@ public partial class MainWindow : Window
         };
     }
 
-    async Task<bool> LowSpaceOk()
+    async Task<bool> LowSpaceOk(long? gameSize = null)
     {
         try
         {
             long free = new DriveInfo(Path.GetPathRoot(Path.GetFullPath(TempRootPath)) ?? "/").AvailableFreeSpace;
-            long size = SystemType is "wii" or "gcn" ? new FileInfo(GamePath).Length : 0;
+            long size = SystemType is "wii" or "gcn" ? gameSize ?? new FileInfo(GamePath).Length : 0;
             long need = SystemType switch { "wii" => size * 2 + 5000000000, "gcn" => size * 2 + 6000000000, _ => 6000000000 };
             if (free >= need) return true;
             var msg = SystemType is "wii" or "gcn"
@@ -893,23 +898,8 @@ public partial class MainWindow : Window
         try
         {
             if (!await LowSpaceOk()) { Done(); return; }
-            Settings = AppSettings.Load();
-            string output;
-            if (!string.IsNullOrEmpty(Settings.OutputPathFixed)) output = Settings.OutputPathFixed;
-            else
-            {
-                var start = string.IsNullOrEmpty(Settings.OutputPath) ? null : await StorageProvider.TryGetFolderFromPathAsync(Settings.OutputPath);
-                var r = await StorageProvider.OpenFolderPickerAsync(new FolderPickerOpenOptions { Title = "Specify your output folder", SuggestedStartLocation = start });
-                if (r.Count == 0)
-                {
-                    await Dialogs.Info(this, "Output folder selection has been cancelled, conversion will not continue.", "Cancelled");
-                    MainTabs.IsEnabled = true;
-                    return;
-                }
-                output = r[0].TryGetLocalPath() ?? "";
-                Settings.OutputPath = output;
-                Settings.Save();
-            }
+            var output = await ResolveOutput();
+            if (output == null) { MainTabs.IsEnabled = true; return; }
             BuildProgress.Value = 2;
             var progress = new Progress<(int Percent, string Status)>(p => { BuildProgress.Value = p.Percent; BuildStatus.Text = p.Status; });
             _cts = new CancellationTokenSource();
@@ -931,6 +921,78 @@ public partial class MainWindow : Window
         {
             Done();
             await Dialogs.Info(this, "The conversion failed:\n" + ex.Message, "Error");
+        }
+    }
+
+    /// <summary>The fixed output folder of the settings, or the folder picker. Null when the user cancels.</summary>
+    async Task<string?> ResolveOutput()
+    {
+        Settings = AppSettings.Load();
+        if (!string.IsNullOrEmpty(Settings.OutputPathFixed)) return Settings.OutputPathFixed;
+        var start = string.IsNullOrEmpty(Settings.OutputPath) ? null : await StorageProvider.TryGetFolderFromPathAsync(Settings.OutputPath);
+        var r = await StorageProvider.OpenFolderPickerAsync(new FolderPickerOpenOptions { Title = "Specify your output folder", SuggestedStartLocation = start });
+        if (r.Count == 0)
+        {
+            await Dialogs.Info(this, "Output folder selection has been cancelled, conversion will not continue.", "Cancelled");
+            return null;
+        }
+        var output = r[0].TryGetLocalPath() ?? "";
+        Settings.OutputPath = output;
+        Settings.Save();
+        return output;
+    }
+
+    /// <summary>Label of the GamePad Emulation Mode currently selected, which a batch applies to every game.</summary>
+    internal string GamePadModeName() =>
+        new[] { NoGamePadEmu, CCEmu, VerWiiMote, HorWiiMote, ForceCC, ForceNoCC }
+            .FirstOrDefault(r => r.IsChecked == true)?.Content?.ToString()?.TrimStart('*') ?? "default";
+
+    private async void BatchButton_Click(object? s, RoutedEventArgs e) => await BatchClick();
+
+    static async Task<byte[]?> FetchRepoFile(string url)
+    {
+        using var r = await Http.GetAsync(url);
+        return r.IsSuccessStatusCode ? await r.Content.ReadAsByteArrayAsync() : null;
+    }
+
+    /// <summary>
+    /// The BATCH button: converts several Wii or GameCube games with the options and GamePad Emulation Mode set in the
+    /// window and the icons and banners of Cucholix's repo. The parameters let the UI self-test replace the picker, the
+    /// downloads and the build.
+    /// </summary>
+    internal async Task<List<BatchResult>?> BatchClick(IReadOnlyList<string>? files = null,
+        Func<string, Task<byte[]?>>? fetch = null, Func<BuildOptions, Task<string>>? build = null)
+    {
+        MainTabs.IsEnabled = false;
+        void Done() { MainTabs.IsEnabled = true; BuildStatus.Text = ""; BuildProgress.Value = 0; }
+        try
+        {
+            files ??= await PickFiles("Specify the games to convert", gameFilter, true);
+            if (files.Count == 0) { Done(); return null; }
+            if (!await Dialogs.Ask(this, $"Convert {files.Count} game(s) with GamePad Emulation Mode \"{GamePadModeName()}\"?\n\n" +
+                "Icons and banners come from Cucholix's repo. A game the repo has no images for is skipped.", "Convert several games"))
+            { Done(); return null; }
+            if (!await LowSpaceOk(files.Max(f => new FileInfo(f).Length))) { Done(); return null; }
+            var output = await ResolveOutput();
+            if (output == null) { Done(); return null; }
+
+            var label = "";
+            var progress = new Progress<(int Percent, string Status)>(p => { BuildProgress.Value = p.Percent; BuildStatus.Text = label + p.Status; });
+            _cts = new CancellationTokenSource();
+            var template = GatherOptions(output);
+            var results = await BatchConverter.RunAsync(template, files, Settings.BannersRepository, fetch ?? FetchRepoFile,
+                build ?? (o => BuildEngine.RunAsync(o, progress, _cts.Token)),
+                line => { label = line + ": "; BuildStatus.Text = line; BuildProgress.Value = 0; }, _cts.Token);
+            Done();
+            if (await Dialogs.Ask(this, BatchConverter.Summary(results) + "\n\nOpen the output folder now?", "Batch conversion finished"))
+                Open(output);
+            return results;
+        }
+        catch (Exception ex)
+        {
+            Done();
+            await Dialogs.Info(this, "The batch conversion failed:\n" + ex.Message, "Error");
+            return null;
         }
     }
 }

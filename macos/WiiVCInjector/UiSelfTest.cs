@@ -138,6 +138,50 @@ public static class UiSelfTest
             w.MainTabs.SelectedItem = w.SourceFilesTab;
             T("first tab: radios enabled", w.WiiRetail.IsEnabled && w.WiiNAND.IsEnabled);
 
+            // --- batch conversion: one GamePad Emulation Mode for all games, images only from the repo
+            w.WiiRetail.IsChecked = true;
+            w.MainTabs.SelectedItem = w.BuildTab;
+            T("build tab: batch blocked without valid keys", !w.BatchButton.IsEnabled);
+            w.MainTabs.SelectedItem = w.SourceFilesTab;
+            new AppSettings { OutputPathFixed = Path.Combine(tmp, "batch-out"), BannersRepository = "https://repo/" }.Save();
+            w.CCEmu.IsChecked = true;
+            w.LRPatch.IsChecked = true;
+            T("batch: mode label", w.GamePadModeName() == "Classic Controller Emulation", w.GamePadModeName());
+            var games = new List<string>();
+            foreach (var (file, id, magic) in new[] { ("a.iso", "RSPE01", GameHeader.WiiType), ("b.iso", "RMGP01", GameHeader.WiiType),
+                ("gc.iso", "GALE01", GameHeader.GcType), ("noimg.iso", "ZZZZ99", GameHeader.WiiType),
+                ("boom.iso", "ABCD01", GameHeader.WiiType), ("evil.iso", "..//..", GameHeader.WiiType) })
+            {
+                var p = Path.Combine(tmp, file);
+                File.WriteAllBytes(p, Iso(id, "Name " + id, magic));
+                games.Add(p);
+            }
+            var urls = new List<string>();
+            Task<byte[]?> Fetch(string url) { urls.Add(url); return Task.FromResult(url.Contains("/ZZZ") ? null : new byte[] { 1, 2, 3 }); }
+            var built = new List<BuildOptions>();
+            var iconBytes = new List<byte[]>();
+            Task<string> Build(BuildOptions bo)
+            {
+                if (bo.GamePath.EndsWith("boom.iso")) throw new InvalidOperationException("tool crashed");
+                built.Add(bo);
+                iconBytes.Add(File.ReadAllBytes(bo.IconPath));
+                return Task.FromResult("/pkg/" + Path.GetFileName(bo.GamePath));
+            }
+            Dialogs.Auto = (title, _) => title.Contains("finished") ? "No" : "Yes";
+            var res = w.BatchClick(games, Fetch, Build).GetAwaiter().GetResult();
+            Dialogs.Auto = (_, _) => "Yes";
+            T("batch: one result per game", res is { Count: 6 }, res?.Count.ToString() ?? "null");
+            T("batch: only the two good games built", built.Count == 2 && built.All(b => b.GamePath.EndsWith("a.iso") || b.GamePath.EndsWith("b.iso")));
+            T("batch: every game gets the window's GamePad mode", built.All(b => b.System == "wii" && b.DrcUse == "65537" && b.NfsPatch == "" && b.LrPatch));
+            T("batch: icon and banner come from the repo", iconBytes.All(b => b.SequenceEqual(new byte[] { 1, 2, 3 }))
+                && urls.Contains("https://repo/wii/RSPE01/iconTex.png") && urls.Contains("https://repo/wii/RMGP01/bootTvTex.png"));
+            T("batch: per game title, no second line", built.All(b => b.Title1 != "" && b.Title2 == null && b.DrcPath == null && b.LogoPath == null));
+            T("batch: wrong system rejected", res!.Single(r => r.File == "gc.iso").Problem!.Contains("not a Wii"));
+            T("batch: missing repo images skip the game", res!.Single(r => r.File == "noimg.iso").Problem!.Contains("no icon and banner"));
+            T("batch: a failing build does not stop the rest", res!.Single(r => r.File == "boom.iso").Problem == "tool crashed" && res!.Single(r => r.File == "b.iso").Package != null);
+            T("batch: invalid id never reaches the url", res!.Single(r => r.File == "evil.iso").Problem != null && !urls.Any(u => u.Contains("..")));
+            T("batch: summary", BatchConverter.Summary(res!).StartsWith("2 of 6 games converted."));
+
             // --- keys and settings
             T("key md5 rejects zeros", !KeyCheck.CommonKey(AppSettings.Zeros) && !KeyCheck.TitleKey(AppSettings.Zeros) && !KeyCheck.AncastKey(AppSettings.Zeros));
             var s = new AppSettings { WiiUCommonKey = "AA", TitleKey = "BB", AncastKey = "CC", BannersRepository = "https://x/", OutputPath = "/o", OutputPathFixed = "/f" };

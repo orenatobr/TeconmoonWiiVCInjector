@@ -1,0 +1,38 @@
+name: macos-ci
+
+on:
+  pull_request:
+    paths: ["macos/**", ".github/workflows/macos-ci.yml"]
+  push:
+    branches: [main]
+    paths: ["macos/**", ".github/workflows/macos-ci.yml"]
+
+permissions:
+  contents: read
+
+jobs:
+  build-and-ui-test:
+    runs-on: macos-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: 10.0.x
+      - name: Build
+        run: dotnet build macos/WiiVCInjector -c Release -o "$RUNNER_TEMP/app"
+      - name: UI logic self-test
+        run: WIIVC_UITEST=1 dotnet "$RUNNER_TEMP/app/WiiVCInjector.dll"
+      - name: Render both themes
+        run: |
+          mkdir -p "$RUNNER_TEMP/shots"
+          for theme in light dark; do
+            for tab in 0 1 2 3 4; do
+              WIIVC_SETTINGS="$RUNNER_TEMP/settings.json" WIIVC_THEME=$theme WIIVC_TAB=$tab \
+                WIIVC_SNAPSHOT="$RUNNER_TEMP/shots/${theme}_tab${tab}.png" dotnet "$RUNNER_TEMP/app/WiiVCInjector.dll"
+            done
+          done
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ui-snapshots
+          path: ${{ runner.temp }}/shots

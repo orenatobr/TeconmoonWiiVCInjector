@@ -983,7 +983,7 @@ public partial class MainWindow : Window
         Func<string, Task<byte[]?>>? fetch = null, Func<BuildOptions, Task<string>>? build = null)
     {
         MainTabs.IsEnabled = false;
-        void Done() { MainTabs.IsEnabled = true; BuildStatus.Text = ""; BuildProgress.Value = 0; }
+        void Done() { MainTabs.IsEnabled = true; BuildStatus.Text = ""; BuildProgress.Value = 0; MainTabs.SelectedItem = SourceFilesTab; }
         try
         {
             files ??= await PickFiles("Specify the games to convert", gameFilter, true);
@@ -991,6 +991,8 @@ public partial class MainWindow : Window
             if (!await Dialogs.Ask(this, $"Convert {files.Count} game(s) with GamePad Emulation Mode \"{GamePadModeName()}\"?\n\n" +
                 "Icons and banners come from Cucholix's repo. A game the repo has no images for is skipped.", "Convert several games"))
             { Done(); return null; }
+            // progress and status live on the Build tab; this also loads the saved keys into its fields, which GatherOptions reads
+            MainTabs.SelectedItem = BuildTab;
             if (!await LowSpaceOk(files.Max(f => new FileInfo(f).Length))) { Done(); return null; }
             var output = await ResolveOutput();
             if (output == null) { Done(); return null; }
@@ -1003,8 +1005,8 @@ public partial class MainWindow : Window
                 build ?? (o => BuildEngine.RunAsync(o, progress, _cts.Token)),
                 line => { label = line + ": "; BuildStatus.Text = line; BuildProgress.Value = 0; }, _cts.Token);
             Done();
-            if (await Dialogs.Ask(this, BatchConverter.Summary(results) + "\n\nOpen the output folder now?", "Batch conversion finished"))
-                Open(output);
+            // many packages in one folder: just report, no "open the folder" prompt
+            await Dialogs.Info(this, BatchConverter.Summary(results) + "\n\nPackages are in:\n" + output, "Batch conversion finished");
             return results;
         }
         catch (Exception ex)

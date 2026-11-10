@@ -164,16 +164,24 @@ public static class UiSelfTest
             Task<byte[]?> Fetch(string url) { urls.Add(url); return Task.FromResult(url.Contains("/ZZZ") ? null : new byte[] { 1, 2, 3 }); }
             var built = new List<BuildOptions>();
             var iconBytes = new List<byte[]>();
+            var tabsDuringBuild = new List<bool>();
             Task<string> Build(BuildOptions bo)
             {
+                tabsDuringBuild.Add(w.MainTabs.SelectedItem == w.BuildTab);
                 if (bo.GamePath.EndsWith("boom.iso")) throw new InvalidOperationException("tool crashed");
                 built.Add(bo);
                 iconBytes.Add(File.ReadAllBytes(bo.IconPath));
                 return Task.FromResult("/pkg/" + Path.GetFileName(bo.GamePath));
             }
-            Dialogs.Auto = (title, _) => title.Contains("finished") ? "No" : "Yes";
+            var asked = new List<string>();
+            Dialogs.Auto = (title, text) => { asked.Add(title + "|" + text); return "Yes"; };
+            w.MainTabs.SelectedItem = w.SourceFilesTab;
+            w.WiiUCommonKey.Text = "";   // as on a fresh start, before the Build tab was ever opened
             var res = w.BatchClick(games, Fetch, Build).GetAwaiter().GetResult();
             Dialogs.Auto = (_, _) => "Yes";
+            T("batch: runs on the Build tab and returns to Source files", tabsDuringBuild.Count > 0 && tabsDuringBuild.All(x => x) && w.MainTabs.SelectedItem == w.SourceFilesTab);
+            T("batch: keys reach the options even if the Build tab was never opened", built.All(b => b.CommonKey != ""));
+            T("batch: final summary does not offer to open the folder", asked.Any(a => a.StartsWith("Batch conversion finished")) && !asked.Any(a => a.Contains("Open the output folder")));
             T("batch: one result per game", res is { Count: 6 }, res?.Count.ToString() ?? "null");
             T("batch: only the two good games built", built.Count == 2 && built.All(b => b.GamePath.EndsWith("a.iso") || b.GamePath.EndsWith("b.iso")));
             T("batch: every game gets the window's GamePad mode", built.All(b => b.System == "wii" && b.DrcUse == "65537" && b.NfsPatch == "" && b.LrPatch));

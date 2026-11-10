@@ -312,6 +312,9 @@ public partial class MainWindow : Window
         TitleKey.Classes.Set("valid", TitleKeyGood);
         AncastKeyGood = KeyCheck.AncastKey(AncastKey.Text ?? "");
 
+        // a batch rewrites these two texts with its own counts; every visit to the Build tab starts from the single-game wording
+        SourceCheck.Text = "Source Files are properly specified";
+        MetaCheck.Text = "Meta options are valid";
         BuildFlagSource = FlagGameSpecified && FlagIconSpecified && FlagBannerSpecified;
         SourceCheck.Status = BuildFlagSource;
         BuildFlagMeta = PackedTitleLine1.Text != "" && (PackedTitleIDLine.Text?.Length ?? 0) == 16;
@@ -1000,8 +1003,14 @@ public partial class MainWindow : Window
             var label = "";
             var progress = new Progress<(int Percent, string Status)>(p => { BuildProgress.Value = p.Percent; BuildStatus.Text = label + p.Status; });
             _cts = new CancellationTokenSource();
+            using var plan = await BatchConverter.PrepareAsync(SystemType, files, Settings.BannersRepository, fetch ?? FetchRepoFile,
+                line => BuildStatus.Text = line, _cts.Token);
+            // the Requirements card describes the whole batch: green when every game has its repo images
+            SourceCheck.Text = $"Source Files: {plan.Ready} of {plan.Items.Count} games have icon and banner from Cucholix's repo";
+            SourceCheck.Status = plan.AllHaveImages;
+            MetaCheck.Status = plan.AllHaveTitles;
             var template = GatherOptions(output);
-            var results = await BatchConverter.RunAsync(template, files, Settings.BannersRepository, fetch ?? FetchRepoFile,
+            var results = await BatchConverter.RunAsync(template, plan,
                 build ?? (o => BuildEngine.RunAsync(o, progress, _cts.Token)),
                 line => { label = line + ": "; BuildStatus.Text = line; BuildProgress.Value = 0; }, _cts.Token);
             Done();

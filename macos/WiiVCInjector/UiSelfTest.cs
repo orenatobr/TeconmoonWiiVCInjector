@@ -165,9 +165,11 @@ public static class UiSelfTest
             var built = new List<BuildOptions>();
             var iconBytes = new List<byte[]>();
             var tabsDuringBuild = new List<bool>();
+            var requirements = new List<(bool Source, bool Meta, string Text)>();
             Task<string> Build(BuildOptions bo)
             {
                 tabsDuringBuild.Add(w.MainTabs.SelectedItem == w.BuildTab);
+                requirements.Add((w.SourceCheck.Status == true, w.MetaCheck.Status == true, w.SourceCheck.Text ?? ""));
                 if (bo.GamePath.EndsWith("boom.iso")) throw new InvalidOperationException("tool crashed");
                 built.Add(bo);
                 iconBytes.Add(File.ReadAllBytes(bo.IconPath));
@@ -182,6 +184,8 @@ public static class UiSelfTest
             T("batch: runs on the Build tab and returns to Source files", tabsDuringBuild.Count > 0 && tabsDuringBuild.All(x => x) && w.MainTabs.SelectedItem == w.SourceFilesTab);
             T("batch: keys reach the options even if the Build tab was never opened", built.All(b => b.CommonKey != ""));
             T("batch: final summary does not offer to open the folder", asked.Any(a => a.StartsWith("Batch conversion finished")) && !asked.Any(a => a.Contains("Open the output folder")));
+            T("batch: requirements go red when a game has no repo images", requirements.Count > 0 && requirements.All(r => !r.Source && r.Text.Contains("3 of 6")),
+                requirements.FirstOrDefault().Text);
             T("batch: one result per game", res is { Count: 6 }, res?.Count.ToString() ?? "null");
             T("batch: only the two good games built", built.Count == 2 && built.All(b => b.GamePath.EndsWith("a.iso") || b.GamePath.EndsWith("b.iso")));
             T("batch: every game gets the window's GamePad mode", built.All(b => b.System == "wii" && b.DrcUse == "65537" && b.NfsPatch == "" && b.LrPatch));
@@ -193,6 +197,17 @@ public static class UiSelfTest
             T("batch: a failing build does not stop the rest", res!.Single(r => r.File == "boom.iso").Problem == "tool crashed" && res!.Single(r => r.File == "b.iso").Package != null);
             T("batch: invalid id never reaches the url", res!.Single(r => r.File == "evil.iso").Problem != null && !urls.Any(u => u.Contains("..")));
             T("batch: summary", BatchConverter.Summary(res!).StartsWith("2 of 6 games converted."));
+
+            // a batch where every game has its repo images: the Requirements card is green
+            requirements.Clear();
+            var good = games.Where(g => g.EndsWith("a.iso") || g.EndsWith("b.iso")).ToList();
+            w.MainTabs.SelectedItem = w.SourceFilesTab;
+            w.BatchClick(good, Fetch, Build).GetAwaiter().GetResult();
+            T("batch: requirements are green when every game has its repo images", requirements.Count == 2 && requirements.All(r => r.Source && r.Meta && r.Text.Contains("2 of 2")),
+                requirements.FirstOrDefault().Text);
+            w.MainTabs.SelectedItem = w.BuildTab;
+            T("batch: Build tab goes back to the single-game wording", w.SourceCheck.Text == "Source Files are properly specified" && w.MetaCheck.Text == "Meta options are valid");
+            w.MainTabs.SelectedItem = w.SourceFilesTab;
 
             // --- keys and settings
             T("key md5 rejects zeros", !KeyCheck.CommonKey(AppSettings.Zeros) && !KeyCheck.TitleKey(AppSettings.Zeros) && !KeyCheck.AncastKey(AppSettings.Zeros));

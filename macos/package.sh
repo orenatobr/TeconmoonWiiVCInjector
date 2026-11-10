@@ -19,7 +19,7 @@ rm -rf "$APP" "$DIST/WiiVCInjector-macos-arm64.zip"
 mkdir -p "$APP/Contents/MacOS" "$TOOLS"/{bin,jar}
 
 echo "==> publish app"
-dotnet publish "$ROOT/macos/WiiVCInjector" -c Release -r osx-arm64 --self-contained true -o "$WORK/app" -v q
+dotnet publish "$ROOT/macos/WiiVCInjector" -c Release -r osx-arm64 --self-contained true -p:Version="$VERSION" -o "$WORK/app" -v q
 # Managed dlls in Contents/MacOS break `codesign --verify --strict` (unsigned subcomponents), so the
 # app lives in Resources/app and MacOS/WiiVCInjector is a tiny launcher that execs it.
 mkdir -p "$RES/app"

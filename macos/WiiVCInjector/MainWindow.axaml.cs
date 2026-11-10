@@ -28,8 +28,6 @@ public partial class MainWindow : Window
     bool _ready, _closeConfirmed;
     CancellationTokenSource? _cts;
 
-    static readonly IBrush Red = Brushes.Red, Black = Brushes.Black, Green = Brushes.Green;
-
     // Filters from the OpenFileDialog definitions of the designer (OpenIcon.Filter etc. come from Form1.resx)
     const string ImageFilter = "Supported Image Files (*.png,*.tga,*.jpg,*.jpeg,*.bmp,*.gif)|*.png;*.tga;*.jpg;*.jpeg;*.bmp;*.gif|PNG Files (*.png)|*.png|TGA Files (*.tga)|*.tga|JPEG Files (*.jpg,*.jpeg)|*.jpg;*.jpeg|BMP Files (*.bmp)|*.bmp|GIF Files (*.gif)|*.gif";
     string gameFilter = "Wii Dumps (*.iso,*.wbfs,*.iso.dec)|*.iso;*.wbfs;*.iso.dec";
@@ -37,10 +35,14 @@ public partial class MainWindow : Window
     public MainWindow()
     {
         InitializeComponent();
-        Title = $"TeconMoon's WiiVC Injector - [{typeof(MainWindow).Assembly.GetName().Version}]";
+        var version = typeof(MainWindow).Assembly.GetName().Version;
+        Title = $"TeconMoon's WiiVC Injector - [{version}]";
+        VersionText.Text = $"TeconMoon's injector for macOS, version {version?.ToString(3)}";
         Directory.CreateDirectory(TempSourcePath);
         WiiVMC.IsCheckedChanged += WiiVMC_CheckedChanged;
         _ready = true;
+        // grey out the options that do not apply to the initial Wii Retail mode, like switching to it does
+        WiiRetail_CheckedChanged(null, null!);
 
         if (Environment.GetEnvironmentVariable("WIIVC_UITEST") == "1")
             Opened += (_, _) => Environment.Exit(UiSelfTest.Run(this));
@@ -81,7 +83,7 @@ public partial class MainWindow : Window
     static void SetPath(WfLabel l, string text, bool good)
     {
         l.Text = text;
-        l.Foreground = good ? Black : Red;
+        l.Status = good;
     }
 
     void ResetGameInfo()
@@ -164,7 +166,7 @@ public partial class MainWindow : Window
         Wiimmfi.IsEnabled = true;
         RepoDownload.IsEnabled = true;
         GameSourceButton.IsEnabled = true;
-        GameSourceButton.Content = ButtonText("Game...");
+        GameSourceButton.Content = ButtonText("Browse...");
         gameFilter = "Wii Dumps (*.iso,*.wbfs,*.iso.dec)|*.iso;*.wbfs;*.iso.dec";
         ResetGame();
         SystemType = "wii";
@@ -190,7 +192,7 @@ public partial class MainWindow : Window
         Off(WiiVMC); Off(Wiimmfi);
         RepoDownload.IsEnabled = false;
         GameSourceButton.IsEnabled = true;
-        GameSourceButton.Content = ButtonText("Game...");
+        GameSourceButton.Content = ButtonText("Browse...");
         gameFilter = "DOL Files (*.dol)|*.dol";
         ResetGame();
         SystemType = "dol";
@@ -257,7 +259,7 @@ public partial class MainWindow : Window
         Off(WiiVMC); Off(Wiimmfi);
         RepoDownload.IsEnabled = true;
         GameSourceButton.IsEnabled = true;
-        GameSourceButton.Content = ButtonText("Game...");
+        GameSourceButton.Content = ButtonText("Browse...");
         gameFilter = "GameCube Dumps (*.gcm,*.iso)|*.gcm;*.iso";
         ResetGame();
         SystemType = "gcn";
@@ -295,20 +297,20 @@ public partial class MainWindow : Window
 
         CommonKeyGood = KeyCheck.CommonKey(WiiUCommonKey.Text!);
         WiiUCommonKey.IsReadOnly = CommonKeyGood;
-        WiiUCommonKey.Background = CommonKeyGood ? Brushes.Lime : Brushes.White;
+        WiiUCommonKey.Classes.Set("valid", CommonKeyGood);
         TitleKeyGood = KeyCheck.TitleKey(TitleKey.Text!);
         TitleKey.IsReadOnly = TitleKeyGood;
-        TitleKey.Background = TitleKeyGood ? Brushes.Lime : Brushes.White;
+        TitleKey.Classes.Set("valid", TitleKeyGood);
         AncastKeyGood = KeyCheck.AncastKey(AncastKey.Text ?? "");
 
         BuildFlagSource = FlagGameSpecified && FlagIconSpecified && FlagBannerSpecified;
-        SourceCheck.Foreground = BuildFlagSource ? Green : Red;
+        SourceCheck.Status = BuildFlagSource;
         BuildFlagMeta = PackedTitleLine1.Text != "" && (PackedTitleIDLine.Text?.Length ?? 0) == 16;
-        MetaCheck.Foreground = BuildFlagMeta ? Green : Red;
+        MetaCheck.Status = BuildFlagMeta;
         BuildFlagAdvance = CustomMainDol.IsChecked != true || Path.GetExtension(MainDolPath) == ".dol";
-        AdvanceCheck.Foreground = BuildFlagAdvance ? Green : Red;
+        AdvanceCheck.Status = BuildFlagAdvance;
         BuildFlagKeys = C2WPatchFlag.IsChecked != true ? CommonKeyGood && TitleKeyGood : CommonKeyGood && TitleKeyGood && AncastKeyGood;
-        KeysCheck.Foreground = BuildFlagKeys ? Green : Red;
+        KeysCheck.Status = BuildFlagKeys;
         TheBigOneTM.IsEnabled = BuildFlagSource && BuildFlagMeta && BuildFlagAdvance && BuildFlagKeys;
     }
 
@@ -632,13 +634,13 @@ public partial class MainWindow : Window
         if (EnablePackedLine2.IsChecked == true)
         {
             PackedTitleLine2.Text = "";
-            PackedTitleLine2.Background = Brushes.White;
+            PackedTitleLine2.Classes.Set("locked", false);
             PackedTitleLine2.IsReadOnly = false;
         }
         else
         {
             PackedTitleLine2.Text = "(Optional) Line 2";
-            PackedTitleLine2.Background = Brushes.Silver;
+            PackedTitleLine2.Classes.Set("locked", true);
             PackedTitleLine2.IsReadOnly = true;
         }
     }
@@ -753,15 +755,16 @@ public partial class MainWindow : Window
         if (C2WPatchFlag.IsChecked == true)
         {
             AncastKey.IsReadOnly = false;
-            AncastKey.Background = Brushes.White;
+            AncastKey.Classes.Set("locked", false);
             SaveAncastKeyButton.IsEnabled = true;
             Settings = AppSettings.Load();
             AncastKey.Text = Settings.AncastKey.ToUpperInvariant();
-            if (KeyCheck.AncastKey(AncastKey.Text)) { AncastKey.IsReadOnly = true; AncastKey.Background = Brushes.Lime; }
+            if (KeyCheck.AncastKey(AncastKey.Text)) { AncastKey.IsReadOnly = true; AncastKey.Classes.Set("valid", true); }
         }
         else
         {
-            AncastKey.Background = Brushes.Silver;
+            AncastKey.Classes.Set("locked", true);
+            AncastKey.Classes.Set("valid", false);
             AncastKey.IsReadOnly = true;
             SaveAncastKeyButton.IsEnabled = false;
         }
@@ -782,7 +785,7 @@ public partial class MainWindow : Window
             Settings = AppSettings.Load(); Settings.AncastKey = AncastKey.Text!; Settings.Save();
             await Dialogs.Info(this, "The Wii U Starbuck Ancast Key has been verified.", "Success");
             AncastKey.IsReadOnly = true;
-            AncastKey.Background = Brushes.Lime;
+            AncastKey.Classes.Set("valid", true);
         }
         else
             await Dialogs.Info(this, "The Wii U Starbuck Ancast Key you have provided is incorrect\n(MD5 Hash verification failed)", "Invalid Starbuck Ancast Key");

@@ -1,100 +1,231 @@
 <Application xmlns="https://github.com/avaloniaui" xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-             x:Class="WiiVCInjector.App" RequestedThemeVariant="Light">
+             xmlns:local="using:WiiVCInjector"
+             x:Class="WiiVCInjector.App" RequestedThemeVariant="Default">
+  <Application.Resources>
+    <ResourceDictionary>
+      <ResourceDictionary.ThemeDictionaries>
+        <ResourceDictionary x:Key="Light">
+          <SolidColorBrush x:Key="AppBackground" Color="#F3F5F8" />
+          <SolidColorBrush x:Key="BandBackground" Color="#FFFFFF" />
+          <SolidColorBrush x:Key="SidebarBackground" Color="#EAEEF3" />
+          <SolidColorBrush x:Key="CardBackground" Color="#FFFFFF" />
+          <SolidColorBrush x:Key="CardBorder" Color="#DDE2E8" />
+          <SolidColorBrush x:Key="FieldBackground" Color="#F3F5F8" />
+          <SolidColorBrush x:Key="PreviewBackground" Color="#E6EAEF" />
+          <SolidColorBrush x:Key="SubtleText" Color="#5A6672" />
+          <SolidColorBrush x:Key="StatusGoodBrush" Color="#0F7B3F" />
+          <SolidColorBrush x:Key="StatusBadBrush" Color="#C42B31" />
+          <SolidColorBrush x:Key="StatusGoodTint" Color="#E3F4EA" />
+          <SolidColorBrush x:Key="AccentTint" Color="#E1F1F8" />
+          <SolidColorBrush x:Key="AccentStroke" Color="#007AA8" />
+          <Color x:Key="LogoStart">#0090C0</Color>
+          <Color x:Key="LogoEnd">#00BFD8</Color>
+        </ResourceDictionary>
+        <ResourceDictionary x:Key="Dark">
+          <SolidColorBrush x:Key="AppBackground" Color="#14171B" />
+          <SolidColorBrush x:Key="BandBackground" Color="#1B1F24" />
+          <SolidColorBrush x:Key="SidebarBackground" Color="#101316" />
+          <SolidColorBrush x:Key="CardBackground" Color="#1D2227" />
+          <SolidColorBrush x:Key="CardBorder" Color="#2C333B" />
+          <SolidColorBrush x:Key="FieldBackground" Color="#14171B" />
+          <SolidColorBrush x:Key="PreviewBackground" Color="#262C33" />
+          <SolidColorBrush x:Key="SubtleText" Color="#9BA6B2" />
+          <SolidColorBrush x:Key="StatusGoodBrush" Color="#4CC38A" />
+          <SolidColorBrush x:Key="StatusBadBrush" Color="#FF7B7F" />
+          <SolidColorBrush x:Key="StatusGoodTint" Color="#17352A" />
+          <SolidColorBrush x:Key="AccentTint" Color="#12303C" />
+          <SolidColorBrush x:Key="AccentStroke" Color="#3DB8E8" />
+          <Color x:Key="LogoStart">#0090C0</Color>
+          <Color x:Key="LogoEnd">#2CD3E8</Color>
+        </ResourceDictionary>
+      </ResourceDictionary.ThemeDictionaries>
+
+      <!-- 24x24 stroke icons, drawn with Path.icon -->
+      <StreamGeometry x:Key="IconFolder">M3,7 C3,5.9 3.9,5 5,5 H9.5 L12,8 H19 C20.1,8 21,8.9 21,10 V17 C21,18.1 20.1,19 19,19 H5 C3.9,19 3,18.1 3,17 Z</StreamGeometry>
+      <StreamGeometry x:Key="IconDisc">M12,3 A9,9 0 1 0 12,21 A9,9 0 1 0 12,3 Z M12,10 A2,2 0 1 0 12,14 A2,2 0 1 0 12,10 Z</StreamGeometry>
+      <StreamGeometry x:Key="IconImage">M5,4 H19 C20.1,4 21,4.9 21,6 V18 C21,19.1 20.1,20 19,20 H5 C3.9,20 3,19.1 3,18 V6 C3,4.9 3.9,4 5,4 Z M3,16 L8,11 L13,16 M11,14 L15,10 L21,16</StreamGeometry>
+      <StreamGeometry x:Key="IconTv">M3,6 H21 V16 H3 Z M8,20 H16 M12,16 V20</StreamGeometry>
+      <StreamGeometry x:Key="IconStar">M12,3 L14.6,9 L21,9.6 L16.2,13.9 L17.6,20.2 L12,16.9 L6.4,20.2 L7.8,13.9 L3,9.6 L9.4,9 Z</StreamGeometry>
+      <StreamGeometry x:Key="IconSound">M4,9.5 H8 L13,5.5 V18.5 L8,14.5 H4 Z M16.5,9 C17.8,10.3 17.8,13.7 16.5,15 M19,6.5 C21.4,9 21.4,15 19,17.5</StreamGeometry>
+      <StreamGeometry x:Key="IconKey">M14.5,4 A5.5,5.5 0 1 0 14.5,15 A5.5,5.5 0 1 0 14.5,4 Z M10.5,13 L3.5,20 M6.5,17 L8.5,19</StreamGeometry>
+      <StreamGeometry x:Key="IconSliders">M4,7 H20 M4,17 H20 M9,4.5 V9.5 M15,14.5 V19.5</StreamGeometry>
+      <StreamGeometry x:Key="IconSdCard">M7,3 H15 L19,7 V19 C19,20.1 18.1,21 17,21 H7 C5.9,21 5,20.1 5,19 V5 C5,3.9 5.9,3 7,3 Z M9,7 V10 M12,7 V10 M15,8 V10</StreamGeometry>
+      <StreamGeometry x:Key="IconGamepad">M7,8 H17 C19.8,8 21.5,10.5 21.5,13.5 C21.5,15.5 20.5,17 19,17 C17.8,17 17,16.3 16.2,15.5 H7.8 C7,16.3 6.2,17 5,17 C3.5,17 2.5,15.5 2.5,13.5 C2.5,10.5 4.2,8 7,8 Z M7.5,10.5 V13.5 M6,12 H9 M16,11 H16.01 M18,13 H18.01</StreamGeometry>
+      <StreamGeometry x:Key="IconBox">M12,3 L20,7.5 V16.5 L12,21 L4,16.5 V7.5 Z M4,7.5 L12,12 L20,7.5 M12,12 V21</StreamGeometry>
+      <StreamGeometry x:Key="IconDownload">M12,4 V15 M7.5,10.5 L12,15 L16.5,10.5 M5,19 H19</StreamGeometry>
+      <StreamGeometry x:Key="IconCheck">M5,12.5 L10,17.5 L19,7</StreamGeometry>
+      <StreamGeometry x:Key="IconPlay">M8,5 L19,12 L8,19 Z</StreamGeometry>
+    </ResourceDictionary>
+  </Application.Resources>
+
   <Application.Styles>
-    <FluentTheme />
-    <Style Selector="Button.wf">
-      <Setter Property="Background" Value="#E1E1E1" />
-      <Setter Property="BorderBrush" Value="#ADADAD" />
+    <FluentTheme>
+      <FluentTheme.Palettes>
+        <ColorPaletteResources x:Key="Light" Accent="#007AA8" />
+        <ColorPaletteResources x:Key="Dark" Accent="#3DB8E8" />
+      </FluentTheme.Palettes>
+    </FluentTheme>
+
+    <Style Selector="Window"><Setter Property="Background" Value="{DynamicResource AppBackground}" /></Style>
+
+    <!-- text -->
+    <Style Selector="TextBlock.h1"><Setter Property="FontSize" Value="20" /><Setter Property="FontWeight" Value="SemiBold" /></Style>
+    <Style Selector="TextBlock.h2"><Setter Property="FontSize" Value="15" /><Setter Property="FontWeight" Value="SemiBold" /></Style>
+    <Style Selector="TextBlock.label"><Setter Property="FontSize" Value="13" /><Setter Property="FontWeight" Value="SemiBold" /></Style>
+    <Style Selector="TextBlock.sub"><Setter Property="FontSize" Value="12" /><Setter Property="Foreground" Value="{DynamicResource SubtleText}" /><Setter Property="TextWrapping" Value="Wrap" /></Style>
+    <Style Selector="local|WfLabel.sub TextBlock"><Setter Property="FontSize" Value="12" /><Setter Property="Foreground" Value="{DynamicResource SubtleText}" /></Style>
+
+    <!-- surfaces -->
+    <Style Selector="Border.card">
+      <Setter Property="Background" Value="{DynamicResource CardBackground}" />
+      <Setter Property="BorderBrush" Value="{DynamicResource CardBorder}" />
       <Setter Property="BorderThickness" Value="1" />
-      <Setter Property="CornerRadius" Value="0" />
-      <Setter Property="Padding" Value="0,1,0,0" />
+      <Setter Property="CornerRadius" Value="12" />
+      <Setter Property="Padding" Value="18" />
+    </Style>
+    <Style Selector="Border.iconbox">
+      <Setter Property="Width" Value="36" /><Setter Property="Height" Value="36" />
+      <Setter Property="CornerRadius" Value="9" />
+      <Setter Property="Background" Value="{DynamicResource AccentTint}" />
+    </Style>
+    <Style Selector="Border.preview">
+      <Setter Property="Background" Value="{DynamicResource PreviewBackground}" />
+      <Setter Property="BorderBrush" Value="{DynamicResource CardBorder}" />
+      <Setter Property="BorderThickness" Value="1" />
+      <Setter Property="CornerRadius" Value="8" />
+      <Setter Property="ClipToBounds" Value="True" />
+    </Style>
+    <Style Selector="Path.icon">
+      <Setter Property="Stroke" Value="{DynamicResource AccentStroke}" />
+      <Setter Property="StrokeThickness" Value="1.7" />
+      <Setter Property="StrokeLineCap" Value="Round" />
+      <Setter Property="StrokeJoin" Value="Round" />
+      <Setter Property="Width" Value="18" /><Setter Property="Height" Value="18" />
+      <Setter Property="Stretch" Value="Uniform" />
+      <Setter Property="HorizontalAlignment" Value="Center" /><Setter Property="VerticalAlignment" Value="Center" />
+    </Style>
+    <Style Selector="Path.icon.muted"><Setter Property="Stroke" Value="{DynamicResource SubtleText}" /></Style>
+
+    <!-- buttons -->
+    <Style Selector="Button">
+      <Setter Property="CornerRadius" Value="8" />
+      <Setter Property="Padding" Value="14,6" />
+      <Setter Property="MinHeight" Value="32" />
       <Setter Property="HorizontalContentAlignment" Value="Center" />
       <Setter Property="VerticalContentAlignment" Value="Center" />
-      <Setter Property="Foreground" Value="Black" />
     </Style>
-    <Style Selector="TextBox.wf">
-      <Setter Property="CornerRadius" Value="0" />
-      <Setter Property="Padding" Value="2,0" />
-      <Setter Property="MinHeight" Value="0" />
-      <Setter Property="VerticalContentAlignment" Value="Center" />
+    <Style Selector="Button.browse"><Setter Property="MinWidth" Value="104" /></Style>
+    <Style Selector="Button.ghost">
+      <Setter Property="Background" Value="Transparent" />
+      <Setter Property="BorderBrush" Value="{DynamicResource CardBorder}" />
+      <Setter Property="BorderThickness" Value="1" />
     </Style>
-    <Style Selector="TabItem">
-      <Setter Property="FontSize" Value="10.5" />
+    <Style Selector="Button.ghost:pointerover /template/ ContentPresenter#PART_ContentPresenter">
+      <Setter Property="Background" Value="{DynamicResource AccentTint}" />
+      <Setter Property="BorderBrush" Value="{DynamicResource AccentStroke}" />
+    </Style>
+
+    <!-- inputs -->
+    <Style Selector="TextBox"><Setter Property="CornerRadius" Value="8" /><Setter Property="MinHeight" Value="34" /><Setter Property="VerticalContentAlignment" Value="Center" /></Style>
+    <Style Selector="ComboBox"><Setter Property="CornerRadius" Value="8" /><Setter Property="MinHeight" Value="34" /><Setter Property="HorizontalAlignment" Value="Stretch" /></Style>
+    <Style Selector="TextBox.valid /template/ Border#PART_BorderElement">
+      <Setter Property="BorderBrush" Value="{DynamicResource StatusGoodBrush}" />
+      <Setter Property="Background" Value="{DynamicResource StatusGoodTint}" />
+    </Style>
+    <Style Selector="TextBox.locked /template/ Border#PART_BorderElement"><Setter Property="Background" Value="{DynamicResource FieldBackground}" /></Style>
+    <Style Selector="TextBox.locked"><Setter Property="Foreground" Value="{DynamicResource SubtleText}" /></Style>
+    <Style Selector="CheckBox"><Setter Property="Margin" Value="0,2" /></Style>
+
+    <!-- status label (path rows and requirement rows) -->
+    <Style Selector="local|WfLabel Ellipse.dot"><Setter Property="Fill" Value="{DynamicResource SubtleText}" /></Style>
+    <Style Selector="local|WfLabel:good Ellipse.dot"><Setter Property="Fill" Value="{DynamicResource StatusGoodBrush}" /></Style>
+    <Style Selector="local|WfLabel:bad Ellipse.dot"><Setter Property="Fill" Value="{DynamicResource StatusBadBrush}" /></Style>
+    <Style Selector="local|WfLabel:bad TextBlock"><Setter Property="Foreground" Value="{DynamicResource StatusBadBrush}" /></Style>
+    <Style Selector="local|WfLabel.tint:good TextBlock"><Setter Property="Foreground" Value="{DynamicResource StatusGoodBrush}" /></Style>
+
+    <!-- mode selector: big selectable tiles -->
+    <Style Selector="RadioButton.tile">
+      <Setter Property="Margin" Value="0,0,10,0" />
+      <Setter Property="HorizontalAlignment" Value="Stretch" />
+      <Setter Property="HorizontalContentAlignment" Value="Left" />
+      <Setter Property="Template">
+        <ControlTemplate>
+          <Border Name="box" Background="{DynamicResource CardBackground}" BorderBrush="{DynamicResource CardBorder}" BorderThickness="1.5"
+                  CornerRadius="10" Padding="14,10">
+            <ContentPresenter Content="{TemplateBinding Content}" />
+          </Border>
+        </ControlTemplate>
+      </Setter>
+    </Style>
+    <Style Selector="RadioButton.tile:pointerover /template/ Border#box"><Setter Property="BorderBrush" Value="{DynamicResource AccentStroke}" /></Style>
+    <Style Selector="RadioButton.tile:checked /template/ Border#box">
+      <Setter Property="BorderBrush" Value="{DynamicResource AccentStroke}" />
+      <Setter Property="Background" Value="{DynamicResource AccentTint}" />
+    </Style>
+    <Style Selector="RadioButton.tile:disabled"><Setter Property="Opacity" Value="0.5" /></Style>
+
+    <!-- choice rows (gamepad emulation) -->
+    <Style Selector="RadioButton.choice">
+      <Setter Property="Margin" Value="0,0,10,10" />
+      <Setter Property="HorizontalAlignment" Value="Stretch" />
+      <Setter Property="Template">
+        <ControlTemplate>
+          <Border Name="box" Background="{DynamicResource CardBackground}" BorderBrush="{DynamicResource CardBorder}" BorderThickness="1.5"
+                  CornerRadius="8" Padding="12,10">
+            <Grid ColumnDefinitions="Auto,*">
+              <Grid Width="16" Height="16" VerticalAlignment="Top" Margin="0,1,10,0">
+                <Ellipse Stroke="{DynamicResource SubtleText}" StrokeThickness="1.5" />
+                <Ellipse Name="dot" Fill="{DynamicResource AccentStroke}" Margin="4" IsVisible="False" />
+              </Grid>
+              <ContentPresenter Grid.Column="1" Content="{TemplateBinding Content}" />
+            </Grid>
+          </Border>
+        </ControlTemplate>
+      </Setter>
+    </Style>
+    <Style Selector="RadioButton.choice:pointerover /template/ Border#box"><Setter Property="BorderBrush" Value="{DynamicResource AccentStroke}" /></Style>
+    <Style Selector="RadioButton.choice:checked /template/ Border#box">
+      <Setter Property="BorderBrush" Value="{DynamicResource AccentStroke}" />
+      <Setter Property="Background" Value="{DynamicResource AccentTint}" />
+    </Style>
+    <Style Selector="RadioButton.choice:checked /template/ Ellipse#dot"><Setter Property="IsVisible" Value="True" /></Style>
+    <Style Selector="RadioButton.choice:disabled"><Setter Property="Opacity" Value="0.45" /></Style>
+
+    <!-- step navigation (TabControl strip on the left) -->
+    <Style Selector="TabControl.steps">
+      <Setter Property="Padding" Value="0" />
+      <Setter Property="Background" Value="Transparent" />
+    </Style>
+    <Style Selector="TabControl.steps /template/ ItemsPresenter#PART_ItemsPresenter">
+      <Setter Property="Margin" Value="0,4,16,0" />
+    </Style>
+    <Style Selector="TabControl.steps TabItem">
+      <Setter Property="Margin" Value="0,0,0,6" />
+      <Setter Property="Padding" Value="0" />
       <Setter Property="MinHeight" Value="0" />
       <Setter Property="MinWidth" Value="0" />
-      <Setter Property="Padding" Value="4,4" />
-      <Setter Property="Margin" Value="0" />
-      <Setter Property="Foreground" Value="#333333" />
-      <Setter Property="Background" Value="#E4E4E4" />
-    </Style>
-    <!-- the selected tab looks like the page it opens: same fill, bold text, no underline -->
-    <Style Selector="TabItem:selected">
-      <Setter Property="Background" Value="#DCDCDC" />
-      <Setter Property="Foreground" Value="Black" />
-      <Setter Property="FontWeight" Value="SemiBold" />
-    </Style>
-    <Style Selector="TabItem:selected /template/ Border#PART_SelectedPipe">
-      <Setter Property="IsVisible" Value="False" />
-      <Setter Property="Opacity" Value="0" />
-      <Setter Property="Height" Value="0" />
-    </Style>
-    <Style Selector="TabItem /template/ ContentPresenter#PART_ContentPresenter">
-      <Setter Property="FontSize" Value="10.5" />
-    </Style>
-    <Style Selector="TabControl.wf">
-      <Setter Property="Padding" Value="0" />
-      <Setter Property="ItemsPanel">
-        <ItemsPanelTemplate><StackPanel Orientation="Horizontal" Margin="11,0,0,0" /></ItemsPanelTemplate>
-      </Setter>
-    </Style>
-    <Style Selector="ComboBox.wf">
-      <Setter Property="MinHeight" Value="0" />
-      <Setter Property="Padding" Value="4,0" />
-      <Setter Property="CornerRadius" Value="0" />
-      <Setter Property="FontSize" Value="11" />
-    </Style>
-    <Style Selector="ListBoxItem">
-      <Setter Property="MinHeight" Value="0" />
-      <Setter Property="Padding" Value="0" />
-    </Style>
-    <Style Selector="Button.wf:disabled TextBlock">
-      <Setter Property="Foreground" Value="#838383" />
-    </Style>
-    <!-- Compact WinForms-size radio and check boxes (13px glyph, wrapping text) -->
-    <Style Selector="RadioButton">
+      <Setter Property="HorizontalContentAlignment" Value="Stretch" />
       <Setter Property="Template">
         <ControlTemplate>
-          <Border Background="Transparent">
-            <Grid ColumnDefinitions="Auto,*">
-              <Grid Width="13" Height="13" VerticalAlignment="Top">
-                <Ellipse Fill="White" Stroke="#333333" StrokeThickness="1" />
-                <Ellipse Name="dot" Fill="#222222" Margin="3" IsVisible="False" />
-              </Grid>
-              <TextBlock Grid.Column="1" Margin="3,0,0,0" Text="{TemplateBinding Content}" TextWrapping="Wrap" VerticalAlignment="Top"
-                         Foreground="{TemplateBinding Foreground}" />
-            </Grid>
+          <Border Name="nav" CornerRadius="10" Padding="12,10" Background="Transparent" BorderThickness="1.5" BorderBrush="Transparent">
+            <ContentPresenter Content="{TemplateBinding Header}" />
           </Border>
         </ControlTemplate>
       </Setter>
     </Style>
-    <Style Selector="RadioButton:checked /template/ Ellipse#dot"><Setter Property="IsVisible" Value="True" /></Style>
-    <Style Selector="CheckBox">
-      <Setter Property="Template">
-        <ControlTemplate>
-          <Border Background="Transparent">
-            <Grid ColumnDefinitions="Auto,*">
-              <Grid Width="13" Height="13" VerticalAlignment="Top">
-                <Rectangle Fill="White" Stroke="#333333" StrokeThickness="1" />
-                <Path Name="tick" Data="M3,6.5 L5.5,9 L10,3.5" Stroke="#222222" StrokeThickness="1.6" IsVisible="False" />
-              </Grid>
-              <TextBlock Grid.Column="1" Margin="3,0,0,0" Text="{TemplateBinding Content}" TextWrapping="Wrap" VerticalAlignment="Top"
-                         Foreground="{TemplateBinding Foreground}" />
-            </Grid>
-          </Border>
-        </ControlTemplate>
-      </Setter>
+    <Style Selector="TabControl.steps TabItem:pointerover /template/ Border#nav"><Setter Property="Background" Value="{DynamicResource CardBackground}" /></Style>
+    <Style Selector="TabControl.steps TabItem:selected /template/ Border#nav">
+      <Setter Property="Background" Value="{DynamicResource CardBackground}" />
+      <Setter Property="BorderBrush" Value="{DynamicResource AccentStroke}" />
     </Style>
-    <Style Selector="CheckBox:checked /template/ Path#tick"><Setter Property="IsVisible" Value="True" /></Style>
-    <Style Selector="RadioButton:disabled, CheckBox:disabled"><Setter Property="Opacity" Value="0.5" /></Style>
+    <Style Selector="Border.stepnum">
+      <Setter Property="Width" Value="26" /><Setter Property="Height" Value="26" /><Setter Property="CornerRadius" Value="13" />
+      <Setter Property="Background" Value="{DynamicResource PreviewBackground}" />
+    </Style>
+    <Style Selector="TabItem:selected Border.stepnum"><Setter Property="Background" Value="{DynamicResource AccentStroke}" /></Style>
+    <Style Selector="Border.stepnum TextBlock"><Setter Property="FontSize" Value="12" /><Setter Property="FontWeight" Value="SemiBold" /><Setter Property="HorizontalAlignment" Value="Center" /><Setter Property="VerticalAlignment" Value="Center" /></Style>
+    <Style Selector="TabItem:selected Border.stepnum TextBlock"><Setter Property="Foreground" Value="White" /></Style>
+
+    <Style Selector="ProgressBar"><Setter Property="MinHeight" Value="8" /><Setter Property="CornerRadius" Value="4" /></Style>
   </Application.Styles>
 </Application>

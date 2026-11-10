@@ -14,7 +14,7 @@ public static class Dialogs
     static Window Make(string title) => new()
     {
         Title = title, CanResize = false, SizeToContent = SizeToContent.WidthAndHeight,
-        WindowStartupLocation = WindowStartupLocation.CenterOwner, FontSize = 12, Background = new SolidColorBrush(Color.Parse("#F0F0F0")),
+        WindowStartupLocation = WindowStartupLocation.CenterOwner, FontSize = 13,
     };
 
     static StackPanel Buttons(Window w, params (string Text, object? Result)[] b)
@@ -22,7 +22,8 @@ public static class Dialogs
         var p = new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Right, Spacing = 8 };
         foreach (var (text, result) in b)
         {
-            var btn = new Button { Content = text, MinWidth = 72, HorizontalContentAlignment = HorizontalAlignment.Center };
+            var btn = new Button { Content = text, MinWidth = 88, HorizontalContentAlignment = HorizontalAlignment.Center };
+            if (p.Children.Count == 0) btn.Classes.Add("accent");
             btn.Click += (_, _) => w.Close(result);
             p.Children.Add(btn);
         }
@@ -31,8 +32,8 @@ public static class Dialogs
 
     static StackPanel Body(string text) => new()
     {
-        Margin = new Thickness(16), Spacing = 14,
-        Children = { new TextBlock { Text = text, TextWrapping = TextWrapping.Wrap, MaxWidth = 420 } },
+        Margin = new Thickness(24), Spacing = 18,
+        Children = { new TextBlock { Text = text, TextWrapping = TextWrapping.Wrap, MaxWidth = 440 } },
     };
 
     public static async Task Info(Window owner, string text, string title)
@@ -84,8 +85,8 @@ public static class Dialogs
                         + "if the game misbehaves, build again without this option.");
         var list = new ComboBox { ItemsSource = VideoModes.Select(m => m.Label).ToList(), SelectedIndex = 0, HorizontalAlignment = HorizontalAlignment.Stretch };
         body.Children.Add(list);
-        var ok = new Button { Content = "OK", MinWidth = 72, HorizontalContentAlignment = HorizontalAlignment.Center };
-        var cancel = new Button { Content = "Cancel", MinWidth = 72, HorizontalContentAlignment = HorizontalAlignment.Center };
+        var ok = new Button { Content = "OK", MinWidth = 88, HorizontalContentAlignment = HorizontalAlignment.Center, Classes = { "accent" } };
+        var cancel = new Button { Content = "Cancel", MinWidth = 88, HorizontalContentAlignment = HorizontalAlignment.Center };
         ok.Click += (_, _) => w.Close(true);
         cancel.Click += (_, _) => w.Close(false);
         body.Children.Add(new StackPanel { Orientation = Orientation.Horizontal, HorizontalAlignment = HorizontalAlignment.Right, Spacing = 8, Children = { ok, cancel } });

@@ -15,8 +15,8 @@ The app is published self-contained (no .NET install needed) and bundles a jlink
 so it does not depend on Homebrew. The managed app lives in `Contents/Resources/app`; `Contents/MacOS/WiiVCInjector`
 is a small launcher script (keeps `codesign --verify --deep --strict` clean).
 
-`.github/workflows/macos-release.yml` builds on tag `v*`. It expects a release asset `wiivc-mac-tools.tar.gz`
-(tools tree without `jre/` and `nfs/`, with `nfs-src/`) in this repo. It has not been run.
+CI (`.github/workflows/macos-ci.yml`) builds the app, runs the UI logic self-test and renders every page in both themes
+on each pull request that touches `macos/`. The release zip is built locally with `package.sh` and uploaded by hand.
 
 ## Install
 
@@ -38,15 +38,20 @@ The app is ad-hoc signed, not notarized, so recent macOS versions block it with 
 
 Removing the quarantine flag is the only thing the command does. Notarization needs a paid Apple Developer account and is not set up.
 
-## Headless render check
+## UI
 
-    WIIVC_SNAPSHOT=/tmp/x.png WiiVCInjector.app/Contents/MacOS/WiiVCInjector
+The three windows (`MainWindow`, `SettingsWindow`, `SDCardWindow`) are hand-written Avalonia XAML in a Fluent look:
+cards, a step list on the left, mode tiles on top, stroke icons, and light or dark following the system theme.
+Colours, icons and control styles live in `App.axaml` (theme dictionaries `Light` and `Dark`); event handlers live in the
+matching `*.axaml.cs` files, and the control names are the ones from the WinForms designer.
 
-## UI port
+![Light](docs/ui-light.png)
+![Dark](docs/ui-dark.png)
 
-UI port of TeconMoon's WiiVC Injector. The three windows (`MainWindow`, `SettingsWindow`, `SDCardWindow`)
-are generated from the WinForms designers by `macos/tools/regen.sh` (never hand-edit the `.axaml` files).
-Event handlers live in the matching `*.axaml.cs` files.
+Render a page without opening a window (`WIIVC_THEME=light|dark` pins the theme, `WIIVC_TAB=0..4` picks the page,
+`WIIVC_WINDOW=settings|sdcard` renders another window, `WIIVC_SETTINGS=/tmp/x.json` keeps your real keys out of the picture):
+
+    WIIVC_SETTINGS=/tmp/x.json WIIVC_THEME=dark WIIVC_TAB=2 WIIVC_SNAPSHOT=/tmp/x.png WiiVCInjector.app/Contents/MacOS/WiiVCInjector
 
 ## Differences from the Windows app
 

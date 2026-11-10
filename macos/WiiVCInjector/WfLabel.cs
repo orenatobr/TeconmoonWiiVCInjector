@@ -1,32 +1,52 @@
 using Avalonia;
 using Avalonia.Controls;
+using Avalonia.Controls.Shapes;
+using Avalonia.Layout;
 using Avalonia.Media;
 
 namespace WiiVCInjector;
 
-/// <summary>WinForms-style Label: wrapping text with optional background and border.</summary>
+/// <summary>
+/// Wrapping text with an optional status dot. <see cref="Status"/> drives the :good / :bad pseudo-classes that
+/// App.axaml turns into theme-aware colours (null = neutral, true = met, false = missing).
+/// </summary>
 public class WfLabel : Border
 {
-    private readonly TextBlock _t = new() { TextWrapping = TextWrapping.Wrap };
+    private readonly TextBlock _t = new() { TextWrapping = TextWrapping.Wrap, VerticalAlignment = VerticalAlignment.Center };
+    private readonly Ellipse _dot = new()
+    {
+        Classes = { "dot" }, Width = 8, Height = 8, Margin = new Thickness(0, 0, 8, 0), IsVisible = false, VerticalAlignment = VerticalAlignment.Center,
+    };
+    private bool? _status;
 
-    public WfLabel() => Child = _t;
+    public WfLabel()
+    {
+        var row = new Grid { ColumnDefinitions = new ColumnDefinitions("Auto,*") };
+        Grid.SetColumn(_t, 1);
+        row.Children.Add(_dot);
+        row.Children.Add(_t);
+        Child = row;
+    }
 
     public string Text
     {
         get => _t.Text ?? "";
-        set => _t.Text = value;
+        set
+        {
+            _t.Text = value;
+            if (_t.TextTrimming != TextTrimming.None) ToolTip.SetTip(this, string.IsNullOrEmpty(value) ? null : value);
+        }
     }
 
+    /// <summary>Trimmed text (paths) stays on one line and shows in full as a tooltip.</summary>
     public TextTrimming TextTrimming
     {
         get => _t.TextTrimming;
-        set => _t.TextTrimming = value;
-    }
-
-    public IBrush? Foreground
-    {
-        get => _t.Foreground;
-        set => _t.Foreground = value;
+        set
+        {
+            _t.TextTrimming = value;
+            _t.TextWrapping = value == TextTrimming.None ? TextWrapping.Wrap : TextWrapping.NoWrap;
+        }
     }
 
     public double FontSize
@@ -41,21 +61,26 @@ public class WfLabel : Border
         set => _t.FontWeight = value;
     }
 
-    public Avalonia.Layout.HorizontalAlignment HorizontalContentAlignment
+    public TextAlignment TextAlignment
     {
-        get => _t.HorizontalAlignment;
-        set => _t.TextAlignment = value == Avalonia.Layout.HorizontalAlignment.Center ? TextAlignment.Center : TextAlignment.Left;
+        get => _t.TextAlignment;
+        set => _t.TextAlignment = value;
     }
 
-    public Avalonia.Layout.VerticalAlignment VerticalContentAlignment
+    public bool ShowDot
     {
-        get => _t.VerticalAlignment;
-        set => _t.VerticalAlignment = value;
+        get => _dot.IsVisible;
+        set => _dot.IsVisible = value;
     }
 
-    public IBrush? Background
+    public bool? Status
     {
-        get => base.Background;
-        set => base.Background = value;
+        get => _status;
+        set
+        {
+            _status = value;
+            PseudoClasses.Set(":good", value == true);
+            PseudoClasses.Set(":bad", value == false);
+        }
     }
 }

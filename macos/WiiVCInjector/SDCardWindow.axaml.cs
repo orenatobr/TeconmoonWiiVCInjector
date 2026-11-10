@@ -67,8 +67,6 @@ public partial class SDCardWindow : Window
 
     private void ReloadDrives_Click(object? s, RoutedEventArgs e) { ReloadDriveList(); SpecifyDrive(); }
     private void DriveBox_SelectedIndexChanged(object? s, SelectionChangedEventArgs e) => SpecifyDrive();
-    private void NintendontOptions_SelectedIndexChanged(object? s, SelectionChangedEventArgs e) => CheckForBoxes();
-    private void NintendontOptions_DoubleClick(object? s, Avalonia.Input.TappedEventArgs e) => CheckForBoxes();
 
     private void VideoForceMode_SelectedIndexChanged(object? s, SelectionChangedEventArgs e)
     {

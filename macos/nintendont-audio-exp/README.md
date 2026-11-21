@@ -23,13 +23,19 @@ Homebrew Channel matches the loader.
 
 ## How to try it
 
+**Try this first, it needs no build.** In Nintendont's own settings, toggle "Skip IPL" and play the same scene both ways.
+Loading a real IPL pins the audio interface to 32 kHz, so the two modes can hand the Wii U different sample rates. Also
+rule out the TV: game mode on, audio processing off, and compare TV speakers against a receiver. The delay you hear may well
+come from the Wii U output chain and not from Nintendont at all, and this variant cannot change that.
+
+Then, if the delay is still there and mostly affects streamed music:
+
 1. Open the app's Nintendont SD Card menu.
 2. Tick "Install the audio buffer experiment instead of the latest upstream build" (the box only shows when the app
    ships this build) and press the download button with your SD card selected.
 3. Play your GameCube WUP as usual. The WUP's autobooter starts `sd:/apps/nintendont/boot.dol`.
 4. Compare against the upstream build (box unticked), ideally with a phone recording at 240 fps of the screen and the
-   speaker. One more free test needs no build: toggle Nintendont's "Skip IPL" setting, because loading a real IPL pins the
-   audio interface to 32 kHz.
+   speaker.
 
 ## Rebuilding
 
@@ -55,4 +61,5 @@ What was checked when this build was made:
 ## License
 
 Nintendont is GPL v2. This directory ships a modified binary, so the matching source is the pinned upstream commit above
-plus `half-stream-buffers.patch`, and `build.sh` reproduces the binary from them.
+plus `half-stream-buffers.patch`. `build.sh` is meant to rebuild the binary from them; whether it reproduces the shipped
+`boot.dol` hash was not confirmed when this was written (the shipped file was built by running the same steps by hand).

@@ -61,14 +61,41 @@ Both of these are outside Nintendont and this repo, and neither is confirmed by 
 3. Change only the TV side first: game mode, disable audio processing, or take audio from a
    different output (TV speakers against a receiver).
 4. If vWii through Nintendont is later than the real console on the same TV, the delay is in the vWii
-   output path, not the emulation logic. If only streamed music is late (menu and effect sounds are fine),
-   test the stream path: set `BUFSIZE`, `CHUNK_48` and `CHUNK_48to32` in `kernel/Stream.c` to a smaller
-   consistent value, rebuild, and listen for underruns on a slow SD card.
+   output path, not the emulation logic. Then try the two experiments below.
 
-## If a stream path experiment is wanted later
+## Experiments, cheapest first
 
-Building Nintendont needs devkitPPC and devkitARM (the kernel runs on the Starlet ARM, the loader on
-the PPC); the upstream `Makefile` stops with an error when `DEVKITPPC` or `DEVKITARM` is not set. Neither
-toolchain was installed or built during this audit. The injector does not ship Nintendont: `macos/WiiVCInjector/SDCardWindow.axaml.cs`
-downloads `loader.dol`, `meta.xml` and `icon.png` from upstream `master` at run time, so a tested fork binary
-would be a deliberate change to that download URL, not a build step of this repo.
+**1. Skip IPL on or off (no build needed).** When "Skip IPL" is off and a GameCube IPL image is found,
+`loader/source/main.c` boots the real IPL and then writes `0x68` to `AI_CR` (`0xCD806C00`), which pins
+the AI to 32 kHz with the comment "No Resample". With "Skip IPL" on, Nintendont's own loader runs and leaves
+the AI rate to the game. The two modes can therefore hand the Wii U different sample rates, and the Wii U
+resamples them in its own path. Run the same game with the option on and off and compare against the video. This
+is a hypothesis: nothing in the code or in a source shows it changes latency, only that the rate differs.
+
+**2. Smaller stream buffers (needs a build, only for streamed music).** The size `0xC400` is hard coded in
+more than one place, so changing it in one file breaks the stream:
+
+- `kernel/Stream.c`: `BUFSIZE`, `CHUNK_48`, `CHUNK_48to32`, and the addresses `buf1` and `buf2`.
+- `kernel/asm/__DSPHandler.S`: `li r3,0xC40; slwi r3,r3,4` and the `MAXBUF` double (`0x18800`), plus the same
+  `0xC40` constant again in `changebuffer`.
+- `kernel/asm/MajoraAudioStream.S`: the same two constants.
+- `kernel/asm/constants.inc`: `AI_ADP_BUF` (`0x93280000`).
+
+Halving all of them gives about 130 ms chunks. That shortens the refill cadence, but streamed music already
+starts at once, so a gain is not expected unless the delay is in how late a refill lands. Treat it as a way to
+rule the stream path in or out, and watch for crackling on a slow SD card or USB drive.
+
+## Why no binary was built
+
+The upstream README pins **devkitARM r53-1** and **devkitPPC r35-2** and warns that newer devkitPro and libOGC
+produce a build that crashes when returning to the Nintendont menu. The README links those old releases from an
+archive folder. This audit did not check whether any Docker image carries them, and no build was attempted: a
+binary from the latest toolchain cannot be trusted, and one from the pinned toolchain still needs a test on a
+real vWii. The upstream `Makefile` also stops when `DEVKITPPC` or `DEVKITARM` is unset.
+
+## How Nintendont reaches the user in this repo
+
+The injector does not ship or build Nintendont. `macos/WiiVCInjector/SDCardWindow.axaml.cs` downloads `loader.dol`,
+`meta.xml` and `icon.png` from upstream `master` at run time, so every user already gets the latest upstream
+Nintendont with no step in this repo. Using a modified build would mean changing that download URL to a place that
+hosts a hardware-tested binary.

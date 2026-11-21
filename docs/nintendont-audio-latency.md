@@ -88,10 +88,25 @@ rule the stream path in or out, and watch for crackling on a slow SD card or USB
 ## Why no binary was built
 
 The upstream README pins **devkitARM r53-1** and **devkitPPC r35-2** and warns that newer devkitPro and libOGC
-produce a build that crashes when returning to the Nintendont menu. The README links those old releases from an
-archive folder. This audit did not check whether any Docker image carries them, and no build was attempted: a
-binary from the latest toolchain cannot be trusted, and one from the pinned toolchain still needs a test on a
-real vWii. The upstream `Makefile` also stops when `DEVKITPPC` or `DEVKITARM` is unset.
+produce a build that crashes when returning to the Nintendont menu. No build of the Nintendont tree was
+completed, and none was tested on a vWii.
+
+What was checked, so the next attempt does not start from zero:
+
+- The old Linux packages exist on an unofficial third-party mirror (`wii.leseratte10.de/devkitPro`), not on devkitPro's
+  own servers: `devkitARM-r53-1-linux.pkg.tar.xz` (sha256 `140d217a...9fa9599`),
+  `devkitPPC-r35-1-linux.pkg.tar.xz` (sha256 `2916d431...181658`; r35-2 is Windows only there) and
+  `libogc-1.8.23-1-any.pkg.tar.xz` (sha256 `e5b61a2e...8514c6707`).
+- Extracted into `/opt/devkitpro` in a `linux/amd64` Ubuntu 22.04 container, the compilers run:
+  `powerpc-eabi-gcc (devkitPPC release 35) 8.3.0` and `arm-none-eabi-gcc (devkitARM release 53) 9.1.0`.
+- Running the unmodified upstream `make forced` there stopped at `fatfs/Makefile.ppc`: `/opt/devkitpro/devkitPPC/wii_rules:
+  No such file or directory`. That file comes from the separate `devkitppc-rules` package (the mirror lists versions
+  1.0.0 to 1.2.1). Which version matches r35 was not determined.
+- The upstream tree already commits a prebuilt `loader/loader.dol` (1651360 bytes), which is the baseline to compare any
+  experimental build against.
+
+The attempt to add the rules package and rerun was blocked by the session's permission check (it downloads and
+runs third-party binaries), so it was not retried. The upstream `Makefile` also stops when `DEVKITPPC` or `DEVKITARM` is unset.
 
 ## How Nintendont reaches the user in this repo
 

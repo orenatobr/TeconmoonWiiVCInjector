@@ -106,7 +106,12 @@ What was checked, so the next attempt does not start from zero:
   experimental build against.
 
 The attempt to add the rules package and rerun was blocked by the session's permission check (it downloads and
-runs third-party binaries), so it was not retried. The upstream `Makefile` also stops when `DEVKITPPC` or `DEVKITARM` is unset.
+runs third-party binaries), so it was not retried. The remaining step for a human: download
+`https://wii.leseratte10.de/devkitPro/devkitPPC/devkitppc-rules/devkitppc-rules-1.1.1-1-any.pkg.tar.xz` (1.1.1 is a
+guess, its hash was never computed, and 1.1.0-1 is the next candidate), extract it into the same `/opt/devkitpro`
+tree as the three packages above, then rerun `make forced` with `DEVKITPRO`, `DEVKITARM` and `DEVKITPPC` exported.
+
+Both experiments above are untested hypotheses. Neither is a known fix. The upstream `Makefile` also stops when `DEVKITPPC` or `DEVKITARM` is unset.
 
 ## How Nintendont reaches the user in this repo
 

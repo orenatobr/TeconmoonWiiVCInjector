@@ -61,5 +61,8 @@ What was checked when this build was made:
 ## License
 
 Nintendont is GPL v2. This directory ships a modified binary, so the matching source is the pinned upstream commit above
-plus `half-stream-buffers.patch`. `build.sh` is meant to rebuild the binary from them; whether it reproduces the shipped
-`boot.dol` hash was not confirmed when this was written (the shipped file was built by running the same steps by hand).
+plus `half-stream-buffers.patch`. `build.sh` rebuilds the binary from them, but the result is **not bit for bit identical**
+to the shipped `boot.dol`: a full run of the script gave the same size (1651328 bytes) and sha256 `3fea4c4b...a8d72` against the shipped
+`a6a7adfe...953fc40`, with 6.8 KB of differences in 6 regions. One of them is the build time compiled into the loader
+(`14:25:37` against `14:37:03`); the two large ones right after it are most likely the compressed kernel that carries the same kind
+of stamp, which was not checked. Expect a different hash on every build.

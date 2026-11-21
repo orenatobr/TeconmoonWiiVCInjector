@@ -28,6 +28,7 @@ public partial class SDCardWindow : Window
         wiiUGamepadSlotBox.SelectedIndex = 0;
         Opt(0).IsChecked = true;
         Opt(7).IsChecked = true;
+        NintendontAudioExperiment.IsVisible = ChooseNintendontSource(true, AppContext.BaseDirectory).Source == NintendontSource.Experiment;
         CheckForBoxes();
     }
 
@@ -94,18 +95,49 @@ public partial class SDCardWindow : Window
     }
 
     // ---- Nintendont download
+    /// <summary>Where the Nintendont files come from.</summary>
+    internal enum NintendontSource { Upstream, Experiment, Unavailable }
+
+    /// <summary>Picks the Nintendont source. Upstream is the default; the bundled audio experiment (smaller stream buffers) is opt-in.</summary>
+    /// <param name="experiment">Whether the user ticked the experiment box.</param>
+    /// <param name="baseDir">Folder the app runs from (<see cref="AppContext.BaseDirectory"/>).</param>
+    /// <returns>The source and, for the experiment, the folder holding its boot.dol, meta.xml and icon.png.</returns>
+    internal static (NintendontSource Source, string? Dir) ChooseNintendontSource(bool experiment, string baseDir)
+    {
+        if (!experiment) return (NintendontSource.Upstream, null);
+        var dir = Path.Combine(baseDir, "Assets", "nintendont-audio-exp");
+        return NintendontFiles.All(f => File.Exists(Path.Combine(dir, f))) ? (NintendontSource.Experiment, dir) : (NintendontSource.Unavailable, null);
+    }
+
+    /// <summary>The only files an install puts under apps/nintendont on the SD card.</summary>
+    static readonly string[] NintendontFiles = { "boot.dol", "meta.xml", "icon.png" };
+
     private async void NintendontUpdate_Click(object? s, RoutedEventArgs e)
     {
         string downloadPath = Path.Combine(Path.GetTempPath(), "WiiVCInjector", "SOURCETEMP", "Download");
         string tempPath = Path.Combine(downloadPath, "apps", "nintendont");
+        var (source, experimentDir) = ChooseNintendontSource(NintendontAudioExperiment.IsChecked == true, AppContext.BaseDirectory);
+        if (source == NintendontSource.Unavailable)
+        {
+            await Info(this, "This install does not include the audio experiment build.", "Error");
+            return;
+        }
         try
         {
             ActionStatus.Text = "Downloading...";
             if (Directory.Exists(downloadPath)) Directory.Delete(downloadPath, true);
             Directory.CreateDirectory(tempPath);
-            var raw = "https://raw.githubusercontent.com/FIX94/Nintendont/master/";
-            foreach (var (url, file) in new[] { ("loader/loader.dol", "boot.dol"), ("nintendont/meta.xml", "meta.xml"), ("nintendont/icon.png", "icon.png") })
-                await File.WriteAllBytesAsync(Path.Combine(tempPath, file), await Http.GetByteArrayAsync(raw + url));
+            if (experimentDir != null)
+            {
+                // boot.dol, meta.xml and icon.png all come from the same pinned commit, so the version shown in the Homebrew Channel matches the loader.
+                foreach (var f in NintendontFiles) File.Copy(Path.Combine(experimentDir, f), Path.Combine(tempPath, f), true);
+            }
+            else
+            {
+                var raw = "https://raw.githubusercontent.com/FIX94/Nintendont/master/";
+                foreach (var (url, file) in new[] { ("loader/loader.dol", "boot.dol"), ("nintendont/meta.xml", "meta.xml"), ("nintendont/icon.png", "icon.png") })
+                    await File.WriteAllBytesAsync(Path.Combine(tempPath, file), await Http.GetByteArrayAsync(raw + url));
+            }
         }
         catch (Exception ex)
         {

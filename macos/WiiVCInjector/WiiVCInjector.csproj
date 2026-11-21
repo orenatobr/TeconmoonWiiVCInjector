@@ -12,6 +12,10 @@
     <EmbeddedResource Include="../../TeconMoon's WiiVC Injector/Resources/wiitdb.txt" LogicalName="wiitdb.txt" />
   </ItemGroup>
   <ItemGroup>
+    <!-- Opt-in Nintendont audio experiment (boot.dol, meta.xml, icon.png). See ../nintendont-audio-exp/README.md. -->
+    <None Include="Assets/nintendont-audio-exp/*" CopyToOutputDirectory="PreserveNewest" CopyToPublishDirectory="PreserveNewest" />
+  </ItemGroup>
+  <ItemGroup>
     <PackageReference Include="Avalonia" Version="12.0.4" />
     <PackageReference Include="Avalonia.Desktop" Version="12.0.4" />
     <PackageReference Include="Avalonia.Themes.Fluent" Version="12.0.4" />

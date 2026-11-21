@@ -1,5 +1,6 @@
 #!/bin/bash
-# Builds dist/WiiVCInjector.app (arm64, self-contained, ad-hoc signed) and a zip.
+# Builds dist/WiiVCInjector.app (arm64, self-contained, ad-hoc signed), a zip and its .sha256 sidecar.
+# Upload both files to the release: install.sh downloads the .sha256 too and stops with a 404 if it is missing.
 # Env: VERSION (default 1.0.0), TOOLS_SRC (dir with bin jar BASE DOL share; default: the local
 # tcmoon-mac/tools), JDK_HOME (default openjdk@17 from Homebrew). nfs2iso2nfs is downloaded and built here.
 set -euo pipefail
@@ -15,7 +16,7 @@ TOOLS="$RES/tools"
 WORK="$(mktemp -d)"
 trap 'rm -rf "$WORK"' EXIT
 
-rm -rf "$APP" "$DIST/WiiVCInjector-macos-arm64.zip"
+rm -rf "$APP" "$DIST/WiiVCInjector-macos-arm64.zip" "$DIST/WiiVCInjector-macos-arm64.zip.sha256"
 mkdir -p "$APP/Contents/MacOS" "$TOOLS"/{bin,jar}
 
 echo "==> publish app"
@@ -92,4 +93,5 @@ codesign --verify --deep --strict "$APP" && echo "codesign verify OK"
 
 echo "==> zip"
 ditto -c -k --keepParent "$APP" "$DIST/WiiVCInjector-macos-arm64.zip"
+(cd "$DIST" && shasum -a 256 WiiVCInjector-macos-arm64.zip > WiiVCInjector-macos-arm64.zip.sha256 && cat WiiVCInjector-macos-arm64.zip.sha256)
 ls -lh "$DIST/WiiVCInjector-macos-arm64.zip"

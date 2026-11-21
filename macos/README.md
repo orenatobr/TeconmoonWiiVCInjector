@@ -81,3 +81,4 @@ or a failed build is skipped and listed in the final summary; the other games st
 
 - `WIIVC_SNAPSHOT=out.png [WIIVC_TAB=n] dotnet bin/Release/net10.0/WiiVCInjector.dll` renders a tab to a PNG and exits.
 - `WIIVC_UITEST=1 dotnet bin/Release/net10.0/WiiVCInjector.dll` runs the UI logic self-test (uses a temporary settings file).
+- `WIIVC_GCCONVERT=game.rvz [WIIVC_GCOUT=out.iso] WIIVC_SELFTEST=1 dotnet bin/Release/net10.0/WiiVCInjector.dll` unpacks a GameCube image (ISO, CISO, RVZ or NKit) with the code the build uses, walks the disc's file table and prints the SHA-1. The same game in CISO, RVZ and NKit must print the same SHA-1; an RVZ or NKit image downloads the NKit tool the first time.

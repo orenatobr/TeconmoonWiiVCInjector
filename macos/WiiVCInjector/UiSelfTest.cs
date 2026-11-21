@@ -11,6 +11,8 @@ public static class UiSelfTest
         Console.WriteLine($"{(ok ? "PASS" : "FAIL")} {name}{(detail != "" ? " (" + detail + ")" : "")}");
     }
 
+    static bool Throws(Action a) { try { a(); return false; } catch { return true; } }
+
     static byte[] Iso(string id, string name, long magic)
     {
         var b = new byte[0x400];
@@ -229,6 +231,20 @@ public static class UiSelfTest
             var cfg = SDCardWindow.BuildConfig(opt, false, 0, 0, 0, 2, 640, 0);
             T("nincfg layout", cfg.Length == 20 + 512 + 8 + 4 + 4 && cfg[0] == 0x01 && cfg[1] == 0x07 && cfg[2] == 0x0C && cfg[3] == 0xF6
                 && cfg[11] == 8 /* memcard emu bit in config */ && cfg[15] == 0x10 /* VidProg */ && cfg[^5] == 0, cfg.Length.ToString());
+
+            // --- writing to the SD card must report an error, not crash the app
+            var staged = Path.Combine(tmp, "staged", "apps", "nintendont");
+            Directory.CreateDirectory(staged);
+            File.WriteAllBytes(Path.Combine(staged, "boot.dol"), new byte[] { 1 });
+            var goodDrive = Path.Combine(tmp, "sd") + Path.DirectorySeparatorChar;
+            Directory.CreateDirectory(goodDrive);
+            T("sd write: success returns no error", SDCardWindow.TryFileOp(() => SDCardWindow.InstallToDrive(staged, goodDrive)) == null
+                && File.Exists(Path.Combine(goodDrive, "apps", "nintendont", "boot.dol")));
+            var notADrive = Path.Combine(tmp, "not-a-drive");   // a file, so nothing can be created under it (also true when run as root)
+            File.WriteAllBytes(notADrive, new byte[] { 1 });
+            T("sd write: an unwritable drive returns the error instead of throwing",
+                SDCardWindow.TryFileOp(() => SDCardWindow.InstallToDrive(staged, notADrive + Path.DirectorySeparatorChar)) is { Length: > 0 });
+            T("sd write: other exceptions still surface", Throws(() => SDCardWindow.TryFileOp(() => throw new InvalidOperationException("bug"))));
 
             // --- Nintendont audio experiment build (opt-in, upstream stays the default)
             var expDir = Path.Combine(tmp, "Assets", "nintendont-audio-exp");

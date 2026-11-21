@@ -112,6 +112,29 @@ public partial class SDCardWindow : Window
     /// <summary>The only files an install puts under apps/nintendont on the SD card.</summary>
     static readonly string[] NintendontFiles = { "boot.dol", "meta.xml", "icon.png" };
 
+    /// <summary>Runs a file operation on the drive and returns the error text, or null on success.</summary>
+    /// <remarks>A drive that cannot be written (a system volume such as Recovery, or a volume the app may not access)
+    /// has to produce a message: an exception that escapes an <c>async void</c> handler ends the whole process.</remarks>
+    /// <param name="op">The file operation to run.</param>
+    internal static string? TryFileOp(Action op)
+    {
+        try { op(); return null; }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { return ex.Message; }
+    }
+
+    /// <summary>Copies the staged Nintendont files to <c>apps/nintendont</c> on the drive, replacing what is there.</summary>
+    /// <param name="stagedDir">Folder holding the files to install.</param>
+    /// <param name="drive">Mount point of the SD card, ending with a slash.</param>
+    internal static void InstallToDrive(string stagedDir, string drive)
+    {
+        var sd = Path.Combine(drive, "apps", "nintendont");
+        if (Directory.Exists(sd)) Directory.Delete(sd, true);
+        Directory.CreateDirectory(sd);
+        foreach (var f in new DirectoryInfo(stagedDir).GetFiles()) f.CopyTo(Path.Combine(sd, f.Name), true);
+    }
+
+    const string DriveHint = "Pick another drive (system volumes such as Recovery are not writable). If this is your SD card, check that it is writable and that WiiVCInjector may access removable volumes.";
+
     private async void NintendontUpdate_Click(object? s, RoutedEventArgs e)
     {
         string downloadPath = Path.Combine(Path.GetTempPath(), "WiiVCInjector", "SOURCETEMP", "Download");
@@ -149,10 +172,11 @@ public partial class SDCardWindow : Window
 
         if (_driveSpecified)
         {
-            var sd = Path.Combine(_selectedDrive, "apps", "nintendont");
-            if (Directory.Exists(sd)) Directory.Delete(sd, true);
-            Directory.CreateDirectory(sd);
-            foreach (var f in new DirectoryInfo(tempPath).GetFiles()) f.CopyTo(Path.Combine(sd, f.Name), true);
+            if (TryFileOp(() => InstallToDrive(tempPath, _selectedDrive)) is { } err)
+            {
+                await Info(this, $"Could not write to {_selectedDrive}: {err}\n{DriveHint}", "Error");
+                return;
+            }
             await Info(this, "Download complete.", "Success");
         }
         else if (await Dialogs.Ask(this, "SD Card not specified.\nDo you wish to save Nintendont somewhere else?", "Drive not specified"))
@@ -164,8 +188,11 @@ public partial class SDCardWindow : Window
                 FileTypeChoices = new[] { new FilePickerFileType("Zip Files") { Patterns = new[] { "*.zip" } } },
             });
             if (f?.TryGetLocalPath() is not { } zip) return;
-            if (File.Exists(zip)) File.Delete(zip);
-            ZipFile.CreateFromDirectory(downloadPath, zip);
+            if (TryFileOp(() => { if (File.Exists(zip)) File.Delete(zip); ZipFile.CreateFromDirectory(downloadPath, zip); }) is { } zipErr)
+            {
+                await Info(this, $"Could not save {zip}: {zipErr}", "Error");
+                return;
+            }
             await Info(this, "Download complete.", "Success");
         }
     }
@@ -230,7 +257,11 @@ public partial class SDCardWindow : Window
             if (f?.TryGetLocalPath() is not { } p) return;
             savePath = p;
         }
-        File.WriteAllBytes(savePath, data);
+        if (TryFileOp(() => File.WriteAllBytes(savePath, data)) is { } cfgErr)
+        {
+            await Info(this, $"Could not write {savePath}: {cfgErr}\n{DriveHint}", "Error");
+            return;
+        }
         await Info(this, "Config generation complete.", "Information");
     }
 

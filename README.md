@@ -19,7 +19,7 @@ This fork adds a native **macOS (Apple Silicon) port** under [`macos/`](macos/),
 
 A zip downloaded in a browser is blocked by Gatekeeper because the app is ad-hoc signed, not notarized; the command above avoids that.
 
-**Status:** a Xenoblade Chronicles (Wii) package built with this app was installed and runs on a real Wii U. A 6.78 GB WBFS produces a 6.4 GiB package, and its WBFS to ISO to NFS to ISO roundtrip passes `wit verify`. The other paths (ISO, GameCube, WiiWare, homebrew DOL) were only run with synthetic inputs, not tested with real games on a console. NKit/NASOS input is not supported on macOS; use ISO or WBFS. See [`macos/README.md`](macos/README.md) for build, first run and checks.
+**Status:** a Xenoblade Chronicles (Wii) package built with this app was installed and runs on a real Wii U. A 6.78 GB WBFS produces a 6.4 GiB package, and its WBFS to ISO to NFS to ISO roundtrip passes `wit verify`. The other paths (ISO, GameCube, WiiWare, homebrew DOL) were only run with synthetic inputs, not tested with real games on a console. Wii NKit/NASOS input is not supported on macOS; use ISO or WBFS. GameCube games can also be a CISO, an RVZ or an NKit ISO (see [`macos/README.md`](macos/README.md)). See [`macos/README.md`](macos/README.md) for build, first run and checks.
 
 ---
 

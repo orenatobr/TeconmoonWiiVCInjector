@@ -36,6 +36,8 @@ public partial class MainWindow : Window
 
     // Filters from the OpenFileDialog definitions of the designer (OpenIcon.Filter etc. come from Form1.resx)
     const string ImageFilter = "Supported Image Files (*.png,*.tga,*.jpg,*.jpeg,*.bmp,*.gif)|*.png;*.tga;*.jpg;*.jpeg;*.bmp;*.gif|PNG Files (*.png)|*.png|TGA Files (*.tga)|*.tga|JPEG Files (*.jpg,*.jpeg)|*.jpg;*.jpeg|BMP Files (*.bmp)|*.bmp|GIF Files (*.gif)|*.gif";
+    /// <summary>GameCube images. A .nkit.iso matches *.iso.</summary>
+    internal const string GcFilter = "GameCube Dumps (*.gcm,*.iso,*.ciso,*.rvz)|*.gcm;*.iso;*.ciso;*.rvz";
     string gameFilter = "Wii Dumps (*.iso,*.wbfs,*.iso.dec)|*.iso;*.wbfs;*.iso.dec";
 
     public MainWindow()
@@ -282,7 +284,7 @@ public partial class MainWindow : Window
         RepoDownload.IsEnabled = true;
         GameSourceButton.IsEnabled = true;
         GameSourceButton.Content = ButtonText("Browse...");
-        gameFilter = "GameCube Dumps (*.gcm,*.iso)|*.gcm;*.iso";
+        gameFilter = GcFilter;
         ResetGame();
         SystemType = "gcn";
         DRCUSE = "65537";
@@ -364,7 +366,7 @@ public partial class MainWindow : Window
         SetPath(GameSourceDirectory, path, true);
         FlagGameSpecified = true;
         GameHeader h;
-        using (var fs = File.OpenRead(path)) h = GameHeader.Parse(fs);
+        h = GameHeader.ParseFile(path);
         FlagWBFS = h.Wbfs; FlagNKIT = h.Nkit; FlagNASOS = h.Nasos;
         GameType = h.GameType;
         InternalGameName = h.InternalName;
@@ -373,9 +375,12 @@ public partial class MainWindow : Window
         string? error = null;
         if (SystemType == "wii" && GameType != GameHeader.WiiType) error = "This is not a Wii image. It will not be loaded.";
         if (SystemType == "gcn" && GameType != GameHeader.GcType) error = "This is not a GameCube image. It will not be loaded.";
-        if (error == null && (FlagNKIT || FlagNASOS))
-            error = "NKit and NASOS images are not supported on macOS yet (the Windows app converts them with NKit). " +
+        // GameCube NKit and RVZ images are unpacked by the build (NKit tool). The Wii ones are not supported on macOS yet.
+        if (error == null && (FlagNASOS || (FlagNKIT && SystemType != "gcn")))
+            error = "NKit and NASOS images of Wii games are not supported on macOS yet (the Windows app converts them with NKit). " +
                     "Convert the game to a plain ISO or WBFS first, then select that file.";
+        if (error == null && SystemType != "gcn" && h.Format == GcImageFormat.Rvz)
+            error = "RVZ images are only supported for GameCube games. Convert the game to a plain ISO or WBFS first, then select that file.";
         if (error != null)
         {
             ResetGame();
@@ -526,10 +531,9 @@ public partial class MainWindow : Window
 
     private async void GC2SourceButton_Click(object? s, RoutedEventArgs e)
     {
-        var f = await PickFile("Specify your GameCube game's 2nd disc", "GameCube Disk 2 (*.gcm,*.iso)|*.gcm;*.iso", "disc2");
+        var f = await PickFile("Specify your GameCube game's 2nd disc", GcFilter, "disc2");
         if (f == null) { ResetGc2(); GC2SourceButton.IsEnabled = true; return; }
-        using var fs = File.OpenRead(f);
-        if (GameHeader.Parse(fs).GameType != GameHeader.GcType)
+        if (GameHeader.ParseFile(f).GameType != GameHeader.GcType)
         {
             await Dialogs.Info(this, "This is not a GameCube image. It will not be loaded.", "Error");
             SetPath(GC2SourceDirectory, "2nd GameCube Disc Image has not been specified", false);

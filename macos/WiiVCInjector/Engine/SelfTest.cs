@@ -49,6 +49,8 @@ internal static class SelfTest
     {
         if (Environment.GetEnvironmentVariable("WIIVC_BUILDFILE") is { Length: > 0 } bf) return BuildFile(bf);
         if (Environment.GetEnvironmentVariable("WIIVC_VALIDATE") is { Length: > 0 } vd) return ValidateDir(vd);
+        if (Environment.GetEnvironmentVariable("WIIVC_GCCONVERT") is { Length: > 0 } gi)
+            return GcConvert(gi, Environment.GetEnvironmentVariable("WIIVC_GCOUT") is { Length: > 0 } go ? go : Path.ChangeExtension(gi, ".converted.iso"));
         if (Environment.GetEnvironmentVariable("WIIVC_TGATEST") is { Length: > 0 } td)
         {   // WIIVC_TGATEST=dir with iconTex.png and bootTvTex.png: writes our TGAs next to them for a byte comparison
             Media.WriteTga(Path.Combine(td, "iconTex.png"), Path.Combine(td, "iconTex.tga"), 128, 128, 32);
@@ -56,10 +58,38 @@ internal static class SelfTest
             Media.WriteTga(Path.Combine(td, "bootTvTex.png"), Path.Combine(td, "bootDrcTex.tga"), 854, 480, 24);
             return 0;
         }
-        try { Units(); Builds(); }
+        try { Units(); GcPrepare(); Builds(); }
         catch (Exception e) { Console.WriteLine("[FAIL] exception: " + e); _fail++; }
         Console.WriteLine(_fail == 0 ? "ALL OK" : $"{_fail} FAILED");
         return _fail == 0 ? 0 : 1;
+    }
+
+    /// <summary>A CISO game goes through the real GameCube build step: it is unpacked to files/game.iso inside the ISO that wit builds.</summary>
+    static void GcPrepare()
+    {
+        var tmp = Path.Combine(Path.GetTempPath(), "wiivc-gc-" + Guid.NewGuid().ToString("N")); Directory.CreateDirectory(tmp);
+        try
+        {
+            // blocks of 0x8000: a header (no GameCube magic, so the result is not padded to a 1.4 GB disc), a hole, a block of 0xAB
+            var head = new byte[0x8000]; Encoding.ASCII.GetBytes("GXYZ").CopyTo(head, 0);
+            var data = Enumerable.Repeat((byte)0xAB, 0x8000).ToArray();
+            var ciso = new byte[0x8000 + 0x10000];
+            Encoding.ASCII.GetBytes("CISO").CopyTo(ciso, 0);
+            BitConverter.GetBytes(0x8000u).CopyTo(ciso, 4);
+            ciso[8] = 1; ciso[9] = 0; ciso[10] = 1;
+            head.CopyTo(ciso, 0x8000); data.CopyTo(ciso, 0x10000);
+            var expected = new byte[0x18000]; head.CopyTo(expected, 0); data.CopyTo(expected, 0x10000);
+            var game = Path.Combine(tmp, "game.ciso");
+            File.WriteAllBytes(game, ciso);
+
+            var wit = Tools.Native("wit");
+            var iso = BuildEngine.PrepareIso(new BuildOptions { System = "gcn", GamePath = game }, tmp, wit, (exe, args, cwd) => Tools.Run(exe, args, cwd, default), default);
+            var ex = Path.Combine(tmp, "extracted");
+            Tools.Run(wit, ["extract", iso, "--DEST", ex, "--psel", "data,-update", "-ovv"], null, default);
+            var got = File.ReadAllBytes(Path.Combine(ex, "files", "game.iso"));
+            Check("gc build step: a CISO game ends up as game.iso inside the ISO", got.SequenceEqual(expected));
+        }
+        finally { Directory.Delete(tmp, true); }
     }
 
     static void Units()
@@ -113,6 +143,42 @@ internal static class SelfTest
             Check("tga rows bottom-up", b[18] == 0xFF && b[19] == 0 && b[20] == 0 && b[^29] == 0 && b[^27] == 0xFF && System.Text.Encoding.ASCII.GetString(b, b.Length - 18, 17) == "TRUEVISION-XFILE.");
         }
         finally { Directory.Delete(tmp, true); }
+    }
+
+    /// <summary>WIIVC_GCCONVERT=image [WIIVC_GCOUT=out.iso] unpacks a GameCube image with the same code the build uses and checks the result.
+    /// Prints the format, size, a walk of the disc's file table and the SHA-1: the same game in CISO, RVZ and NKit gives the same SHA-1.</summary>
+    static int GcConvert(string input, string output)
+    {
+        BuildEngine.Log += l => Console.WriteLine("    " + l);
+        var format = GcImage.Detect(input);
+        var h = GameHeader.ParseFile(input);
+        Console.WriteLine($"format: {format}; id: {h.RepoId}; name: {h.InternalName}; gamecube: {h.GameType == GameHeader.GcType}");
+        var sw = System.Diagnostics.Stopwatch.StartNew();
+        GcImage.PrepareIso(input, output, null, default);
+        Console.WriteLine($"converted in {sw.Elapsed.TotalSeconds:F1}s to {output}");
+        using var f = File.OpenRead(output);
+        byte[] Read(long pos, int n) { var b = new byte[n]; f.Position = pos; f.ReadExactly(b); return b; }
+        uint Be(byte[] b, int o) => System.Buffers.Binary.BinaryPrimitives.ReadUInt32BigEndian(b.AsSpan(o));
+        var magic = Read(0x1C, 4).SequenceEqual(new byte[] { 0xC2, 0x33, 0x9F, 0x3D });
+        var ok = magic && f.Length == GcImage.DiscSize;
+        Console.WriteLine($"size {f.Length} (a full disc is {GcImage.DiscSize}): {(f.Length == GcImage.DiscSize ? "ok" : "DIFFERENT")}; disc magic: {(magic ? "ok" : "MISSING")}");
+        if (magic)
+        {
+            var fstOff = Be(Read(0x424, 4), 0); var fstSize = Be(Read(0x428, 4), 0);
+            var fst = Read(fstOff, (int)fstSize);
+            var entries = (int)Be(fst, 8); int files = 0, outside = 0;
+            for (var i = 1; i < entries; i++)
+            {
+                if (fst[i * 12] == 1) continue;
+                files++;
+                if ((long)Be(fst, i * 12 + 4) + Be(fst, i * 12 + 8) > f.Length) outside++;
+            }
+            Console.WriteLine($"file table: {files} files, {outside} outside the image: {(outside == 0 ? "ok" : "BAD")}");
+            ok &= outside == 0;
+        }
+        f.Position = 0;
+        Console.WriteLine("sha1: " + Convert.ToHexString(System.Security.Cryptography.SHA1.HashData(f)));
+        return ok ? 0 : 1;
     }
 
     static string Png(string path)

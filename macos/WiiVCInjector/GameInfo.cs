@@ -7,6 +7,8 @@ namespace WiiVCInjector;
 public sealed class GameHeader
 {
     public bool Wbfs, Nkit, Nasos, IsDol;
+    /// <summary>Container of a GameCube image (ISO, CISO, RVZ, NKit); Unknown for Wii images, DOLs and anything else.</summary>
+    public GcImageFormat Format;
     public long GameType;
     public string InternalName = "";
     /// <summary>Game id as text (CucholixRepoID), e.g. RSPE01.</summary>
@@ -15,6 +17,16 @@ public sealed class GameHeader
     public string IdHex = "";
 
     public const long WiiType = 2745048157, GcType = 4440324665927270400;
+
+    /// <summary>Reads the header of the image at <paramref name="path"/>, looking inside a CISO or RVZ for the disc header.</summary>
+    public static GameHeader ParseFile(string path)
+    {
+        var format = GcImage.Detect(path);
+        using var s = GcImage.OpenHeader(path);
+        var h = Parse(s);
+        h.Format = format;
+        return h;
+    }
 
     public static GameHeader Parse(Stream s)
     {

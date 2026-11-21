@@ -73,7 +73,7 @@ public static class BuildEngine
 
             P(60, "Processing game for NFS Conversion...");
             var wit = Tools.Native("wit");
-            var iso = PrepareIso(o, work, wit, Exec);
+            var iso = PrepareIso(o, work, wit, Exec, ct);
             IsoReady?.Invoke(iso);
 
             var tik = Path.Combine(work, "TIKTEMP");
@@ -130,7 +130,7 @@ public static class BuildEngine
     /// <summary>Retail Wii common key (public). Checked by decrypting the first block of a disc partition: it starts with the game id.</summary>
     static readonly byte[] WiiCommonKey = Convert.FromHexString("EBE42A225E8593E448D9C5457381AAF7");
 
-    static string PrepareIso(BuildOptions o, string work, string wit, Action<string, IEnumerable<string>, string?> exec)
+    internal static string PrepareIso(BuildOptions o, string work, string wit, Action<string, IEnumerable<string>, string?> exec, CancellationToken ct)
     {
         var iso = Path.Combine(work, "game.iso");
         if (o.System == "wii")
@@ -183,8 +183,9 @@ public static class BuildEngine
                 // original precedence: force flags, then custom DOL, then forwarder, then default autobooter
                 var custom = !string.IsNullOrEmpty(o.CustomDolPath) && !o.Force43 && !o.ForceInterlaced;
                 File.Copy(custom ? o.CustomDolPath! : Path.Combine(Tools.Root, "DOL", Metadata.GcnBooter(o)), main, true);
-                File.Copy(o.GamePath, Path.Combine(b, "files", "game.iso"), true);
-                if (!string.IsNullOrEmpty(o.Game2Path)) File.Copy(o.Game2Path, Path.Combine(b, "files", "disc2.iso"), true);
+                // ISO and GCM are copied; CISO, RVZ and NKit images are unpacked to a plain ISO (Nintendont gets game.iso)
+                GcImage.PrepareIso(o.GamePath, Path.Combine(b, "files", "game.iso"), null, ct);
+                if (!string.IsNullOrEmpty(o.Game2Path)) GcImage.PrepareIso(o.Game2Path, Path.Combine(b, "files", "disc2.iso"), null, ct);
                 break;
         }
         exec(wit, ["copy", b, "--DEST", iso, "-ovv", "--links", "--iso"], null);

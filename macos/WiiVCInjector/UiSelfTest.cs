@@ -13,6 +13,22 @@ public static class UiSelfTest
 
     static bool Throws(Action a) { try { a(); return false; } catch { return true; } }
 
+    static bool Throws<TEx>(Action a) where TEx : Exception { try { a(); return false; } catch (TEx) { return true; } catch { return false; } }
+
+    /// <summary>A synthetic CISO: header, block size, one map byte per block, then the present blocks in order.</summary>
+    static byte[] Ciso(uint blockSize, byte[] map, params byte[][] blocks)
+    {
+        var b = new byte[0x8000 + blocks.Sum(x => x.Length)];
+        System.Text.Encoding.ASCII.GetBytes("CISO").CopyTo(b, 0);
+        BitConverter.GetBytes(blockSize).CopyTo(b, 4);
+        map.CopyTo(b, 8);
+        var at = 0x8000;
+        foreach (var blk in blocks) { blk.CopyTo(b, at); at += blk.Length; }
+        return b;
+    }
+
+    static byte[] Padded(byte[] head, int size) { var b = new byte[size]; head.CopyTo(b, 0); return b; }
+
     static byte[] Iso(string id, string name, long magic)
     {
         var b = new byte[0x400];
@@ -245,6 +261,111 @@ public static class UiSelfTest
             T("sd write: an unwritable drive returns the error instead of throwing",
                 SDCardWindow.TryFileOp(() => SDCardWindow.InstallToDrive(staged, notADrive + Path.DirectorySeparatorChar)) is { Length: > 0 });
             T("sd write: other exceptions still surface", Throws(() => SDCardWindow.TryFileOp(() => throw new InvalidOperationException("bug"))));
+
+            // --- GameCube images: CISO, RVZ and NKit are detected, and the game id is read from inside them
+            var gcHead = Iso("GEAP", "Skies of Arcadia Legends", GameHeader.GcType);
+            var plainIso = Path.Combine(tmp, "plain.iso");
+            File.WriteAllBytes(plainIso, Padded(gcHead, 0x8000));
+            var nkitHead = Padded(gcHead, 0x8000);
+            System.Text.Encoding.ASCII.GetBytes("NKIT v01").CopyTo(nkitHead, 0x200);
+            var nkitIso = Path.Combine(tmp, "game.nkit.iso");
+            File.WriteAllBytes(nkitIso, nkitHead);
+            var cisoPath = Path.Combine(tmp, "game.ciso");
+            File.WriteAllBytes(cisoPath, Ciso(0x8000, new byte[] { 1, 0, 1 }, Padded(gcHead, 0x8000), Enumerable.Repeat((byte)0xAB, 0x8000).ToArray()));
+            var rvzBytes = new byte[0x200];
+            System.Text.Encoding.ASCII.GetBytes("RVZ\x01").CopyTo(rvzBytes, 0);
+            gcHead.AsSpan(0, 0x80).CopyTo(rvzBytes.AsSpan(0x58));
+            var rvzPath = Path.Combine(tmp, "game.rvz");
+            File.WriteAllBytes(rvzPath, rvzBytes);
+            var junkPath = Path.Combine(tmp, "junk.bin");
+            File.WriteAllBytes(junkPath, new byte[0x300]);
+            T("gc format: plain iso", GcImage.Detect(plainIso) == GcImageFormat.Iso);
+            T("gc format: nkit.iso", GcImage.Detect(nkitIso) == GcImageFormat.Nkit);
+            T("gc format: ciso", GcImage.Detect(cisoPath) == GcImageFormat.Ciso);
+            T("gc format: rvz", GcImage.Detect(rvzPath) == GcImageFormat.Rvz);
+            T("gc format: anything else is unknown", GcImage.Detect(junkPath) == GcImageFormat.Unknown);
+            foreach (var (label, path) in new[] { ("iso", plainIso), ("nkit.iso", nkitIso), ("ciso", cisoPath), ("rvz", rvzPath) })
+            {
+                var hdr = GameHeader.ParseFile(path);
+                T($"gc header: {label} gives the game id and name", hdr.RepoId == "GEAP" && hdr.InternalName == "Skies of Arcadia Legends" && hdr.GameType == GameHeader.GcType,
+                    $"{hdr.RepoId} / {hdr.InternalName}");
+                T($"gc game id: {label} is read from inside the image", Metadata.ReadGameId(path) == "GEAP");
+            }
+            T("gc header: nkit.iso is flagged", GameHeader.ParseFile(nkitIso).Nkit && !GameHeader.ParseFile(plainIso).Nkit);
+
+            // --- CISO to ISO: present blocks are copied, absent ones are zeros, and the disc is padded to its size
+            var cisoOut = Path.Combine(tmp, "from-ciso.iso");
+            var reported = new List<int>();
+            GcImage.CisoToIso(cisoPath, cisoOut, new SyncProgress<int>(reported.Add), default, discSize: 0x20000);
+            var iso = File.ReadAllBytes(cisoOut);
+            T("ciso: padded to the disc size", iso.Length == 0x20000, iso.Length.ToString());
+            T("ciso: block 0 is the disc header", iso.AsSpan(0, gcHead.Length).SequenceEqual(gcHead));
+            T("ciso: an absent block is zeros", iso.AsSpan(0x8000, 0x8000).ToArray().All(x => x == 0));
+            T("ciso: a present block is copied", iso.AsSpan(0x10000, 0x8000).ToArray().All(x => x == 0xAB));
+            T("ciso: the padding is zeros", iso.AsSpan(0x18000, 0x8000).ToArray().All(x => x == 0));
+            T("ciso: progress ends at 100", reported.Count > 0 && reported[^1] == 100, string.Join(",", reported));
+            var plainOut = Path.Combine(tmp, "from-iso.iso");
+            GcImage.PrepareIso(plainIso, plainOut, null, default);
+            T("prepare: a plain iso is copied as it is", File.ReadAllBytes(plainOut).SequenceEqual(File.ReadAllBytes(plainIso)));
+            var badMagic = Path.Combine(tmp, "bad.ciso");
+            File.WriteAllBytes(badMagic, new byte[0x9000]);
+            T("ciso: a wrong magic is rejected", Throws<InvalidDataException>(() => GcImage.CisoToIso(badMagic, Path.Combine(tmp, "x1.iso"), null, default)));
+            var truncated = Path.Combine(tmp, "truncated.ciso");
+            File.WriteAllBytes(truncated, Ciso(0x8000, new byte[] { 1, 1 }, Padded(gcHead, 0x8000)));   // the map says 2 blocks, only 1 is there
+            T("ciso: a truncated file is rejected", Throws<InvalidDataException>(() => GcImage.CisoToIso(truncated, Path.Combine(tmp, "x2.iso"), null, default)));
+            T("ciso: no half written output is left behind", !File.Exists(Path.Combine(tmp, "x2.iso")) && !File.Exists(Path.Combine(tmp, "x2.iso") + ".part"));
+            var copiedJunk = Path.Combine(tmp, "x3.iso");
+            GcImage.PrepareIso(junkPath, copiedJunk, null, default);
+            T("prepare: a file that is not CISO, RVZ or NKit is copied as before", File.ReadAllBytes(copiedJunk).SequenceEqual(File.ReadAllBytes(junkPath)));
+
+            // --- RVZ and NKit go through the NKit tool; a stand-in script checks our side of the call
+            var fakeDir = Path.Combine(tmp, "fake-nkit");
+            Directory.CreateDirectory(fakeDir);
+            var fakeNkit = Path.Combine(fakeDir, "nkit");
+            File.WriteAllText(fakeNkit, "#!/bin/bash\n" +
+                "echo \"$@\" > \"$(dirname \"$0\")/args.txt\"\n" +
+                "while [ $# -gt 0 ]; do case \"$1\" in --output) out=\"$2\";; esac; shift; done\n" +
+                "if [ -f \"$(dirname \"$0\")/fail\" ]; then echo 'ERROR: boom' >&2; exit 3; fi\n" +
+                "if [ ! -f \"$(dirname \"$0\")/nothing\" ]; then printf 'FAKEISO' > \"$out/Some Game.iso\"; fi\n" +
+                "echo done\n");
+            File.SetUnixFileMode(fakeNkit, (UnixFileMode)0b111_101_101);
+            Environment.SetEnvironmentVariable("WIIVC_NKIT", fakeNkit);
+            try
+            {
+                foreach (var (label, src) in new[] { ("rvz", rvzPath), ("nkit.iso", nkitIso) })
+                {
+                    var expanded = Path.Combine(tmp, "nkit-" + label + ".iso");
+                    GcImage.PrepareIso(src, expanded, null, default);
+                    T($"nkit tool: {label} becomes the ISO the tool wrote", File.ReadAllText(expanded) == "FAKEISO");
+                    var called = File.ReadAllText(Path.Combine(fakeDir, "args.txt"));
+                    T($"nkit tool: {label} is expanded with the right arguments",
+                        called.StartsWith("expand ") && called.Contains(src) && called.Contains("--output ") && called.Contains("--temp ") && called.Contains("--config "), called.Trim());
+                }
+                File.WriteAllText(Path.Combine(fakeDir, "nothing"), "");
+                T("nkit tool: no ISO written is an error", Throws<InvalidOperationException>(() => GcImage.PrepareIso(rvzPath, Path.Combine(tmp, "n1.iso"), null, default)));
+                File.Delete(Path.Combine(fakeDir, "nothing"));
+                File.WriteAllText(Path.Combine(fakeDir, "fail"), "");
+                T("nkit tool: a failing tool is an error", Throws<InvalidOperationException>(() => GcImage.PrepareIso(rvzPath, Path.Combine(tmp, "n2.iso"), null, default)));
+                T("nkit tool: a failed run leaves no output", !File.Exists(Path.Combine(tmp, "n2.iso")));
+                File.Delete(Path.Combine(fakeDir, "fail"));
+            }
+            finally { Environment.SetEnvironmentVariable("WIIVC_NKIT", null); }
+
+            var zipSrc = Path.Combine(tmp, "nkit-zip-src");
+            Directory.CreateDirectory(zipSrc);
+            File.WriteAllText(Path.Combine(zipSrc, "nkit"), "not a real binary");
+            File.WriteAllText(Path.Combine(zipSrc, "nkit.yaml"), "task:");
+            File.WriteAllText(Path.Combine(zipSrc, "nkds"), "should not be installed");
+            var fakeZip = Path.Combine(tmp, "nkit.zip");
+            System.IO.Compression.ZipFile.CreateFromDirectory(zipSrc, fakeZip);
+            var zipHash = Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(File.ReadAllBytes(fakeZip)));
+            var installDir = Path.Combine(tmp, "nkit-installed");
+            T("nkit install: a zip with the wrong hash is refused", Throws<InvalidDataException>(() => NkitTool.Install(fakeZip, installDir, new string('0', 64))) && !Directory.Exists(installDir));
+            NkitTool.Install(fakeZip, installDir, zipHash);
+            T("nkit install: the executable and config are installed", File.Exists(Path.Combine(installDir, "nkit")) && File.Exists(Path.Combine(installDir, "nkit.yaml")));
+            T("nkit install: only what is needed is unpacked", !File.Exists(Path.Combine(installDir, "nkds")));
+            T("nkit install: the executable is marked executable", (File.GetUnixFileMode(Path.Combine(installDir, "nkit")) & UnixFileMode.UserExecute) != 0);
+            T("nkit install: the verified hash is recorded", File.ReadAllText(Path.Combine(installDir, ".verified")) == zipHash);
 
             // --- Nintendont audio experiment build (opt-in, upstream stays the default)
             var expDir = Path.Combine(tmp, "Assets", "nintendont-audio-exp");

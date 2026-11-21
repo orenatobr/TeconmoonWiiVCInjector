@@ -229,6 +229,19 @@ public static class UiSelfTest
             var cfg = SDCardWindow.BuildConfig(opt, false, 0, 0, 0, 2, 640, 0);
             T("nincfg layout", cfg.Length == 20 + 512 + 8 + 4 + 4 && cfg[0] == 0x01 && cfg[1] == 0x07 && cfg[2] == 0x0C && cfg[3] == 0xF6
                 && cfg[11] == 8 /* memcard emu bit in config */ && cfg[15] == 0x10 /* VidProg */ && cfg[^5] == 0, cfg.Length.ToString());
+
+            // --- Nintendont audio experiment build (opt-in, upstream stays the default)
+            var expDir = Path.Combine(tmp, "Assets", "nintendont-audio-exp");
+            T("nintendont source: upstream when the box is off", SDCardWindow.ChooseNintendontSource(false, tmp) == (SDCardWindow.NintendontSource.Upstream, null));
+            T("nintendont source: unavailable when ticked but not shipped", SDCardWindow.ChooseNintendontSource(true, tmp) == (SDCardWindow.NintendontSource.Unavailable, null));
+            Directory.CreateDirectory(expDir);
+            File.WriteAllBytes(Path.Combine(expDir, "boot.dol"), new byte[] { 1 });
+            T("nintendont source: unavailable when only boot.dol is shipped", SDCardWindow.ChooseNintendontSource(true, tmp) == (SDCardWindow.NintendontSource.Unavailable, null));
+            File.WriteAllBytes(Path.Combine(expDir, "meta.xml"), new byte[] { 1 });
+            File.WriteAllBytes(Path.Combine(expDir, "icon.png"), new byte[] { 1 });
+            T("nintendont source: experiment when ticked and shipped", SDCardWindow.ChooseNintendontSource(true, tmp) == (SDCardWindow.NintendontSource.Experiment, expDir));
+            T("nintendont source: the real build output ships the experiment files", SDCardWindow.ChooseNintendontSource(true, AppContext.BaseDirectory).Source == SDCardWindow.NintendontSource.Experiment, AppContext.BaseDirectory);
+            T("nintendont source: upstream stays the default even when the experiment is shipped", SDCardWindow.ChooseNintendontSource(false, tmp) == (SDCardWindow.NintendontSource.Upstream, null));
         }
         catch (Exception ex)
         {

@@ -28,6 +28,8 @@
             </Button>
             <local:WfLabel Name="ActionStatus" Grid.Column="1" Classes="sub" VerticalAlignment="Center" Text="" />
           </Grid>
+          <CheckBox Name="NintendontAudioExperiment" Content="Install the audio buffer experiment instead of the latest upstream build"
+                    ToolTip.Tip="Nintendont 7a18345 with the streamed music buffers halved (about 130 ms instead of 261 ms). Untested on a real console. Leave this off for the normal upstream build." />
         </StackPanel>
       </Border>
 

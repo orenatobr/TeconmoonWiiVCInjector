@@ -62,10 +62,11 @@ public static partial class BatchConverter
         var name = System.IO.Path.GetFileName(path);
         BatchItem Skip(string why, string title = "") => new(name, path, title, null, null, why);
         GameHeader h;
-        using (var fs = File.OpenRead(path)) h = GameHeader.Parse(fs);
+        h = GameHeader.ParseFile(path);
         var wantType = system == "gcn" ? GameHeader.GcType : GameHeader.WiiType;
         if (h.GameType != wantType) return Skip($"not a {(system == "gcn" ? "GameCube" : "Wii")} image");
-        if (h.Nkit || h.Nasos) return Skip("NKit and NASOS images are not supported, convert it to a plain ISO or WBFS first");
+        if (h.Nasos || (h.Nkit && system != "gcn")) return Skip("NKit and NASOS images of Wii games are not supported, convert it to a plain ISO or WBFS first");
+        if (system != "gcn" && h.Format == GcImageFormat.Rvz) return Skip("RVZ images are only supported for GameCube games, convert it to a plain ISO or WBFS first");
         // the id goes into the repo URL, so only accept what a real disc id looks like
         if (!GameId().IsMatch(h.RepoId)) return Skip("the disc id is not valid");
 

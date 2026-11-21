@@ -57,7 +57,7 @@ Render a page without opening a window (`WIIVC_THEME=light|dark` pins the theme,
 
 On the Source files tab, "Choose games and convert..." (Wii Retail or GC Retail modes; the keys must already be saved on the Build tab) builds every game you pick in one run.
 All of them use the GamePad Emulation Mode and the advanced options currently set in the window, and the icon and banner of
-each game are always downloaded from Cucholix's repo. A game the repo has no images for, a wrong system, an NKit/NASOS image
+each game are always downloaded from Cucholix's repo. A game the repo has no images for, a wrong system, a Wii NKit/NASOS image
 or a failed build is skipped and listed in the final summary; the other games still convert.
 
 ## Differences from the Windows app
@@ -66,7 +66,11 @@ or a failed build is skipped and listed in the final summary; the other games st
 - Wii-VMC: the external wii-vmc.exe window is replaced by a dialog that picks the target video mode
   (NTSC 480i, PAL60, PAL50, 480p). It patches the video mode tables of the game's main.dol (experimental).
 - C2W patch: ported to C# (`Engine/C2wPatcher.cs`, from FIX94's c2w_patcher). Needs your own ancast key. Verified only on a synthetic image.
-- NKit/NASOS input (the original's NKit converter) is not supported on macOS; use ISO or WBFS.
+- Wii NKit and NASOS input (the original's NKit converter) is not supported on macOS; use ISO or WBFS.
+- GameCube images can be an ISO/GCM, a `.ciso`, a `.rvz` or a GameCube `.nkit.iso`. The build turns them into the plain `game.iso` that Nintendont expects
+  (the same goes for the 2nd disc). A CISO is unpacked by the app itself. RVZ and NKit drop the junk padding of a disc and regenerate it on read, so they go
+  through the [NKit](https://github.com/Nanook/NKit) command line tool (MIT): the first time one is needed the app downloads release 3.2.2 (about 18 MB) into
+  `~/Library/Caches/WiiVCInjector/tools/`, checks it against a fixed SHA-256 and runs `nkit expand`. Wii RVZ is not supported. `WIIVC_NKIT=/path/to/nkit` uses another executable.
 - `WIIVC_GUIBUILD=1` drives the real window (mode, game load, images, Build tab, BUILD button) through a homebrew build; keys come from WIIVC_COMMON_KEY and WIIVC_TITLE_KEY.
 - Engine self-test (`WIIVC_SELFTEST=1`) also runs WBFS, GameCube (synthetic header) and WiiWare builds; none used a real game.
 - Boot sound and TGA conversion are done in C# (no sox, no png2tgacmd); not compared byte for byte with the originals.

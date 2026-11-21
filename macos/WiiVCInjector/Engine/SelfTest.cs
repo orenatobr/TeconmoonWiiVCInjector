@@ -56,10 +56,38 @@ internal static class SelfTest
             Media.WriteTga(Path.Combine(td, "bootTvTex.png"), Path.Combine(td, "bootDrcTex.tga"), 854, 480, 24);
             return 0;
         }
-        try { Units(); Builds(); }
+        try { Units(); GcPrepare(); Builds(); }
         catch (Exception e) { Console.WriteLine("[FAIL] exception: " + e); _fail++; }
         Console.WriteLine(_fail == 0 ? "ALL OK" : $"{_fail} FAILED");
         return _fail == 0 ? 0 : 1;
+    }
+
+    /// <summary>A CISO game goes through the real GameCube build step: it is unpacked to files/game.iso inside the ISO that wit builds.</summary>
+    static void GcPrepare()
+    {
+        var tmp = Path.Combine(Path.GetTempPath(), "wiivc-gc-" + Guid.NewGuid().ToString("N")); Directory.CreateDirectory(tmp);
+        try
+        {
+            // blocks of 0x8000: a header (no GameCube magic, so the result is not padded to a 1.4 GB disc), a hole, a block of 0xAB
+            var head = new byte[0x8000]; Encoding.ASCII.GetBytes("GXYZ").CopyTo(head, 0);
+            var data = Enumerable.Repeat((byte)0xAB, 0x8000).ToArray();
+            var ciso = new byte[0x8000 + 0x10000];
+            Encoding.ASCII.GetBytes("CISO").CopyTo(ciso, 0);
+            BitConverter.GetBytes(0x8000u).CopyTo(ciso, 4);
+            ciso[8] = 1; ciso[9] = 0; ciso[10] = 1;
+            head.CopyTo(ciso, 0x8000); data.CopyTo(ciso, 0x10000);
+            var expected = new byte[0x18000]; head.CopyTo(expected, 0); data.CopyTo(expected, 0x10000);
+            var game = Path.Combine(tmp, "game.ciso");
+            File.WriteAllBytes(game, ciso);
+
+            var wit = Tools.Native("wit");
+            var iso = BuildEngine.PrepareIso(new BuildOptions { System = "gcn", GamePath = game }, tmp, wit, (exe, args, cwd) => Tools.Run(exe, args, cwd, default), default);
+            var ex = Path.Combine(tmp, "extracted");
+            Tools.Run(wit, ["extract", iso, "--DEST", ex, "--psel", "data,-update", "-ovv"], null, default);
+            var got = File.ReadAllBytes(Path.Combine(ex, "files", "game.iso"));
+            Check("gc build step: a CISO game ends up as game.iso inside the ISO", got.SequenceEqual(expected));
+        }
+        finally { Directory.Delete(tmp, true); }
     }
 
     static void Units()

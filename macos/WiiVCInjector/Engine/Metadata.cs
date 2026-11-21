@@ -24,6 +24,14 @@ internal static class Metadata
     /// <summary>WBFS id at 0x200, DOL (magic 00 00 01 00) at 0x2A0, NASOS WII5/WII9 at their data offsets, else 0.</summary>
     public static string ReadGameId(string path)
     {
+        // a CISO or RVZ keeps the disc header elsewhere, so its first four bytes are not the game id
+        if (GcImage.Detect(path) is GcImageFormat.Ciso or GcImageFormat.Rvz)
+        {
+            using var h = GcImage.OpenHeader(path);
+            var gid = new byte[4];
+            h.ReadExactly(gid);
+            return Encoding.Latin1.GetString(gid);
+        }
         using var f = File.OpenRead(path);
         var magic = new byte[4];
         f.ReadExactly(magic);

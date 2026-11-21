@@ -6,7 +6,7 @@ This repository is a **fork** of [piratesephiroth/TeconmoonWiiVCInjector](https:
 
 This fork adds a native **macOS (Apple Silicon) port** under [`macos/`](macos/), because the original is a WinForms app that shells out to Windows `.exe` tools and cannot run on a Mac.
 
-- Same window layout as the original: the Avalonia windows are generated from `Form1.Designer.cs`, `SettingsForm` and `Form2` by `macos/tools/gen_axaml.py`, and the logic of `Form1.cs` is ported.
+- Same window layout as the original: the Avalonia windows are hand written XAML that keeps the control names of `Form1.Designer.cs`, `SettingsForm` and `Form2`, and the logic of `Form1.cs` is ported.
 - A C# build engine replaces the Windows tools: wit, GetExtTypePatcher, nfs2iso2nfs and NUSPacker run natively, PNG to TGA and boot sound (WAV to btsnd) are done in C#, and the Wii U base files are downloaded with JNUSTool using your own keys.
 - The C2W patch is a C# port of [FIX94's c2w_patcher](https://github.com/FIX94/c2w_patcher) (MIT); on a synthetic image its output is byte identical to the original tool.
 - Wii VMC (closed source, Windows only) is replaced by an open, experimental video mode patcher with a target picker (NTSC 480i, PAL60, PAL50, 480p).

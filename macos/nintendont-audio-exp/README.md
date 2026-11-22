@@ -62,7 +62,9 @@ What was checked when this build was made:
 
 Nintendont is GPL v2. This directory ships a modified binary, so the matching source is the pinned upstream commit above
 plus `half-stream-buffers.patch`. `build.sh` rebuilds the binary from them, but the result is **not bit for bit identical**
-to the shipped `boot.dol`: a full run of the script gave the same size (1651328 bytes) and sha256 `3fea4c4b...a8d72` against the shipped
-`a6a7adfe...953fc40`, with 6.8 KB of differences in 6 regions. One of them is the build time compiled into the loader
-(`14:25:37` against `14:37:03`); the two large ones right after it are most likely the compressed kernel that carries the same kind
-of stamp, which was not checked. Expect a different hash on every build.
+to the shipped `boot.dol` (1651328 bytes, sha256 `a6a7adfe...953fc40`). Measured, all against the shipped file: a rebuild with the build time
+left alone differed in 6791 bytes (the loader's stamp was `14:37:03` against `14:25:37`). With only the loader's stamp pinned, 5542 bytes.
+With the final script, which pins every `__DATE__` and `__TIME__` in the loader, kernel and common sources and ran to the end, 6503 bytes,
+in the same two areas (near `0x145000` and `0x168000`). The two pinned rebuilds differ from each other in 6391 bytes, so the kernel embedded
+in the loader carries its own build time; its published value is not `14:25:37` and cannot be read from the shipped file. Whether two runs
+of the final script give the same hash was not checked. Treat the shipped file as not independently reproducible.

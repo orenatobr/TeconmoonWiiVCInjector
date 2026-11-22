@@ -21,6 +21,15 @@ Source: upstream commit `7a183459939653cb7bcf59ab137c2758a9f9fae0` plus `half-st
 `Assets/nintendont-audio-exp/meta.xml` and `icon.png` are the files from that same commit, so the version shown in the
 Homebrew Channel matches the loader.
 
+## What this can and cannot fix
+
+From reading Nintendont 7a18345 (not from a measurement on a console): the only place Nintendont buffers audio itself is `kernel/Stream.c`,
+the disc streaming path, and that is the buffer this build halves. Effects and most music are mixed by the game's own AX/DSP code, which
+Nintendont only patches and then hands to the Wii hardware; it adds no queue there, so there is nothing on that side to cut. Force Progressive
+and Deflicker only change video mode words and a GX filter bit, not audio timing. So if the delay you hear is in sound effects or
+DSP-mixed audio, or if it persists with this build, its source is outside Nintendont (the vWii to Wii U output, or the TV), and no
+change to this code will remove it. A 240 fps A/B recording of this build against upstream is still the only way to know how much it helps.
+
 ## How to try it
 
 **Try this first, it needs no build.** In Nintendont's own settings, toggle "Skip IPL" and play the same scene both ways.

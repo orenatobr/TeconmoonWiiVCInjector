@@ -26,6 +26,20 @@ Upstream has no issue about audio delay. Issues about crackling (FIX94/Nintendon
 3. Extract frames and audio with `ffmpeg`, find the frame of the flash and the onset of the sound, and subtract. Repeat on several events and compare with a reference capture of the same scene.
 4. The first phone recording (Skies of Arcadia, Cutlass Fury) gave a possible 200 ms delay with low confidence (correlation 0.2), so it is not a result.
 
+## Test matrix (change one thing at a time)
+Same scene each time (Skies of Arcadia, Cutlass Fury), same recording setup.
+
+| Run | Nintendont | Force Progressive | Video Mode | Log |
+|-----|------------|-------------------|------------|-----|
+| A | upstream | on | None, type Auto | off |
+| B | upstream | off | None, type Auto | off |
+| C | experimental | on | None, type Auto | off |
+
+- A against B tests the 60 Hz lead.
+- A against C tests the half-buffer experiment (not expected to matter for this disc).
+- Turn Log on only in a separate run, when you want `ndebug.log`.
+- If B shows a black screen, go back to A and report it.
+
 ## Open items
 - Storage test (above).
 - A clean capture for a real number.

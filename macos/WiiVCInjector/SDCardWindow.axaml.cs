@@ -27,7 +27,8 @@ public partial class SDCardWindow : Window
         LanguageBox.SelectedIndex = 0;
         wiiUGamepadSlotBox.SelectedIndex = 0;
         Opt(0).IsChecked = true;
-        Opt(7).IsChecked = true;
+        // 720 fills the whole 720 pixel line; Auto gives 640 and thin black bars at the sides.
+        VideoWidth.Value = 720;
         NintendontAudioExperiment.IsVisible = ChooseNintendontSource(true, AppContext.BaseDirectory).Source == NintendontSource.Experiment;
         CheckForBoxes();
     }

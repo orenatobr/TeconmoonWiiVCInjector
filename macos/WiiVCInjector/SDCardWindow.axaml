@@ -47,7 +47,8 @@
             <CheckBox Name="NintendontOptions_7" Content="Auto Video Width" />
             <CheckBox Name="NintendontOptions_8" Content="Patch PAL50" />
             <CheckBox Name="NintendontOptions_9" Content="Force Widescreen" />
-            <CheckBox Name="NintendontOptions_10" Content="Force Progressive" />
+            <CheckBox Name="NintendontOptions_10" Content="Force Progressive (not for PAL games)"
+                      ToolTip.Tip="Converts the game to 480p at 60 Hz. On a PAL game this replaces 50 Hz with 60 Hz and sound effects arrive late against the picture (confirmed on Skies of Arcadia). Leave it off for PAL discs." />
             <CheckBox Name="NintendontOptions_11" Content="Skip IPL" />
             <CheckBox Name="NintendontOptions_12" Content="OSReport" />
             <CheckBox Name="NintendontOptions_13" Content="Log" />

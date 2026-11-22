@@ -256,6 +256,7 @@ public static class UiSelfTest
             // switched to 480p, which is a black screen on a PAL disc. So Force Progressive implies the patch.
             var prog = new bool[14]; prog[10] = true;
             T("nincfg: Force Progressive also sets Patch PAL50", (Video(SDCardWindow.BuildConfig(prog, false, 0, 0, 0, 2, 640, 0)) & 0x20) != 0);
+            T("nincfg: Force Progressive is off by default (PAL 50 Hz stays native)", (BitConverter.ToUInt32(SDCardWindow.BuildConfig(opt, false, 0, 0, 0, 2, 640, 0).Skip(8).Take(4).Reverse().ToArray()) & (1u << 6)) == 0);
             T("nincfg: no Force Progressive, no Patch PAL50", (Video(SDCardWindow.BuildConfig(opt, false, 0, 0, 0, 2, 640, 0)) & 0x20) == 0);
 
             // --- writing to the SD card must report an error, not crash the app

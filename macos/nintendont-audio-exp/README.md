@@ -21,6 +21,15 @@ Source: upstream commit `7a183459939653cb7bcf59ab137c2758a9f9fae0` plus `half-st
 `Assets/nintendont-audio-exp/meta.xml` and `icon.png` are the files from that same commit, so the version shown in the
 Homebrew Channel matches the loader.
 
+## What this can and cannot fix
+
+From reading Nintendont 7a18345 (not from a measurement on a console): the only place Nintendont buffers audio itself is `kernel/Stream.c`,
+the disc streaming path, and that is the buffer this build halves. Effects and most music are mixed by the game's own AX/DSP code, which
+Nintendont only patches and then hands to the Wii hardware; it adds no queue there, so there is nothing on that side to cut. Force Progressive
+and Deflicker only change video mode words and a GX filter bit, not audio timing. So if the delay you hear is in sound effects or
+DSP-mixed audio, or if it persists with this build, its source is outside Nintendont (the vWii to Wii U output, or the TV), and no
+change to this code will remove it. A 240 fps A/B recording of this build against upstream is still the only way to know how much it helps.
+
 ## How to try it
 
 **Try this first, it needs no build.** In Nintendont's own settings, toggle "Skip IPL" and play the same scene both ways.
@@ -62,7 +71,9 @@ What was checked when this build was made:
 
 Nintendont is GPL v2. This directory ships a modified binary, so the matching source is the pinned upstream commit above
 plus `half-stream-buffers.patch`. `build.sh` rebuilds the binary from them, but the result is **not bit for bit identical**
-to the shipped `boot.dol`: a full run of the script gave the same size (1651328 bytes) and sha256 `3fea4c4b...a8d72` against the shipped
-`a6a7adfe...953fc40`, with 6.8 KB of differences in 6 regions. One of them is the build time compiled into the loader
-(`14:25:37` against `14:37:03`); the two large ones right after it are most likely the compressed kernel that carries the same kind
-of stamp, which was not checked. Expect a different hash on every build.
+to the shipped `boot.dol` (1651328 bytes, sha256 `a6a7adfe...953fc40`). Measured, all against the shipped file: a rebuild with the build time
+left alone differed in 6791 bytes (the loader's stamp was `14:37:03` against `14:25:37`). With only the loader's stamp pinned, 5542 bytes.
+With the final script, which pins every `__DATE__` and `__TIME__` in the loader, kernel and common sources and ran to the end, 6503 bytes,
+in the same two areas (near `0x145000` and `0x168000`). The two pinned rebuilds differ from each other in 6391 bytes, so the kernel embedded
+in the loader carries its own build time; its published value is not `14:25:37` and cannot be read from the shipped file. Whether two runs
+of the final script give the same hash was not checked. Treat the shipped file as not independently reproducible.

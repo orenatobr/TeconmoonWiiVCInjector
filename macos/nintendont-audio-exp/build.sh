@@ -37,6 +37,16 @@ fetch "$MIRROR/devkitPPC/devkitppc-rules/devkitppc-rules-1.1.1-1-any.pkg.tar.xz"
 git clone -q https://github.com/FIX94/Nintendont "$WORK/src"
 git -C "$WORK/src" checkout -q "$NINTENDONT_REF"
 [[ "$VARIANT" == half ]] && git -C "$WORK/src" apply "$HERE/half-stream-buffers.patch"
+# Loader and kernel print their build time (__DATE__ __TIME__), so every build differs. The published boot.dol says
+# "Nov 21 2026 14:25:37" (the loader's value); BUILD_DATE and BUILD_TIME override it. Every use in the tree is pinned.
+BUILD_DATE="${BUILD_DATE:-Nov 21 2026}"; BUILD_TIME="${BUILD_TIME:-14:25:37}"
+while IFS= read -r f; do
+  sed -e "s/__DATE__/\"$BUILD_DATE\"/g" -e "s/__TIME__/\"$BUILD_TIME\"/g" "$f" > "$WORK/pinned.tmp" && mv "$WORK/pinned.tmp" "$f"
+done < <(grep -rlE '__DATE__|__TIME__' "$WORK/src/loader/source" "$WORK/src/kernel" "$WORK/src/common" --include='*.c' --include='*.h')
+if grep -rqE '__DATE__|__TIME__' "$WORK/src/loader/source" "$WORK/src/kernel" "$WORK/src/common"; then
+  echo "could not pin __DATE__/__TIME__ everywhere" >&2; exit 1
+fi
+grep -q "$BUILD_DATE" "$WORK/src/loader/source/menu.c" || { echo "build time was not pinned in menu.c" >&2; exit 1; }
 mkdir -p "$WORK/tools"
 git clone -q https://github.com/devkitPro/general-tools "$WORK/tools/general-tools"
 git -C "$WORK/tools/general-tools" checkout -q "$GENERAL_TOOLS_REF"

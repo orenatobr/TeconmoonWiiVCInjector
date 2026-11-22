@@ -11,6 +11,10 @@ No fix exists. The Nintendont bundled here is upstream 7a18345 (6.510), which is
 
 Upstream has no issue about audio delay. Issues about crackling (FIX94/Nintendont #781, #1200) point at slow storage and large cluster sizes.
 
+## Skies of Arcadia (GEAP8P) specifics
+- The disc header has the audio streaming flag (offset 0x8) and the stream buffer size (offset 0x9) both at 0. The game does not use DVD audio streaming, so the half-buffer experiment cannot change its sound.
+- Hypothesis, not confirmed: with Force Progressive on, Nintendont turns a PAL 50 Hz mode into 480p at 60 Hz (`kernel/Patch.c`). A scripted move such as Cutlass Fury then runs faster than its sound, which plays in real time. Test: Force Progressive off and Video Mode Auto (native 50 Hz), then play the move again.
+
 ## Check the storage first
 1. Format the SD card or USB drive with a 32 KB cluster size.
 2. Try the same game from a fast USB drive. If late or popping sounds go away, the cause was the card.

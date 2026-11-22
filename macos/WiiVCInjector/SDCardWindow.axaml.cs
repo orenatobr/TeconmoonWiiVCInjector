@@ -217,15 +217,17 @@ public partial class SDCardWindow : Window
         void On(int i, NinConfig f) { if (opt[i]) config |= (uint)f; }
         On(0, NinConfig.MemcardEmu); On(1, NinConfig.Cheats); On(2, NinConfig.CheatPath); On(3, NinConfig.RemLimit);
         On(4, NinConfig.CcRumble); On(5, NinConfig.ArcadeMode); On(6, NinConfig.BbaEmu);
+        // Force Progressive only converts a game's 60 Hz modes; a PAL50 one stays untouched unless the patch is on, while the
+        // loader has already switched to 480p. That mismatch is a black screen on PAL discs, so Force Progressive implies it.
+        if (opt[8] || opt[10]) video |= VidPatchPal50;
         if (opt[8])
         {
-            video |= VidPatchPal50;
             if (typeMode == 0 || typeMode == 3) video |= VidPal50;
         }
         if (opt[9]) config |= (uint)(NinConfig.ForceWide | NinConfig.WiiUWide);
         On(10, NinConfig.ForceProg); On(11, NinConfig.SkipIpl); On(12, NinConfig.OsReport); On(13, NinConfig.Log);
         if (memcardMulti) config |= (uint)NinConfig.McMulti;
-        video |= forceMode switch { 1 => VidForce, 2 => VidForceDf, 3 => VidNone, _ => 0u };
+        video |= forceMode switch { 1 => VidForce, 2 => VidForce | VidForceDf, 3 => VidNone, _ => 0u };
         video |= typeMode switch { 1 => VidNtsc, 2 => VidMpal, 3 => VidPal50, 4 => VidPal60, _ => 0u };
         uint lang = language == 0 ? 0xFFFFFFFF : (uint)language - 1;
         sbyte scale = opt[7] ? (sbyte)0 : (sbyte)(videoWidth - 600);

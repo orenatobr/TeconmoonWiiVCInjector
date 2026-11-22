@@ -248,6 +248,16 @@ public static class UiSelfTest
             T("nincfg layout", cfg.Length == 20 + 512 + 8 + 4 + 4 && cfg[0] == 0x01 && cfg[1] == 0x07 && cfg[2] == 0x0C && cfg[3] == 0xF6
                 && cfg[11] == 8 /* memcard emu bit in config */ && cfg[15] == 0x10 /* VidProg */ && cfg[^5] == 0, cfg.Length.ToString());
 
+            // "Force (Deflicker)" is FORCE | FORCE_DF in Nintendont (menu.c, Patch.c); DF alone is ignored by the kernel
+            uint Video(byte[] c) => (uint)(c[12] << 24 | c[13] << 16 | c[14] << 8 | c[15]);
+            T("nincfg: Force (Deflicker) sets the force bit and the deflicker bit", Video(SDCardWindow.BuildConfig(opt, false, 2, 4, 0, 2, 640, 0)) == (0x50000u | 0x10 | 2),
+                Video(SDCardWindow.BuildConfig(opt, false, 2, 4, 0, 2, 640, 0)).ToString("X"));
+            // Force Progressive leaves a PAL50 game untouched unless "Patch PAL50" is set (Patch.c), while the loader already
+            // switched to 480p, which is a black screen on a PAL disc. So Force Progressive implies the patch.
+            var prog = new bool[14]; prog[10] = true;
+            T("nincfg: Force Progressive also sets Patch PAL50", (Video(SDCardWindow.BuildConfig(prog, false, 0, 0, 0, 2, 640, 0)) & 0x20) != 0);
+            T("nincfg: no Force Progressive, no Patch PAL50", (Video(SDCardWindow.BuildConfig(opt, false, 0, 0, 0, 2, 640, 0)) & 0x20) == 0);
+
             // --- writing to the SD card must report an error, not crash the app
             var staged = Path.Combine(tmp, "staged", "apps", "nintendont");
             Directory.CreateDirectory(staged);

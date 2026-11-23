@@ -189,7 +189,13 @@ E0000000 80008000 //end
             w.WiiRetail.IsChecked = true;
             T("wii: system/drc", w.SystemType == "wii" && w.DRCUSE == "1" && w.NoGamePadEmu.IsChecked == true && w.GamePadEmuLayout.IsEnabled);
             T("wii: enabled matrix", w.WiiVMC.IsEnabled && w.Wiimmfi.IsEnabled && w.DisableTrimming.IsEnabled && w.RepoDownload.IsEnabled
-                && !w.Force43NINTENDONT.IsEnabled && !w.Force43NAND.IsEnabled && !w.C2WPatchFlag.IsEnabled && !w.GC2SourceButton.IsEnabled);
+                && !w.Force43NINTENDONT.IsEnabled && !w.Force43NAND.IsEnabled && !w.GC2SourceButton.IsEnabled);
+            T("wii: the cafe2wii patching option can be ticked (clock unlock for games that need CPU), and starts unticked",
+                w.C2WPatchFlag.IsEnabled && w.C2WPatchFlag.IsChecked != true);
+            w.C2WPatchFlag.IsChecked = true;
+            w.WiiHomebrew.IsChecked = true;
+            w.WiiRetail.IsChecked = true;
+            T("wii: going back to Wii Retail unticks cafe2wii again", w.C2WPatchFlag.IsEnabled && w.C2WPatchFlag.IsChecked != true);
 
             // --- gamepad emulation modes
             w.ForceCC.IsChecked = true;

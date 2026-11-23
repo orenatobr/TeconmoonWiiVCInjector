@@ -132,7 +132,7 @@ game puts them into its `sys/main.dol` before packing. Two ways, chosen by the b
 
 **Frame rate codes (for example "60 FPS") on a Wii game.** They change the game's time step per frame and its frame interval, so the game has to really deliver 60 frames per second, or it runs in slow
 motion. A real Wii (and so a vWii at its normal speed) usually cannot: the Dolphin wiki says the Arc Rise Fantasia 60 FPS code needs more than 125% CPU. The cheat codes window warns about it. What can help
-is the **cafe2wii patching** option (Advanced tab, port of FIX94's c2w_patcher, needs your Starbuck ancast key), which unlocks the Wii U CPU speed in vWii (1.215 GHz); the console also needs the `c2w_patcher`
+is the **cafe2wii patching** option (Advanced tab, available in Wii Retail since 1.2.22 and in Wii Homebrew, port of FIX94's c2w_patcher, needs your Starbuck ancast key), which unlocks the Wii U CPU speed in vWii (1.215 GHz); the console also needs the `c2w_patcher`
 Aroma plugin and signature patches for injected titles. It does not speed up the Wii's graphics chip, so a game that is graphics bound can still be slow. When testing, change one thing at a time (the
 "Patch video mode" option is a separate variable). Checked on the real Arc Rise Fantasia (USA) `main.dol`: the code's variables are in BSS (only a code handler can set them, and the handler hooks a function that
 runs once per displayed frame), and every `C2` block matches the game's own instructions, so it is the right version of the game for the code.

@@ -202,8 +202,10 @@ public partial class MainWindow : Window
             DRCUSE = "1";
         }
         Off(Force43NINTENDONT); Off(ForceInterlacedNINTENDONT); Off(CustomMainDol);
-        Off(DisableNintendontAutoboot); Off(DisablePassthrough); Off(DisableGamePad); Off(C2WPatchFlag);
-        // original: C2W is disabled for Wii Retail
+        Off(DisableNintendontAutoboot); Off(DisablePassthrough); Off(DisableGamePad);
+        // the original disables C2W for Wii Retail; here it stays available (unticked) so a game that needs CPU,
+        // such as a frame rate code, can get the Wii U clock (needs the Starbuck key and the c2w_patcher plugin)
+        C2WPatchFlag.IsChecked = false; C2WPatchFlag.IsEnabled = true;
         if (ForceCC.IsChecked == true) { DisableTrimming.IsChecked = false; DisableTrimming.IsEnabled = false; } else DisableTrimming.IsEnabled = true;
         Off(Force43NAND);
     }

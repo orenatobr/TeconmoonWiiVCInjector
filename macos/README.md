@@ -89,7 +89,8 @@ Nintendont from the SD Card menu also copies every saved `.gct`.
 
 - Where the codes come from: the compatibility list at `dolphin-emu.org/compat` only lists ratings and links each game to its Dolphin wiki page, and the codes people
   wrote are on that page. The wiki (like the list) answers automated requests with a bot check, which the app does not try to get past: "Open wiki page" opens the
-  page in your browser, you copy a code block and paste it into the window. What the app downloads by itself, with nothing to paste, is: the Gecko code database the
+  page in your browser, you select the whole page (Cmd+A, Cmd+C) and paste it into the window. Only the code blocks are taken, named by the heading above them and by their
+  region label ("Normal HUD (PAL)"), and the blocks labelled for another region than the disc are left out. A single code block can be pasted too. What the app downloads by itself, with nothing to paste, is: the Gecko code database the
   Wii loaders (USB Loader GX, WiiFlow) use, `codes.rc24.xyz/txt.php?txt=<id6>`, one list per 6 character disc id (the only thing sent is the public disc id), and the codes
   Dolphin ships in its open source `Data/Sys/GameSettings/<id3>.ini` and `<id6>.ini` files. A game only gets codes when its own id is listed, because the addresses change
   with the region: Skies of Arcadia NTSC-U (`GEAE8P`) downloads 124 codes, the PAL disc (`GEAP8P`) none, and for it the codes are only on the wiki page.

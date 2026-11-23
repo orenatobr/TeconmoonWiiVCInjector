@@ -410,12 +410,16 @@ public static class UiSelfTest
                 string.Join("|", parsed.Select(c => c.Name)) == "Infinite Rings [Someone]|Conditional|Widescreen", string.Join("|", parsed.Select(c => c.Name)));
             T("cheats ini: plain Action Replay writes are usable, the conditional one is not",
                 parsed[0].Unusable == null && parsed[0].Lines.Count == 2 && parsed[1].Unusable != null && parsed[2].Unusable == null && parsed[2].Source == "Gecko");
-            const string wiki = "Normal HUD\nThis hack unstretches the HUD\nNA:\n04345894 3F400000\n043463C0 3B190000\nC22AB718 00000003\n90010010 3C003B4D\n3C608034 900363C0\n\n"
-                + "PAL:\n04348E54 3F400000\n\n$60Hz\n04241FC8 38600000\n042FEE50 00000014\n";
+            const string wiki = "Skies of Arcadia Legends\nDeveloper(s) Overworks\nEnhancements\nHD Texture\n16:9 Widescreen Gecko Code\nThe following Gecko codes fix clipping issues. Disable the hack before using.\n"
+                + "Normal HUD\nThis hack unstretches the HUD but will break cutscenes.\nNA:\n04345894 3F400000\n043463C0 3B190000\nC22AB718 00000003\n90010010 3C003B4D\n3C608034 900363C0\n60000000 00000000\n"
+                + "PAL:\n04348E54 3F400000\nStretched HUD\nThe HUD along with other cutscene elements will be stretched.\nNA:\n04345894 3F400000\nPAL:\n04348E54 3F400000\n"
+                + "60Hz PAL\nIn the PAL-Version the 60Hz mode cannot be activated at startup. Use this Gecko code to force the 60Hz mode.\n$60Hz\n04241FC8 38600000\n042FEE50 00000014\nConfiguration\nThis title does not need settings.\n";
             var pasted = CheatCodes.ParseText(wiki);
-            T("cheats text: wiki blocks become cheats named by the lines above them",
-                pasted.Count == 3 && pasted[0].Name == "Normal HUD This hack unstretches the HUD NA" && pasted[0].Lines.Count == 5 && pasted[1].Name == "PAL" && pasted[2].Name == "60Hz" && pasted[2].Lines.Count == 2,
+            T("cheats text: a whole wiki page gives the code blocks named by heading and region, the rest is ignored",
+                string.Join("|", pasted.Select(c => c.Name + ":" + c.Lines.Count)) == "Normal HUD (NA):6|Normal HUD (PAL):1|Stretched HUD (NA):1|Stretched HUD (PAL):1|60Hz:2"
+                && pasted.Select(c => c.Region).SequenceEqual(new string?[] { "NA", "PAL", "NA", "PAL", null }),
                 string.Join("|", pasted.Select(c => c.Name + ":" + c.Lines.Count)));
+            T("cheats text: the region of a disc comes from its id", CheatCodes.RegionOf("GEAP8P") == "PAL" && CheatCodes.RegionOf("GEAE8P") == "NA" && CheatCodes.RegionOf("GEAJ8P") == "JP" && CheatCodes.RegionOf("GEA") == null);
             T("cheats text: no code lines gives no cheats, bare codes get a default name",
                 CheatCodes.ParseText("just words").Count == 0 && CheatCodes.ParseText("04345894 3F400000")[0].Name == "Pasted code");
             var gct = CheatCodes.BuildGct(new[] { parsed[0], parsed[1], parsed[2] });
@@ -425,7 +429,7 @@ public static class UiSelfTest
             T("cheats: ids Nintendont can use as a file name", CheatCodes.IsValidId("GEAP8P") && !CheatCodes.IsValidId("GEAP") && !CheatCodes.IsValidId("../..AB"));
             T("cheats: PAL discs are told apart by the region letter", CheatCodes.IsPal("GEAP8P") && !CheatCodes.IsPal("GEAE8P") && !CheatCodes.IsPal("GEAJ8P"));
             T("cheats: a 60 Hz code on a PAL disc is warned about, on an NTSC disc it is not",
-                CheatCodes.Warning(pasted[2], "GEAP8P") != null && CheatCodes.Warning(pasted[2], "GEAE8P") == null && CheatCodes.Warning(pasted[0], "GEAP8P") == null);
+                CheatCodes.Warning(pasted[4], "GEAP8P") != null && CheatCodes.Warning(pasted[4], "GEAE8P") == null && CheatCodes.Warning(pasted[0], "GEAP8P") == null);
             T("cheats: wiki page address of a game", CheatCodes.WikiUrl("Skies of Arcadia Legends") == "https://wiki.dolphin-emu.org/index.php?title=Skies_of_Arcadia_Legends");
             var cheatUrls = new List<string>();
             using (var http = new HttpClient(new StubHandler(req =>

@@ -22,7 +22,7 @@ public sealed class CheatsWindow : Window
     readonly List<(Cheat Cheat, CheckBox Box)> _rows = new();
     readonly StackPanel _list = new() { Spacing = 4 };
     readonly TextBlock _status = new() { TextWrapping = TextWrapping.Wrap, Opacity = 0.8 };
-    readonly TextBox _paste = new() { AcceptsReturn = true, MinHeight = 90, TextWrapping = TextWrapping.Wrap, Watermark = "Paste the code block here, for example:\n$Widescreen\n04345894 3F400000" };
+    readonly TextBox _paste = new() { AcceptsReturn = true, MinHeight = 90, TextWrapping = TextWrapping.Wrap, Watermark = "Paste the wiki page (or just a code block) here" };
 
     public CheatsWindow(string id, string name, bool wii = false)
     {
@@ -51,7 +51,7 @@ public sealed class CheatsWindow : Window
                     : "Gecko and Action Replay codes from the Dolphin project. Nintendont runs them for GameCube games, including a game inside a WUP."),
                 _status,
                 new ScrollViewer { MaxHeight = 220, Content = _list },
-                T("Codes people wrote for this game are on its Dolphin wiki page. The wiki checks for bots, so it opens in your browser: copy a code block there and paste it here.", 0.8),
+                T("Codes people wrote for this game are on its Dolphin wiki page. The wiki checks for bots, so it opens in your browser: select the whole page there (Cmd+A, Cmd+C) and paste it here. Only the code blocks are taken, and the ones labelled for another region are left out.", 0.8),
                 new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8, Children = { B("Open wiki page", (_, _) => MainWindow.Open(CheatCodes.WikiUrl(_name))), B("Add pasted codes", AddPasted_Click) } },
                 _paste,
                 new StackPanel
@@ -100,10 +100,14 @@ public sealed class CheatsWindow : Window
 
     async void AddPasted_Click(object? s, Avalonia.Interactivity.RoutedEventArgs e)
     {
-        var added = CheatCodes.ParseText(_paste.Text ?? "");
-        if (added.Count == 0) { await Dialogs.Info(this, "No code lines found. A code line is two groups of 8 hex digits, like 04345894 3F400000.", "Nothing to add"); return; }
+        var parsed = CheatCodes.ParseText(_paste.Text ?? "");
+        if (parsed.Count == 0) { await Dialogs.Info(this, "No code lines found. A code line is two groups of 8 hex digits, like 04345894 3F400000.", "Nothing to add"); return; }
+        var mine = CheatCodes.RegionOf(_id);
+        var added = parsed.Where(c => c.Region == null || mine == null || c.Region == mine).ToList();
+        if (added.Count == 0) { await Dialogs.Info(this, $"All {parsed.Count} code(s) are labelled for another region than this disc ({_id}). Codes only fit their own region.", "Other region"); return; }
         AddRows(added);
         _paste.Text = "";
+        if (added.Count < parsed.Count) _status.Text = $"Added {added.Count} code(s); {parsed.Count - added.Count} labelled for another region were left out.";
     }
 
     async void Save_Click(object? s, Avalonia.Interactivity.RoutedEventArgs e)

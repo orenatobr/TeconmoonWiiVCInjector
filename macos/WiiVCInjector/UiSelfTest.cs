@@ -398,10 +398,32 @@ public static class UiSelfTest
             T("nintendont source: the real build output ships the Teconmoon files", SDCardWindow.ChooseNintendontSource(false, AppContext.BaseDirectory).Source == SDCardWindow.NintendontSource.Teconmoon, AppContext.BaseDirectory);
             var shippedDol = File.ReadAllBytes(Path.Combine(AppContext.BaseDirectory, "Assets", "nintendont-teconmoon", "boot.dol"));
             T("nintendont build: the shipped boot.dol is the one nintendont-teconmoon/README.md documents",
-                Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(shippedDol)).Equals("438848541e7619b12d61a22d78084710717d7f85a90bfd6d74aed8ee7464f0e9", StringComparison.OrdinalIgnoreCase));
+                Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(shippedDol)).Equals("55164337908325ffb1d5edfa9e313d99681dddc798572068eac2220876b0667a", StringComparison.OrdinalIgnoreCase));
             T("nintendont build: the shipped boot.dol carries the PAL guard", System.Text.Encoding.ASCII.GetString(shippedDol).Contains("PAL disc: Force Progressive ignored"));
             T("nintendont build: the shipped boot.dol keeps a PAL option the game settings ask for", System.Text.Encoding.ASCII.GetString(shippedDol).Contains("PAL disc: Force Progressive kept"));
+            T("nintendont build: the shipped boot.dol applies a forced video mode from the game settings", System.Text.Encoding.ASCII.GetString(shippedDol).Contains("Game settings: Video mode"));
             T("nintendont build: the shipped boot.dol reads the per game settings file", System.Text.Encoding.ASCII.GetString(shippedDol).Contains("%s:/teconmoon/%s.ini"));
+            // --- downloading the latest Teconmoon Nintendont from GitHub
+            var tnDol = new byte[1_200_000]; tnDol[2] = 1;
+            var tnMeta = System.Text.Encoding.UTF8.GetBytes("<?xml version=\"1.0\"?><app version=\"1\"></app>");
+            var tnPng = new byte[] { 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A, 1, 2, 3 };
+            var tnHtml = System.Text.Encoding.UTF8.GetBytes("<html>404: Not Found</html>");
+            T("nintendont download: a real boot.dol, meta.xml and icon.png pass the check",
+                SDCardWindow.CheckTeconmoonFile("boot.dol", tnDol) == null && SDCardWindow.CheckTeconmoonFile("meta.xml", tnMeta) == null && SDCardWindow.CheckTeconmoonFile("icon.png", tnPng) == null);
+            T("nintendont download: an error page does not pass for any of them",
+                SDCardWindow.CheckTeconmoonFile("boot.dol", tnHtml) != null && SDCardWindow.CheckTeconmoonFile("meta.xml", tnHtml) != null && SDCardWindow.CheckTeconmoonFile("icon.png", tnHtml) != null
+                && SDCardWindow.CheckTeconmoonFile("other.bin", tnDol) != null);
+            var tnDir = Path.Combine(tmp, "nin-dl"); Directory.CreateDirectory(tnDir);
+            using (var tnGood = new HttpClient(new StubHandler(req => new HttpResponseMessage(System.Net.HttpStatusCode.OK)
+            { Content = new ByteArrayContent(req.RequestUri!.AbsoluteUri.EndsWith("boot.dol") ? tnDol : req.RequestUri!.AbsoluteUri.EndsWith("meta.xml") ? tnMeta : tnPng) })))
+                T("nintendont download: the three files are fetched and written", Task.Run(() => SDCardWindow.DownloadTeconmoon(tnDir, tnGood)).GetAwaiter().GetResult() == null
+                    && File.ReadAllBytes(Path.Combine(tnDir, "boot.dol")).Length == tnDol.Length && File.Exists(Path.Combine(tnDir, "meta.xml")) && File.Exists(Path.Combine(tnDir, "icon.png")));
+            var tnDirBad = Path.Combine(tmp, "nin-dl-bad"); Directory.CreateDirectory(tnDirBad);
+            using (var tnBad = new HttpClient(new StubHandler(_ => new HttpResponseMessage(System.Net.HttpStatusCode.OK) { Content = new ByteArrayContent(tnHtml) })))
+                T("nintendont download: an error page instead of boot.dol fails and writes nothing",
+                    Task.Run(() => SDCardWindow.DownloadTeconmoon(tnDirBad, tnBad)).GetAwaiter().GetResult() is { } tnWhy && tnWhy.Contains("boot.dol") && !File.Exists(Path.Combine(tnDirBad, "boot.dol")));
+            using (var tnOff = new HttpClient(new StubHandler(_ => throw new HttpRequestException("offline"))))
+                T("nintendont download: no connection gives a reason, not an exception", Task.Run(() => SDCardWindow.DownloadTeconmoon(tnDirBad, tnOff)).GetAwaiter().GetResult() is { } tnW2 && tnW2.Contains("offline"));
             T("nintendont source: upstream still available when the build is shipped", SDCardWindow.ChooseNintendontSource(true, tmp) == (SDCardWindow.NintendontSource.Upstream, null));
 
             // --- Gecko and Action Replay codes (Dolphin game settings and wiki text)
@@ -505,6 +527,10 @@ public static class UiSelfTest
                 var ntsc = Task.Run(() => CheatCodes.DownloadAsync("GEAE8P", live)).GetAwaiter().GetResult();
                 var pal = Task.Run(() => CheatCodes.DownloadAsync("GEAP8P", live)).GetAwaiter().GetResult();
                 T("live: Skies of Arcadia NTSC-U has downloadable codes, PAL has none", ntsc.Count > 10 && pal.Count == 0, $"{ntsc.Count} / {pal.Count}");
+                var liveDir = Path.Combine(tmp, "nin-live"); Directory.CreateDirectory(liveDir);
+                var liveWhy = Task.Run(() => SDCardWindow.DownloadTeconmoon(liveDir, live)).GetAwaiter().GetResult();
+                var bundledDol = Path.Combine(AppContext.BaseDirectory, "Assets", "nintendont-teconmoon", "boot.dol");
+                T("live: the Teconmoon Nintendont downloads from GitHub and is the bundled boot.dol", liveWhy == null && File.ReadAllBytes(Path.Combine(liveDir, "boot.dol")).SequenceEqual(File.ReadAllBytes(bundledDol)), liveWhy ?? "");
                 T("live: Wii Sports codes have names and code lines", Task.Run(() => CheatCodes.DownloadAsync("RSPE01", live)).GetAwaiter().GetResult() is { Count: > 10 } ws && ws.All(c => c.Name.Length > 0 && c.Lines.Count > 0));
             }
             // --- per game settings (Dolphin GameINI format, read by the Teconmoon Nintendont)
@@ -526,6 +552,11 @@ public static class UiSelfTest
                 gsPal.ProgressiveScan == true && gsPal.PatchPal50 == false
                 && new GameSettings { PatchPal50 = true }.ToIni("X", "Y").Contains("[Teconmoon]\nPatchPAL50 = True\n") && !new GameSettings { PatchPal50 = true }.IsEmpty
                 && GameSettings.Parse(new GameSettings { PatchPal50 = true, ProgressiveScan = true }.ToIni("X", "Y")) is { PatchPal50: true, ProgressiveScan: true });
+            var gsVm = GameSettings.Parse("[Teconmoon]\nVideoMode = pal50\nDeflicker = False\n");
+            T("game settings: VideoMode and Deflicker are read, written and read back",
+                gsVm.VideoMode == "PAL50" && gsVm.Deflicker == false && GameSettings.Parse("VideoMode = PAL576").VideoMode == null
+                && new GameSettings { VideoMode = "PAL50", Deflicker = false }.ToIni("X", "Y").Contains("[Teconmoon]\nVideoMode = PAL50\nDeflicker = False\n")
+                && GameSettings.Parse(new GameSettings { VideoMode = "NTSC", PatchPal50 = true }.ToIni("X", "Y")) is { VideoMode: "NTSC", PatchPal50: true } && !new GameSettings { Deflicker = true }.IsEmpty);
             T("game settings: the file is named by the first 4 id characters", GameSettings.Id4("GEAP8P") == "GEAP" && GameSettings.Id4("GEA") == null && GameSettings.Id4("../AB") == null);
             var gsLib = Path.Combine(tmp, "gslib"); var gsCard = Path.Combine(tmp, "gscard");
             Directory.CreateDirectory(gsLib); Directory.CreateDirectory(gsCard);

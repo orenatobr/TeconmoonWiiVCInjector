@@ -112,6 +112,32 @@ public partial class SDCardWindow : Window
     /// <summary>The only files an install puts under apps/nintendont on the SD card.</summary>
     static readonly string[] NintendontFiles = { "boot.dol", "meta.xml", "icon.png" };
 
+    /// <summary>Where this project keeps the Teconmoon Nintendont build (the same files the app bundles).</summary>
+    internal const string TeconmoonRaw = "https://raw.githubusercontent.com/orenatobr/TeconmoonWiiVCInjector/main/macos/WiiVCInjector/Assets/nintendont-teconmoon/";
+
+    /// <summary>Checks a downloaded file looks like what its name says (not an error page). Returns the problem, or null.</summary>
+    internal static string? CheckTeconmoonFile(string name, byte[] data) => name switch
+    {
+        "boot.dol" => data.Length > 1_000_000 && data[0] == 0 && data[1] == 0 && data[2] == 1 && data[3] == 0 ? null : "boot.dol is not a DOL file",
+        "meta.xml" => System.Text.Encoding.UTF8.GetString(data).Contains("<app") ? null : "meta.xml is not the app metadata",
+        "icon.png" => data.Length > 8 && data[0] == 0x89 && data[1] == 0x50 && data[2] == 0x4E && data[3] == 0x47 ? null : "icon.png is not a PNG",
+        _ => "unknown file " + name,
+    };
+
+    /// <summary>Downloads the three files of the latest Teconmoon Nintendont into <paramref name="dest"/>. Returns why it failed, or null when all three arrived and look right.</summary>
+    internal static async Task<string?> DownloadTeconmoon(string dest, HttpClient http, string baseUrl = TeconmoonRaw)
+    {
+        foreach (var f in NintendontFiles)
+        {
+            byte[] data;
+            try { data = await http.GetByteArrayAsync(baseUrl + f); }
+            catch (Exception ex) when (ex is HttpRequestException or TaskCanceledException) { return $"{f}: {ex.Message}"; }
+            if (CheckTeconmoonFile(f, data) is { } bad) return bad;
+            await File.WriteAllBytesAsync(Path.Combine(dest, f), data);
+        }
+        return null;
+    }
+
     /// <summary>Runs a file operation on the drive and returns the error text, or null on success.</summary>
     /// <remarks>A drive that cannot be written (a system volume such as Recovery, or a volume the app may not access)
     /// has to produce a message: an exception that escapes an <c>async void</c> handler ends the whole process.</remarks>
@@ -140,20 +166,31 @@ public partial class SDCardWindow : Window
         string downloadPath = Path.Combine(Path.GetTempPath(), "WiiVCInjector", "SOURCETEMP", "Download");
         string tempPath = Path.Combine(downloadPath, "apps", "nintendont");
         var (source, bundledDir) = ChooseNintendontSource(NintendontUpstream.IsChecked == true, AppContext.BaseDirectory);
-        if (source == NintendontSource.Unavailable)
-        {
-            await Info(this, "This install does not include the Teconmoon Nintendont build. Tick the upstream box to download the plain upstream build instead.", "Error");
-            return;
-        }
+        string? note = null;
         try
         {
             ActionStatus.Text = "Downloading...";
             if (Directory.Exists(downloadPath)) Directory.Delete(downloadPath, true);
             Directory.CreateDirectory(tempPath);
-            if (bundledDir != null)
+            if (source != NintendontSource.Upstream)
             {
-                // boot.dol, meta.xml and icon.png all come from the same pinned commit, so the version shown in the Homebrew Channel matches the loader.
-                foreach (var f in NintendontFiles) File.Copy(Path.Combine(bundledDir, f), Path.Combine(tempPath, f), true);
+                // The latest Teconmoon build from this project's GitHub. boot.dol, meta.xml and icon.png come together, so the version shown
+                // in the Homebrew Channel matches the loader. Without a connection the build bundled with the app is installed.
+                var latestDir = Path.Combine(Path.GetTempPath(), "WiiVCInjector", "SOURCETEMP", "Latest");
+                if (Directory.Exists(latestDir)) Directory.Delete(latestDir, true);
+                Directory.CreateDirectory(latestDir);
+                var why = await DownloadTeconmoon(latestDir, Http);
+                if (why == null)
+                {
+                    foreach (var f in NintendontFiles) File.Copy(Path.Combine(latestDir, f), Path.Combine(tempPath, f), true);
+                    note = "This is the latest Teconmoon Nintendont from GitHub.";
+                }
+                else if (bundledDir != null)
+                {
+                    foreach (var f in NintendontFiles) File.Copy(Path.Combine(bundledDir, f), Path.Combine(tempPath, f), true);
+                    note = $"Could not get the latest build from GitHub ({why}), so this is the Teconmoon build bundled with the app.";
+                }
+                else throw new InvalidOperationException($"the latest Teconmoon build could not be downloaded ({why}) and this install does not bundle one. Tick the upstream box to install the plain upstream build instead.");
             }
             else
             {
@@ -179,6 +216,7 @@ public partial class SDCardWindow : Window
                 return;
             }
             await Info(this, "Download complete."
+                + (note != null ? "\n" + note : "")
                 + (codes > 0 ? $"\n{codes} saved cheat file(s) copied to codes/ on the card." : "")
                 + (games > 0 ? $"\n{games} game settings file(s) copied to teconmoon/ on the card." : ""), "Success");
         }

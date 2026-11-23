@@ -18,8 +18,14 @@ public sealed class GameSettings
     public bool? SkipIpl;
     /// <summary>PatchPAL50 (Nintendont's "Patch PAL50"): a PAL game's 50 Hz mode becomes 60 Hz. A key of this app, Dolphin has none.</summary>
     public bool? PatchPal50;
+    /// <summary>The video modes a game can be forced to: Auto leaves it to the game, PAL50 keeps a PAL game at 50 Hz. Keys of this app, Dolphin has none.</summary>
+    public static readonly string[] VideoModes = { "Auto", "PAL50", "PAL60", "NTSC", "MPAL" };
+    /// <summary>VideoMode: one of <see cref="VideoModes"/>.</summary>
+    public string? VideoMode;
+    /// <summary>Deflicker: with a forced VideoMode, the GX deflicker filter on or off. Off is sharper on interlaced output.</summary>
+    public bool? Deflicker;
 
-    public bool IsEmpty => Fullscreen == null && WidescreenHack == null && ProgressiveScan == null && SkipIpl == null && PatchPal50 == null;
+    public bool IsEmpty => Fullscreen == null && WidescreenHack == null && ProgressiveScan == null && SkipIpl == null && PatchPal50 == null && VideoMode == null && Deflicker == null;
 
     /// <summary>The file is named by the first 4 characters of the disc id, which also carry the region.</summary>
     public static string? Id4(string id) => id.Length >= 4 && id[..4].All(char.IsAsciiLetterOrDigit) ? id[..4] : null;
@@ -49,6 +55,8 @@ public sealed class GameSettings
             else if (key.Equals("ProgressiveScan", StringComparison.OrdinalIgnoreCase) && Bool(val) is { } p) s.ProgressiveScan = p;
             else if (key.Equals("SkipIPL", StringComparison.OrdinalIgnoreCase) && Bool(val) is { } i) s.SkipIpl = i;
             else if (key.Equals("PatchPAL50", StringComparison.OrdinalIgnoreCase) && Bool(val) is { } p50) s.PatchPal50 = p50;
+            else if (key.Equals("Deflicker", StringComparison.OrdinalIgnoreCase) && Bool(val) is { } df) s.Deflicker = df;
+            else if (key.Equals("VideoMode", StringComparison.OrdinalIgnoreCase) && VideoModes.FirstOrDefault(m => m.Equals(val, StringComparison.OrdinalIgnoreCase)) is { } vm) s.VideoMode = vm;
         }
         return s;
     }
@@ -72,7 +80,13 @@ public sealed class GameSettings
             if (ProgressiveScan != null) sb.Append($"ProgressiveScan = {B(ProgressiveScan.Value)}\n");
             if (SkipIpl != null) sb.Append($"SkipIPL = {B(SkipIpl.Value)}\n");
         }
-        if (PatchPal50 != null) sb.Append($"\n[Teconmoon]\nPatchPAL50 = {B(PatchPal50.Value)}\n");
+        if (PatchPal50 != null || VideoMode != null || Deflicker != null)
+        {
+            sb.Append("\n[Teconmoon]\n");
+            if (PatchPal50 != null) sb.Append($"PatchPAL50 = {B(PatchPal50.Value)}\n");
+            if (VideoMode != null) sb.Append($"VideoMode = {VideoMode}\n");
+            if (Deflicker != null) sb.Append($"Deflicker = {B(Deflicker.Value)}\n");
+        }
         return sb.ToString();
     }
 

@@ -56,10 +56,10 @@ index fac0829..bd1c7f4 100644
  	while (1)
 diff --git a/loader/source/GameSettings.c b/loader/source/GameSettings.c
 new file mode 100644
-index 0000000..19bc3f3
+index 0000000..ab2da4e
 --- /dev/null
 +++ b/loader/source/GameSettings.c
-@@ -0,0 +1,67 @@
+@@ -0,0 +1,75 @@
 +#include <string.h>
 +#include <strings.h>
 +#include <stdlib.h>
@@ -118,6 +118,14 @@ index 0000000..19bc3f3
 +			which = GS_SKIP_IPL, v = Bool(val);
 +		else if (!strcasecmp(key, "PatchPAL50"))
 +			which = GS_PATCH_PAL50, v = Bool(val);
++		else if (!strcasecmp(key, "Deflicker"))
++			which = GS_DEFLICKER, v = Bool(val);
++		else if (!strcasecmp(key, "VideoMode"))
++		{
++			which = GS_VIDEO_MODE;
++			v = !strcasecmp(val, "auto") ? 0 : !strcasecmp(val, "pal50") ? 1 : !strcasecmp(val, "pal60") ? 2 :
++			    !strcasecmp(val, "ntsc") ? 3 : !strcasecmp(val, "mpal") ? 4 : -1;
++		}
 +		if (which >= 0 && v >= 0)
 +		{
 +			if (out[which] < 0)
@@ -129,10 +137,10 @@ index 0000000..19bc3f3
 +}
 diff --git a/loader/source/GameSettings.h b/loader/source/GameSettings.h
 new file mode 100644
-index 0000000..347af95
+index 0000000..5fa6822
 --- /dev/null
 +++ b/loader/source/GameSettings.h
-@@ -0,0 +1,29 @@
+@@ -0,0 +1,34 @@
 +#ifndef GAMESETTINGS_H
 +#define GAMESETTINGS_H
 +
@@ -145,8 +153,11 @@ index 0000000..347af95
 + *   ProgressiveScan = True or False         Force Progressive
 + *   SkipIPL         = True or False         Skip IPL
 + *   PatchPAL50      = True or False         Patch PAL50 (Teconmoon key, Dolphin has none)
++ *   VideoMode       = Auto, PAL50, PAL60, NTSC or MPAL   force that video mode, or leave it to the game (Teconmoon key)
++ *   Deflicker       = True or False         with a forced VideoMode: the GX deflicker filter on or off (Teconmoon key)
 + *
-+ * ProgressiveScan = True and PatchPAL50 = True also switch off the PAL guard of this loader for that game: it is the user's choice.
++ * ProgressiveScan = True, PatchPAL50 = True and a forced VideoMode other than Auto also switch off the PAL guard of this loader for that
++ * game: it is the user's choice. VideoMode = PAL50 keeps a PAL game at 50 Hz, so with Deflicker = False it only turns the filter off.
 + */
 +enum GameSetting
 +{
@@ -155,6 +166,8 @@ index 0000000..347af95
 +	GS_FORCE_PROG,
 +	GS_SKIP_IPL,
 +	GS_PATCH_PAL50,
++	GS_VIDEO_MODE,		/* 0 Auto, 1 PAL50, 2 PAL60, 3 NTSC, 4 MPAL */
++	GS_DEFLICKER,
 +	GS_COUNT
 +};
 +
@@ -163,7 +176,7 @@ index 0000000..347af95
 +
 +#endif
 diff --git a/loader/source/main.c b/loader/source/main.c
-index aef1e55..d35c3ad 100644
+index aef1e55..d194142 100644
 --- a/loader/source/main.c
 +++ b/loader/source/main.c
 @@ -48,6 +48,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
@@ -175,12 +188,12 @@ index aef1e55..d35c3ad 100644
  
  #include "ff_utf8.h"
  #include "diskio.h"
-@@ -554,6 +556,64 @@ static char dev_es[] ATTRIBUTE_ALIGN(32) = "/dev/es";
+@@ -554,6 +556,77 @@ static char dev_es[] ATTRIBUTE_ALIGN(32) = "/dev/es";
  
  extern vu32 FoundVersion;
  extern void _jmp813();
 +/* Set when the game's own settings file asks for Force Progressive or Patch PAL50: the PAL guard then leaves that option alone. */
-+static bool gsKeepProg = false, gsKeepPal50 = false;
++static bool gsKeepProg = false, gsKeepPal50 = false, gsKeepVideo = false;
 +
 +/* Teconmoon: /teconmoon/<game id>.ini overrides a few options for this start only, nincfg.bin is not changed (see GameSettings.h). */
 +static void ApplyGameSettings(void)
@@ -233,14 +246,27 @@ index aef1e55..d35c3ad 100644
 +			ncfg->VideoMode &= ~NIN_VID_PATCH_PAL50;
 +		gprintf("Game settings: Patch PAL50 %s\r\n", set[GS_PATCH_PAL50] ? "on" : "off");
 +	}
++	//a forced video mode lives in the video mode word too: Force (deflicker off) or Force (Deflicker), plus the mode
++	if (set[GS_VIDEO_MODE] >= 0)
++	{
++		static const u32 modes[] = { 0, NIN_VID_FORCE_PAL50, NIN_VID_FORCE_PAL60, NIN_VID_FORCE_NTSC, NIN_VID_FORCE_MPAL };
++		static const char *const names[] = { "Auto", "PAL50", "PAL60", "NTSC", "MPAL" };
++		ncfg->VideoMode &= ~(NIN_VID_MASK | NIN_VID_FORCE_MASK);
++		if (set[GS_VIDEO_MODE] == 0)
++			ncfg->VideoMode |= NIN_VID_AUTO;
++		else
++			ncfg->VideoMode |= (set[GS_DEFLICKER] == 1 ? NIN_VID_FORCE_DF : NIN_VID_FORCE) | modes[(int)set[GS_VIDEO_MODE]];
++		gprintf("Game settings: Video mode %s, deflicker %s\r\n", names[(int)set[GS_VIDEO_MODE]], set[GS_DEFLICKER] == 1 ? "on" : "off");
++	}
 +	gsKeepProg = set[GS_FORCE_PROG] == 1;
 +	gsKeepPal50 = set[GS_PATCH_PAL50] == 1;
++	gsKeepVideo = set[GS_VIDEO_MODE] > 0;
 +}
 +
  int main(int argc, char **argv)
  {
  	// Exit after 10 seconds if there is an error
-@@ -1026,6 +1086,10 @@ int main(int argc, char **argv)
+@@ -1026,6 +1099,10 @@ int main(int argc, char **argv)
  		ExitToLoader(1);
  	}
  
@@ -251,7 +277,7 @@ index aef1e55..d35c3ad 100644
  	// Save the ISO shift value for multi-game discs.
  	*(vu32*)0xD300300C = ISOShift;
  
-@@ -1233,6 +1297,30 @@ int main(int argc, char **argv)
+@@ -1233,6 +1310,32 @@ int main(int argc, char **argv)
  		ncfg->Config &= ~NIN_CFG_FORCE_PROG;
  	}
  
@@ -272,7 +298,9 @@ index aef1e55..d35c3ad 100644
 +			gprintf("PAL disc: Patch PAL50 ignored, it delays the audio\r\n");
 +			ncfg->VideoMode &= ~NIN_VID_PATCH_PAL50;
 +		}
-+		if((ncfg->VideoMode & NIN_VID_FORCE) && (ncfg->VideoMode & NIN_VID_FORCE_MASK) != NIN_VID_FORCE_PAL50)
++		if((ncfg->VideoMode & NIN_VID_FORCE) && (ncfg->VideoMode & NIN_VID_FORCE_MASK) != NIN_VID_FORCE_PAL50 && gsKeepVideo)
++			gprintf("PAL disc: forced video mode kept, the game settings ask for it\r\n");
++		else if((ncfg->VideoMode & NIN_VID_FORCE) && (ncfg->VideoMode & NIN_VID_FORCE_MASK) != NIN_VID_FORCE_PAL50)
 +		{
 +			gprintf("PAL disc: forced 60 Hz video mode ignored, it delays the audio\r\n");
 +			ncfg->VideoMode &= ~NIN_VID_FORCE;

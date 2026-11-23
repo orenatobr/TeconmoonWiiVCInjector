@@ -20,11 +20,13 @@ The kernel logs the video options it ends up with (`Video: ...`) and each mode i
 text for Force Progressive says it is ignored on PAL games.
 
 **Settings for one game.** `/teconmoon/<id4>.ini` on the card (the first 4 characters of the disc id, which carry the region) holds a few keys of Dolphin's GameINI format:
-`AspectRatio = 1` or `2` (Wii U Widescreen on or off), `wideScreenHack` (Force Widescreen), `ProgressiveScan` (Force Progressive), `SkipIPL` and, a key of this build that Dolphin does not have, `PatchPAL50` (Patch PAL50, under `[Teconmoon]`). `loader/source/GameSettings.c` reads them
+`AspectRatio = 1` or `2` (Wii U Widescreen on or off), `wideScreenHack` (Force Widescreen), `ProgressiveScan` (Force Progressive), `SkipIPL` and, keys of this build that Dolphin does not have (under `[Teconmoon]`), `PatchPAL50` (Patch PAL50), `VideoMode` (`Auto`, `PAL50`, `PAL60`, `NTSC` or `MPAL`: force that video mode)
+and `Deflicker` (with a forced `VideoMode`, the GX deflicker filter on or off). `loader/source/GameSettings.c` reads them
 (`test-gamesettings.sh` compiles and tests that file on the Mac) and `loader/source/main.c` sets or clears the matching option bit in the config the kernel receives, for that start only, so `nincfg.bin`
 is not changed. A key that is not there leaves the option as it is. Section names are ignored and other lines skipped, so a Dolphin `GameSettings/<id>.ini` can be dropped in as it is (only the first 4 KB is read).
 It is read as soon as the game id is final, while the card is still open and after `nincfg.bin` has been written (so nothing is saved), and before the loader uses any of the four options.
-The PAL guard below still runs after it, except that `ProgressiveScan = True` and `PatchPAL50 = True` in the game's own file are kept on a PAL disc: that is the user's choice for that game. The app writes the file (see "Game settings" in `../README.md`).
+The PAL guard below still runs after it, except that `ProgressiveScan = True`, `PatchPAL50 = True` and a forced `VideoMode` other than `Auto` in the game's own file are kept on a PAL disc: that is the user's choice for that game.
+`VideoMode = PAL50` keeps a PAL game at 50 Hz (the sound was in sync there), and with `Deflicker = False` it only turns the GX deflicker filter off, the likely cause of the soft picture of the interlaced PAL mode. The app writes the file (see "Game settings" in `../README.md`).
 The Wii U decides 4:3 or 16:9 for a game in `kernel/main.c`: it writes the DMCU registers `0xd8006a0` and `0xd8006a8` only when the Wii U Widescreen option and the console's own aspect setting disagree, and restores them when the game ends.
 The kernel now logs that decision in `ndebug.log` (`WiiU aspect: ...`, with the register value and whether it writes), because those registers are also what display patches such as wiiscreenoff touch.
 
@@ -34,7 +36,7 @@ searches), the Gecko code handler is switched on. Any other start (a game file o
 (see "Cheat codes" in `../README.md`). Seen working on a console: with a `/codes/GEAP8P.gct` on the card, a Skies of Arcadia PAL WUP logged `Patch:Cheats on for a Wii U disc game, found /codes/GEAP8P.gct` and
 `Patch:Copied /codes/GEAP8P.gct to memory` in `ndebug.log`, and the Gecko code took effect.
 
-The patch is `teconmoon.patch`, 208 added lines in 6 files, on top of upstream commit `7a183459939653cb7bcf59ab137c2758a9f9fae0`.
+The patch is `teconmoon.patch`, 236 added lines in 6 files, on top of upstream commit `7a183459939653cb7bcf59ab137c2758a9f9fae0`.
 `Assets/nintendont-teconmoon/icon.png` is the file from that same commit. `meta.xml` is the upstream one with the name, author and description changed so the Homebrew Channel shows this is the Teconmoon build (the version number is still upstream's 4.431).
 
 ## What was and was not checked
@@ -61,7 +63,7 @@ silicon it runs under emulation and takes 15 to 40 minutes.
 What was checked when this build was made:
 
 - Built with the toolchain above (devkitPPC r35-1 instead of the r35-2 the Nintendont README names, which only exists for Windows).
-  `Assets/nintendont-teconmoon/boot.dol` is 1654304 bytes with sha256 `438848541e7619b12d61a22d78084710717d7f85a90bfd6d74aed8ee7464f0e9`, and `UiSelfTest` checks that hash.
+  `Assets/nintendont-teconmoon/boot.dol` is 1655104 bytes with sha256 `55164337908325ffb1d5edfa9e313d99681dddc798572068eac2220876b0667a`, and `UiSelfTest` checks that hash.
 - Release 1.2.14 read the file after the loader had already closed the card, so it never opened it and every option kept its WUP value: the console log of a Skies of Arcadia run showed
   `WiiU aspect: console 16:9=1, Wii U Widescreen option=0` although `GEAP.ini` had `AspectRatio = 1`. The host test of the parser could not catch that, it does not run the loader. 1.2.15 moves the call
   and the kernel log now prints the whole config, so `ndebug.log` shows whether the file arrived.

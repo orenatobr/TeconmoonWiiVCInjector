@@ -23,12 +23,12 @@
             <Button Name="NintendontUpdate" Click="NintendontUpdate_Click">
               <StackPanel Orientation="Horizontal" Spacing="8">
                 <Path Classes="icon muted" Data="{StaticResource IconDownload}" />
-                <TextBlock Text="Download Latest Nintendont from GitHub" />
+                <TextBlock Text="Download Latest Teconmoon Nintendont from GitHub" />
               </StackPanel>
             </Button>
             <local:WfLabel Name="ActionStatus" Grid.Column="1" Classes="sub" VerticalAlignment="Center" Text="" />
           </Grid>
-          <local:WfLabel Classes="sub" Text="Installs the Teconmoon build of Nintendont. PAL discs always stay at 50 Hz, so their audio stays in sync." />
+          <local:WfLabel Classes="sub" Text="Downloads the latest Teconmoon build of Nintendont from this project's GitHub (the build bundled with the app if you are offline). It reads per game settings (teconmoon/) and cheat codes (codes/) from the card, and keeps PAL discs at 50 Hz unless a game's own settings say otherwise." />
           <CheckBox Name="NintendontUpstream" Content="Install the plain upstream Nintendont instead"
                     ToolTip.Tip="Downloads FIX94's latest loader.dol from GitHub. It does not stop Force Progressive from delaying the audio of PAL games." />
         </StackPanel>

@@ -75,6 +75,7 @@ or a failed build is skipped and listed in the final summary; the other games st
 - Engine self-test (`WIIVC_SELFTEST=1`) also runs WBFS, GameCube (synthetic header) and WiiWare builds; none used a real game.
 - Boot sound and TGA conversion are done in C# (no sox, no png2tgacmd); not compared byte for byte with the originals.
 - Boot sound preview uses `afplay`; TGA images are decoded in-process.
+- Nintendont SD card menu: the button "Download Latest Teconmoon Nintendont from GitHub" fetches `boot.dol`, `meta.xml` and `icon.png` from this project's `main` branch, checks they look right (a DOL, the app metadata, a PNG, so an error page is never installed), and installs the build bundled with the app instead when there is no connection. The upstream box installs the plain upstream build.
 - Nintendont SD card menu: SD cards are the volumes mounted under `/Volumes`. The "format" link opens Disk Utility.
 - The Nintendont SD card menu installs the Teconmoon build of Nintendont by default (see `nintendont-teconmoon/README.md`): PAL discs ignore Force Progressive,
   Patch PAL50 and forced 60 Hz modes so their audio stays in sync. A box installs the plain upstream build instead.
@@ -83,7 +84,7 @@ or a failed build is skipped and listed in the final summary; the other games st
 
 The button "Game settings..." (GC Retail mode, under the cheat codes button) sets options for one game only, in the format of Dolphin's GameINI. Each option can follow the Nintendont
 setting, be forced on or be forced off: Fullscreen (`AspectRatio = 1` or `2`, Nintendont's "WiiU Widescreen"), Widescreen hack (`wideScreenHack`, "Force Widescreen"), Progressive scan
-(`ProgressiveScan`, "Force Progressive") and Skip IPL (`SkipIPL`). The window shows the text of the file. "Save" keeps it in `~/Library/Application Support/WiiVCInjector/gamesettings/<id4>.ini`,
+(`ProgressiveScan`, "Force Progressive"), Skip IPL (`SkipIPL`), and three keys of this app that Dolphin does not have: Patch PAL50 (`PatchPAL50`), Video mode (`VideoMode`: Auto, PAL50, PAL60, NTSC or MPAL) and the Deflicker filter (`Deflicker`, with a forced video mode). The window shows the text of the file. "Save" keeps it in `~/Library/Application Support/WiiVCInjector/gamesettings/<id4>.ini`,
 "Copy to SD card..." puts it at `teconmoon/<id4>.ini` on the card, and installing Nintendont from the SD Card menu copies every saved file. The Teconmoon Nintendont applies it when that game
 starts, also from a WUP, without rebuilding the WUP and without changing `nincfg.bin` (see `nintendont-teconmoon/README.md`).
 
@@ -93,7 +94,8 @@ starts, also from a WUP, without rebuilding the WUP and without changing `nincfg
 - A PAL disc normally ignores Progressive scan and Patch PAL50 (`AUDIO-DELAY.md`), which leaves it on a 528 line interlaced mode with black bars above and below and a soft picture. Setting either one On in the
   game's own settings keeps it for that game. Progressive scan without Patch PAL50, together with a Gecko code that makes the game run at 60 Hz, is the combination meant to give a sharp full height picture without
   the sound delay; that is not measured.
-- Dolphin keys other than these four are ignored, so a Dolphin `GameSettings/<id>.ini` can be used as it is.
+- A forced video mode is kept on a PAL disc when set here. PAL50 keeps the game at 50 Hz, where the sound was in sync, and with the deflicker filter Off the interlaced picture is sharper (thin lines may flicker). Not measured.
+- Dolphin keys other than these are ignored, so a Dolphin `GameSettings/<id>.ini` can be used as it is.
 - The GamePad staying on with the wiiscreenoff plugin is not covered by this. The kernel now logs what it does with the Wii U aspect registers (`WiiU aspect:` lines in `ndebug.log`), which is the
   first thing to read if Nintendont turns out to interfere with that plugin.
 - GameCube only. Release 1.2.14 did not apply the file at all (the loader read it after closing the card); 1.2.15 does. Not confirmed on a console yet.

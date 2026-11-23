@@ -98,7 +98,7 @@ public partial class SDCardWindow : Window
     /// <summary>Where the Nintendont files come from.</summary>
     internal enum NintendontSource { Upstream, Teconmoon, Unavailable }
 
-    /// <summary>Picks the Nintendont source. The bundled Teconmoon build (L + R + A aspect toggle, PAL discs kept at 50 Hz) is the default; upstream is opt-in.</summary>
+    /// <summary>Picks the Nintendont source. The bundled Teconmoon build (PAL discs kept at 50 Hz) is the default; upstream is opt-in.</summary>
     /// <param name="upstream">Whether the user ticked the upstream box.</param>
     /// <param name="baseDir">Folder the app runs from (<see cref="AppContext.BaseDirectory"/>).</param>
     /// <returns>The source and, for the Teconmoon build, the folder holding its boot.dol, meta.xml and icon.png.</returns>

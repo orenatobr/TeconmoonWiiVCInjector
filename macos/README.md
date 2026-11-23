@@ -76,8 +76,8 @@ or a failed build is skipped and listed in the final summary; the other games st
 - Boot sound and TGA conversion are done in C# (no sox, no png2tgacmd); not compared byte for byte with the originals.
 - Boot sound preview uses `afplay`; TGA images are decoded in-process.
 - Nintendont SD card menu: SD cards are the volumes mounted under `/Volumes`. The "format" link opens Disk Utility.
-- The Nintendont SD card menu installs the Teconmoon build of Nintendont by default (see `nintendont-teconmoon/README.md`): in game, L + R + A switches the Wii U
-  screen between 4:3 and 16:9, and PAL discs ignore Force Progressive, Patch PAL50 and forced 60 Hz modes so their audio stays in sync. A box installs the plain upstream build instead.
+- The Nintendont SD card menu installs the Teconmoon build of Nintendont by default (see `nintendont-teconmoon/README.md`): PAL discs ignore Force Progressive,
+  Patch PAL50 and forced 60 Hz modes so their audio stays in sync. A box installs the plain upstream build instead.
 
 ## Checks
 

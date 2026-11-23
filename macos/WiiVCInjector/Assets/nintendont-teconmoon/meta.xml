@@ -4,12 +4,12 @@
 	<coder>FIX94, crediar; Teconmoon build: orenatobr</coder>
 	<version>4.431</version>
 	<release_date>20161218000000</release_date>
-	<short_description>Gamecube Loader, L+R+A 4:3/16:9, PAL 50 Hz</short_description>
+	<short_description>Gamecube Loader, PAL discs kept at 50 Hz</short_description>
 	<long_description>Commiters: GerbilSoft, JoostinOnline, GreyRogue, Howard, Cyan, nastys 
 
  Project website: https://github.com/FIX94/Nintendont 
 
-Teconmoon build: L+R+A switches 4:3 and 16:9 on Wii U, and PAL discs stay at 50 Hz so their audio stays in sync.
+Teconmoon build: PAL discs stay at 50 Hz so their audio stays in sync.
 
 Nintendont allows you to run GameCube games on a Wii or Wii U from an SD or HDD device.</long_description>
 	<no_ios_reload/>

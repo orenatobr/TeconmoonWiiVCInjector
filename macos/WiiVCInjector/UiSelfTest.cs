@@ -378,18 +378,22 @@ public static class UiSelfTest
             T("nkit install: the executable is marked executable", (File.GetUnixFileMode(Path.Combine(installDir, "nkit")) & UnixFileMode.UserExecute) != 0);
             T("nkit install: the verified hash is recorded", File.ReadAllText(Path.Combine(installDir, ".verified")) == zipHash);
 
-            // --- Nintendont audio experiment build (opt-in, upstream stays the default)
-            var expDir = Path.Combine(tmp, "Assets", "nintendont-audio-exp");
-            T("nintendont source: upstream when the box is off", SDCardWindow.ChooseNintendontSource(false, tmp) == (SDCardWindow.NintendontSource.Upstream, null));
-            T("nintendont source: unavailable when ticked but not shipped", SDCardWindow.ChooseNintendontSource(true, tmp) == (SDCardWindow.NintendontSource.Unavailable, null));
-            Directory.CreateDirectory(expDir);
-            File.WriteAllBytes(Path.Combine(expDir, "boot.dol"), new byte[] { 1 });
-            T("nintendont source: unavailable when only boot.dol is shipped", SDCardWindow.ChooseNintendontSource(true, tmp) == (SDCardWindow.NintendontSource.Unavailable, null));
-            File.WriteAllBytes(Path.Combine(expDir, "meta.xml"), new byte[] { 1 });
-            File.WriteAllBytes(Path.Combine(expDir, "icon.png"), new byte[] { 1 });
-            T("nintendont source: experiment when ticked and shipped", SDCardWindow.ChooseNintendontSource(true, tmp) == (SDCardWindow.NintendontSource.Experiment, expDir));
-            T("nintendont source: the real build output ships the experiment files", SDCardWindow.ChooseNintendontSource(true, AppContext.BaseDirectory).Source == SDCardWindow.NintendontSource.Experiment, AppContext.BaseDirectory);
-            T("nintendont source: upstream stays the default even when the experiment is shipped", SDCardWindow.ChooseNintendontSource(false, tmp) == (SDCardWindow.NintendontSource.Upstream, null));
+            // --- Teconmoon Nintendont build (the default, upstream is opt-in)
+            var tecDir = Path.Combine(tmp, "Assets", "nintendont-teconmoon");
+            T("nintendont source: upstream when the box is ticked", SDCardWindow.ChooseNintendontSource(true, tmp) == (SDCardWindow.NintendontSource.Upstream, null));
+            T("nintendont source: unavailable when the build is not shipped", SDCardWindow.ChooseNintendontSource(false, tmp) == (SDCardWindow.NintendontSource.Unavailable, null));
+            Directory.CreateDirectory(tecDir);
+            File.WriteAllBytes(Path.Combine(tecDir, "boot.dol"), new byte[] { 1 });
+            T("nintendont source: unavailable when only boot.dol is shipped", SDCardWindow.ChooseNintendontSource(false, tmp) == (SDCardWindow.NintendontSource.Unavailable, null));
+            File.WriteAllBytes(Path.Combine(tecDir, "meta.xml"), new byte[] { 1 });
+            File.WriteAllBytes(Path.Combine(tecDir, "icon.png"), new byte[] { 1 });
+            T("nintendont source: the Teconmoon build when shipped", SDCardWindow.ChooseNintendontSource(false, tmp) == (SDCardWindow.NintendontSource.Teconmoon, tecDir));
+            T("nintendont source: the real build output ships the Teconmoon files", SDCardWindow.ChooseNintendontSource(false, AppContext.BaseDirectory).Source == SDCardWindow.NintendontSource.Teconmoon, AppContext.BaseDirectory);
+            var shippedDol = File.ReadAllBytes(Path.Combine(AppContext.BaseDirectory, "Assets", "nintendont-teconmoon", "boot.dol"));
+            T("nintendont build: the shipped boot.dol is the one nintendont-teconmoon/README.md documents",
+                Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(shippedDol)).Equals("a32f92354107b70a3805cd7648784ddaf5b4aad86909d47e05b2fd81abd43027", StringComparison.OrdinalIgnoreCase));
+            T("nintendont build: the shipped boot.dol carries the PAL guard", System.Text.Encoding.ASCII.GetString(shippedDol).Contains("PAL disc: Force Progressive ignored"));
+            T("nintendont source: upstream still available when the build is shipped", SDCardWindow.ChooseNintendontSource(true, tmp) == (SDCardWindow.NintendontSource.Upstream, null));
         }
         catch (Exception ex)
         {

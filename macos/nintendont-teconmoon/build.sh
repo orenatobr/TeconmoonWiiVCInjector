@@ -1,16 +1,16 @@
 #!/usr/bin/env bash
-# Rebuilds the Nintendont audio experiment (or the untouched upstream, for comparison) with the toolchain
+# Rebuilds the Teconmoon Nintendont (or the untouched upstream, for comparison) with the toolchain
 # that Nintendont's README pins: devkitARM r53-1, devkitPPC r35, libogc 1.8.23-1.
 #
-# Usage:  macos/nintendont-audio-exp/build.sh [half|upstream] [output.dol]
-#   half      upstream 7a18345 plus half-stream-buffers.patch (default)
+# Usage:  macos/nintendont-teconmoon/build.sh [teconmoon|upstream] [output.dol]
+#   teconmoon upstream 7a18345 plus teconmoon.patch (default)
 #   upstream  upstream 7a18345 as is
 # Needs Docker (the toolchain is linux/amd64, so it runs under emulation on Apple silicon: expect 15 to 40 minutes),
 # git, curl and shasum. The old toolchain packages come from an unofficial mirror; every file is checked against
 # the sha256 below before it is used.
 set -euo pipefail
 
-VARIANT="${1:-half}"
+VARIANT="${1:-teconmoon}"
 OUT="${2:-$PWD/loader-$VARIANT.dol}"
 HERE="$(cd "$(dirname "$0")" && pwd)"
 NINTENDONT_REF=7a183459939653cb7bcf59ab137c2758a9f9fae0
@@ -18,7 +18,7 @@ GENERAL_TOOLS_REF=46086605cdc63fb02ba0ed08cdc00801ba00c6f0
 GAMECUBE_TOOLS_REF=3b7f914df771d4b779d88607ceed2ec9264ff93a
 MIRROR=https://wii.leseratte10.de/devkitPro
 
-[[ "$VARIANT" == half || "$VARIANT" == upstream ]] || { echo "variant must be half or upstream" >&2; exit 2; }
+[[ "$VARIANT" == teconmoon || "$VARIANT" == upstream ]] || { echo "variant must be teconmoon or upstream" >&2; exit 2; }
 
 WORK="$(mktemp -d)"
 trap 'rm -rf "$WORK"' EXIT
@@ -36,7 +36,7 @@ fetch "$MIRROR/devkitPPC/devkitppc-rules/devkitppc-rules-1.1.1-1-any.pkg.tar.xz"
 
 git clone -q https://github.com/FIX94/Nintendont "$WORK/src"
 git -C "$WORK/src" checkout -q "$NINTENDONT_REF"
-[[ "$VARIANT" == half ]] && git -C "$WORK/src" apply "$HERE/half-stream-buffers.patch"
+[[ "$VARIANT" == teconmoon ]] && git -C "$WORK/src" apply "$HERE/teconmoon.patch"
 # Loader and kernel print their build time (__DATE__ __TIME__), so every build differs. The published boot.dol says
 # "Nov 21 2026 14:25:37" (the loader's value); BUILD_DATE and BUILD_TIME override it. Every use in the tree is pinned.
 BUILD_DATE="${BUILD_DATE:-Nov 21 2026}"; BUILD_TIME="${BUILD_TIME:-14:25:37}"

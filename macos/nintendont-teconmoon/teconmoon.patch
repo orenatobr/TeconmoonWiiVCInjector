@@ -1,0 +1,125 @@
+diff --git a/kernel/main.c b/kernel/main.c
+index fac0829..5af14d5 100644
+--- a/kernel/main.c
++++ b/kernel/main.c
+@@ -331,6 +331,11 @@ int _main( int argc, char *argv[] )
+ 			write32(0xd8006a0, 0x30000002), mask32(0xd8006a8, 0, 2);
+ 	}
+ 
++	// Wii U aspect currently on screen (the widescreen option sets the start value), and the last
++	// L+R+A press count seen from the PPC side (last word of the RESET_STATUS cache line).
++	bool wiiuWide = ConfigGetConfig(NIN_CFG_WIIU_WIDE);
++	u32 wideTogglesSeen = 0;
++
+ 	while (1)
+ 	{
+ 		_ahbMemFlush(0);
+@@ -459,6 +464,18 @@ int _main( int argc, char *argv[] )
+ 		}
+ 		sync_before_read((void*)RESET_STATUS, 0x20);
+ 		vu32 reset_status = read32(RESET_STATUS);
++		u32 wideToggles = read32(RESET_STATUS + 0x1C);
++		if (wideToggles != wideTogglesSeen)
++		{
++			wideTogglesSeen = wideToggles;
++			if (IsWiiU())
++			{
++				wiiuWide = !wiiuWide;
++				write32(0xd8006a0, wiiuWide ? 0x30000004 : 0x30000002);
++				mask32(0xd8006a8, 0, 2);
++				dbgprintf("L+R+A: Wii U output %s\r\n", wiiuWide ? "16:9" : "4:3");
++			}
++		}
+ 		if (reset_status == 0x1DEA)
+ 		{
+ 			dbgprintf("Game Exit\r\n");
+diff --git a/loader/source/main.c b/loader/source/main.c
+index aef1e55..ebd6340 100644
+--- a/loader/source/main.c
++++ b/loader/source/main.c
+@@ -1233,6 +1233,26 @@ int main(int argc, char **argv)
+ 		ncfg->Config &= ~NIN_CFG_FORCE_PROG;
+ 	}
+ 
++	if(BI2region == BI2_REGION_PAL)
++	{	//A PAL game forced to 60 Hz plays its sound late against the picture (Force Progressive was
++		//confirmed on Skies of Arcadia). Keep PAL discs at their own 50 Hz whatever the config says.
++		if(ncfg->Config & NIN_CFG_FORCE_PROG)
++		{
++			gprintf("PAL disc: Force Progressive ignored, it delays the audio\r\n");
++			ncfg->Config &= ~NIN_CFG_FORCE_PROG;
++		}
++		if(ncfg->VideoMode & NIN_VID_PATCH_PAL50)
++		{
++			gprintf("PAL disc: Patch PAL50 ignored, it delays the audio\r\n");
++			ncfg->VideoMode &= ~NIN_VID_PATCH_PAL50;
++		}
++		if((ncfg->VideoMode & NIN_VID_FORCE) && (ncfg->VideoMode & NIN_VID_FORCE_MASK) != NIN_VID_FORCE_PAL50)
++		{
++			gprintf("PAL disc: forced 60 Hz video mode ignored, it delays the audio\r\n");
++			ncfg->VideoMode &= ~NIN_VID_FORCE;
++		}
++	}
++
+ 	//make sure the cfg gets to the kernel
+ 	DCStoreRange((void*)ncfg, sizeof(NIN_CFG));
+ 
+diff --git a/loader/source/menu.c b/loader/source/menu.c
+index 5616bec..099dd74 100644
+--- a/loader/source/menu.c
++++ b/loader/source/menu.c
+@@ -874,6 +874,9 @@ static const char *const *GetSettingsDescription(const MenuCtx *ctx)
+ 					"",
+ 					"Requires component cables, or",
+ 					"an HDMI cable on Wii U.",
++					"",
++					"Ignored on PAL games: 60 Hz",
++					"delays their audio.",
+ 					NULL
+ 				};
+ 				return desc_force_prog;
+diff --git a/loader/source/ppc/PADReadGC/source/PADReadGC.c b/loader/source/ppc/PADReadGC/source/PADReadGC.c
+index c382013..ecef4c8 100644
+--- a/loader/source/ppc/PADReadGC/source/PADReadGC.c
++++ b/loader/source/ppc/PADReadGC/source/PADReadGC.c
+@@ -20,6 +20,9 @@ static vu32* const _siReg = (vu32*)0xCD006400;
+ static vu32* const MotorCommand = (vu32*)0x93003010;
+ static vu32* RESET_STATUS = (vu32*)0xD3003420;
+ static vu32* HID_STATUS = (vu32*)0xD3003440;
++//Counter bumped on every L+R+A press, the kernel flips the Wii U aspect ratio when it changes.
++//Last word of the RESET_STATUS cache line (0x1300343C), zeroed at boot with the rest of the line.
++static vu32* WIDE_TOGGLE = (vu32*)0xD300343C;
+ static vu32* HIDMotor = (vu32*)0x93003020;
+ static vu32* PadUsed = (vu32*)0x93003024;
+ 
+@@ -41,6 +44,7 @@ static u32 PrevAdapterChannel2 = 0;
+ static u32 PrevAdapterChannel3 = 0;
+ static u32 PrevAdapterChannel4 = 0;
+ static u32 PrevDRCButton = 0;
++static u32 WideComboHeld = 0;
+ 
+ static s8 OffsetX[NIN_CFG_MAXPAD] = {0};
+ static s8 OffsetY[NIN_CFG_MAXPAD] = {0};
+@@ -1557,6 +1561,22 @@ u32 PADRead(u32 calledByGame)
+ 		for(chan = 0; chan < 4; ++chan)
+ 			Pad[chan].err = ((used & (1<<chan)) && *SIInited) ? 0 : -1;
+ 	}
++	if(calledByGame)
++	{
++		//L+R+A on any pad toggles 4:3 / 16:9, once per press. A is hidden from the game while it is held.
++		u32 combo = 0;
++		for(chan = 0; chan < 4; ++chan)
++		{
++			if((used & (1<<chan)) && (Pad[chan].button & (PAD_TRIGGER_L|PAD_TRIGGER_R|PAD_BUTTON_A)) == (PAD_TRIGGER_L|PAD_TRIGGER_R|PAD_BUTTON_A))
++			{
++				combo = 1;
++				Pad[chan].button &= ~PAD_BUTTON_A;
++			}
++		}
++		if(combo && !WideComboHeld)
++			*WIDE_TOGGLE = *WIDE_TOGGLE + 1;
++		WideComboHeld = combo;
++	}
+ 	*PadUsed = (*SIInited ? used : 0);
+ 
+ 	memFlush = (u32)HIDMotor;

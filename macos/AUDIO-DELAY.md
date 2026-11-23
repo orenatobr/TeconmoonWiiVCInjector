@@ -3,11 +3,11 @@
 ## Status
 Fixed for PAL games: the cause is Force Progressive. With it on, `kernel/Patch.c` (around lines 2340 to 2350) rewrites a game's PAL50 video mode (0x04) to the progressive 60 Hz mode (0x02), so a PAL game runs at 60 Hz instead of the 50 Hz it was made for. Sound effects then arrive late against the picture. Confirmed on hardware with Skies of Arcadia (GEAP8P), scene Cutlass Fury: same ISO, same Nintendont, only Force Progressive off, and the delay is gone.
 
-What to do: leave Force Progressive off for PAL discs. The SD Card window now says so. A PAL game then outputs 50 Hz; if your TV shows a black screen, that is the older black screen of 50 Hz output, not this setting.
+What to do: leave Force Progressive off for PAL discs. The SD Card window now says so, and the Teconmoon Nintendont build (`nintendont-teconmoon/`) enforces it: for a PAL disc its loader clears Force Progressive, Patch PAL50 and any forced 60 Hz video mode before the game starts. Only Force Progressive was measured on hardware; the other two are blocked because they also put a PAL game on 60 Hz. A PAL game then outputs 50 Hz; if your TV shows a black screen, that is the older black screen of 50 Hz output, not this setting.
 
 ## Ruled out (read in the source and tested)
 - Disc reads through the Wii VC virtual disc (`WDVD_FST_Read`): the same delay appears with the ISO read from the SD card through the Homebrew Channel.
-- Disc audio streaming buffer (`kernel/Stream.c`): the game's header has the streaming flag (offset 0x8) at 0, so the half-buffer experiment cannot change its sound.
+- Disc audio streaming buffer (`kernel/Stream.c`): the game's header has the streaming flag (offset 0x8) at 0, so a smaller buffer cannot change its sound (the half-buffer build tried before is gone).
 - `ARStartDMA` (synchronous copy), the AX DSP patches (sample format only), and the `__AI_set_stream_sample_rate` patch (no pattern entry, never applied).
 
 The crackling on flames and footsteps is gone too with Force Progressive off, and the picture showed no black screen or flicker at 50 Hz (reported by the user on Skies of Arcadia PAL).
@@ -25,4 +25,4 @@ The crackling on flames and footsteps is gone too with Force Progressive off, an
 ## Open items
 - Storage test (above).
 - A clean capture for a real number.
-- A/B of the experimental `boot.dol` against the stock one.
+- Check on a console that the Teconmoon build keeps a PAL disc at 50 Hz with Force Progressive ticked in `nincfg.bin`.

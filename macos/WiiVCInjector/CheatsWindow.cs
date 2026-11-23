@@ -21,6 +21,12 @@ public sealed class CheatsWindow : Window
     readonly Button _copyButton;
     readonly List<(Cheat Cheat, CheckBox Box)> _rows = new();
     readonly StackPanel _list = new() { Spacing = 4 };
+    readonly ScrollViewer _listScroll;
+    // Wii only: the rows that need a code handler, and whether the code handler tool (GeckoLoader) is installed
+    readonly List<(CheckBox Box, string Text)> _handlerRows = new();
+    bool _handler;
+    readonly TextBlock _handlerNote = new() { TextWrapping = TextWrapping.Wrap, Opacity = 0.8 };
+    readonly Button _handlerButton = new() { Content = "Install code handler tool" };
     readonly TextBlock _status = new() { TextWrapping = TextWrapping.Wrap, Opacity = 0.8 };
     // a fixed height with a scroll bar: a long pasted page must not make the window grow
     readonly TextBox _paste = new() { AcceptsReturn = true, Height = 110, TextWrapping = TextWrapping.Wrap, Watermark = "Paste the wiki page (or just a code block) here" };
@@ -28,6 +34,7 @@ public sealed class CheatsWindow : Window
     public CheatsWindow(string id, string name, bool wii = false)
     {
         _id = id; _name = name; _wii = wii;
+        _handler = wii && GeckoLoaderTool.Find() != null;
         Title = "Cheat codes";
         Width = 580; SizeToContent = SizeToContent.Height; CanResize = false; FontSize = 13;
         WindowStartupLocation = WindowStartupLocation.CenterOwner;
@@ -41,6 +48,7 @@ public sealed class CheatsWindow : Window
         TextBlock T(string text, double opacity = 1) => new() { Text = text, TextWrapping = TextWrapping.Wrap, Opacity = opacity };
 
         ScrollViewer.SetVerticalScrollBarVisibility(_paste, Avalonia.Controls.Primitives.ScrollBarVisibility.Auto);
+        _listScroll = new ScrollViewer { MaxHeight = 220, Content = _list };
         _copyButton = B("Copy to SD card...", CopyToSd_Click);
         ToolTip.SetTip(_copyButton, "Puts codes/<id>.gct on the card. The Teconmoon Nintendont loads it when the game starts; the code is not inside the WUP.");
 
@@ -50,10 +58,10 @@ public sealed class CheatsWindow : Window
             Children =
             {
                 new TextBlock { Text = $"{name} ({id})", FontWeight = Avalonia.Media.FontWeight.SemiBold, FontSize = 15, TextWrapping = TextWrapping.Wrap },
-                T(wii ? "Gecko and Action Replay codes. A Wii game in a WUP has no code handler, so the build writes the ticked codes into the game's main.dol. That works for plain memory writes that patch the game's own code (widescreen, frame rate). Greyed out: conditional, pointer and assembly (C2) Gecko codes, and Action Replay codes that are not plain writes; codes that change values the game keeps while it runs (lives, health) are reported as not applied in the build log."
+                T(wii ? "Gecko and Action Replay codes. A Wii game in a WUP has no code handler, so the build writes plain memory writes straight into the game's main.dol (widescreen, frame rate). Codes that are not plain writes (assembly C2, conditional, pointer) need a code handler: install the code handler tool below and the build adds one to main.dol, with all the ticked codes. Without it those codes are greyed out. Action Replay codes that are not plain writes are always greyed out."
                     : "Gecko and Action Replay codes. They are saved on the SD card as codes/<id>.gct and the Teconmoon Nintendont runs them when the game starts, also from a WUP; they are not stored inside the WUP. Gecko codes are used as they are; Action Replay codes only when they are plain memory writes (converted to Gecko), the other Action Replay types are greyed out."),
                 _status,
-                new ScrollViewer { MaxHeight = 220, Content = _list },
+                _listScroll,
                 T("Codes people wrote for this game are on its Dolphin wiki page. The wiki checks for bots, so it opens in your browser: select the whole page there (Cmd+A, Cmd+C) and paste it here. Only the code blocks are taken, and the ones labelled for another region are left out.", 0.8),
                 new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8, Children = { B("Open wiki page", (_, _) => MainWindow.Open(CheatCodes.WikiUrl(_name))), B("Add pasted codes", AddPasted_Click) } },
                 _paste,
@@ -65,7 +73,35 @@ public sealed class CheatsWindow : Window
             },
         };
         _copyButton.IsVisible = !wii;
+        if (wii)
+        {
+            _handlerButton.Click += InstallHandler_Click;
+            ToolTip.SetTip(_handlerButton, "Downloads GeckoLoader (GPL-3.0, a separate Python program) and its Python packages into this app's folder. It needs git and python3 and takes a minute.");
+            ((StackPanel)Content).Children.Insert(4, new StackPanel { Orientation = Orientation.Horizontal, Spacing = 12, Children = { _handlerButton, new Border { Child = _handlerNote, MaxWidth = 380 } } });
+            ShowHandlerState();
+        }
         Opened += async (_, _) => await LoadAsync();
+    }
+
+    void ShowHandlerState()
+    {
+        _handlerButton.IsVisible = !_handler;
+        _handlerNote.Text = _handler ? "Code handler tool (GeckoLoader): installed. Codes that need a code handler can be ticked; the build adds the handler to main.dol. Not tried on a console."
+            : "Code handler tool (GeckoLoader): not installed.";
+    }
+
+    async void InstallHandler_Click(object? s, Avalonia.Interactivity.RoutedEventArgs e)
+    {
+        _handlerButton.IsEnabled = false;
+        _handlerNote.Text = "Installing GeckoLoader and its Python packages (about 60 MB)...";
+        var (ok, output) = await GeckoLoaderTool.InstallAsync();
+        _handler = ok;
+        _handlerButton.IsEnabled = true;
+        ShowHandlerState();
+        if (ok)
+            foreach (var (box, text) in _handlerRows) { box.IsEnabled = true; box.Content = text + "  [with the code handler]"; ToolTip.SetTip(box, null); }
+        else
+            await Dialogs.Info(this, "Could not install the code handler tool:\n" + output, "Install failed");
     }
 
     string SavedFile => _wii ? CheatCodes.CodesTextPath(_id) : CheatCodes.GctPath(_id);
@@ -87,18 +123,26 @@ public sealed class CheatsWindow : Window
         }
     }
 
-    void AddRows(IEnumerable<Cheat> cheats)
+    /// <summary>Adds a row per cheat and returns how many of them cannot be used here (their rows are greyed out and say why).</summary>
+    int AddRows(IEnumerable<Cheat> cheats)
     {
+        var unusable = 0;
         foreach (var c in cheats)
         {
             var text = $"{c.Name}  ({c.Source}, {c.Lines.Count} line(s))";
             if (CheatCodes.Warning(c, _id) is { } w) text += "\n" + w;
-            var reason = c.Unusable ?? (_wii && DolCheats.Writes(c) == null ? "Needs a code handler, which a Wii game in a WUP does not have." : null);
+            var needsHandler = _wii && c.Unusable == null && DolCheats.Writes(c) == null;
+            var reason = c.Unusable ?? (needsHandler && !_handler ? "Needs a code handler, which a Wii game in a WUP does not have. Install the code handler tool (button above the paste box) to use it." : null);
+            var baseText = text;
+            if (needsHandler && _handler) text += "  [with the code handler]";
+            if (reason != null) { text += "\nNot usable here: " + reason; unusable++; }
             var box = new CheckBox { Content = text, IsEnabled = reason == null };
             if (reason != null) ToolTip.SetTip(box, reason);
+            if (needsHandler) _handlerRows.Add((box, baseText));
             _rows.Add((c, box));
             _list.Children.Add(box);
         }
+        return unusable;
     }
 
     async void AddPasted_Click(object? s, Avalonia.Interactivity.RoutedEventArgs e)
@@ -108,9 +152,15 @@ public sealed class CheatsWindow : Window
         var mine = CheatCodes.RegionOf(_id);
         var added = parsed.Where(c => c.Region == null || mine == null || c.Region == mine).ToList();
         if (added.Count == 0) { await Dialogs.Info(this, $"All {parsed.Count} code(s) are labelled for another region than this disc ({_id}). Codes only fit their own region.", "Other region"); return; }
-        AddRows(added);
+        var unusable = AddRows(added);
         _paste.Text = "";
-        if (added.Count < parsed.Count) _status.Text = $"Added {added.Count} code(s); {parsed.Count - added.Count} labelled for another region were left out.";
+        _listScroll.ScrollToEnd();
+        var msg = $"Added {added.Count} code(s).";
+        if (added.Count < parsed.Count) msg += $" {parsed.Count - added.Count} labelled for another region were left out.";
+        if (unusable > 0)
+            msg += _wii ? $" {unusable} cannot be used for a Wii game in a WUP without a code handler: install the code handler tool (button above the paste box) to tick it. It would work for a GameCube game through Nintendont."
+                        : $" {unusable} cannot be used: it is greyed out in the list, with the reason.";
+        _status.Text = msg;
     }
 
     async void Save_Click(object? s, Avalonia.Interactivity.RoutedEventArgs e)

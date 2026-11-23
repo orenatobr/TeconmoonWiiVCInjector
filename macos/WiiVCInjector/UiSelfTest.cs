@@ -576,6 +576,36 @@ E0000000 80008000 //end
                 CheatCodes.DisplayName(null, "ARC RISE FANTASIA", "RPJE7U") == "Arc Rise Fantasia" && CheatCodes.WikiUrl(CheatCodes.DisplayName(null, "ARC RISE FANTASIA", "RPJE7U")) == "https://wiki.dolphin-emu.org/index.php?title=Arc_Rise_Fantasia");
             T("cheats: the database name wins, a mixed case header name is kept, an empty one falls back to the id",
                 CheatCodes.DisplayName("Skies of Arcadia Legends", "SKIES OF ARCADIA", "GEAP8P") == "Skies of Arcadia Legends" && CheatCodes.DisplayName("", "Wii Sports", "RSPE01") == "Wii Sports" && CheatCodes.DisplayName(null, "", "RSPE01") == "RSPE01");
+            // --- the code handler tool (GeckoLoader): found by its files, run for real when it is installed (WIIVC_GECKOLOADER_DIR)
+            var glFake = Path.Combine(tmp, "gl-fake"); Directory.CreateDirectory(Path.Combine(glFake, "venv", "bin"));
+            T("code handler tool: not found without its script and its Python, found with both",
+                GeckoLoaderTool.Find(glFake) == null && Task.Run(() => { File.WriteAllText(Path.Combine(glFake, "GeckoLoader.py"), "x"); File.WriteAllText(Path.Combine(glFake, "venv", "bin", "python"), "x"); return GeckoLoaderTool.Find(glFake); }).GetAwaiter().GetResult() is { } found
+                && found.Script.EndsWith("GeckoLoader.py") && found.Python.EndsWith(Path.Combine("venv", "bin", "python")));
+            T("code handler tool: the install script pins the release and installs what GeckoLoader imports",
+                GeckoLoaderTool.SetupScript.Contains("__TAG__") && GeckoLoaderTool.SetupScript.Contains("chardet PyQt5 beautifulsoup4") && GeckoLoaderTool.SetupScript.Contains("setuptools") && GeckoLoaderTool.Tag == "v7.1.1");
+            if (GeckoLoaderTool.Find() == null) Console.WriteLine("SKIP code handler tool: GeckoLoader is not installed here, the real run is skipped");
+            else
+            {
+                byte[] GlDol(bool hook)
+                {
+                    var d = new byte[0x100 + 0xA0];
+                    void U32(int o, uint v) => System.Buffers.Binary.BinaryPrimitives.WriteUInt32BigEndian(d.AsSpan(o), v);
+                    U32(0, 0x100); U32(0x48, 0x80003100); U32(0x90, 0xA0); U32(0xD8, 0x80010000); U32(0xDC, 0x1000); U32(0xE0, 0x80003100);
+                    for (var o = 0x100; o < d.Length; o += 4) U32(o, 0x60000000);
+                    if (hook) new byte[] { 0x7C, 0xE3, 0x3B, 0x78, 0x38, 0x87, 0x00, 0x34, 0x38, 0xA7, 0x00, 0x38, 0x38, 0xC7, 0x00, 0x4C }.CopyTo(d, 0x140);
+                    U32(0x160, 0x4E800020);
+                    return d;
+                }
+                var glDolFile = Path.Combine(tmp, "gl-main.dol"); File.WriteAllBytes(glDolFile, GlDol(true));
+                var glGct = CheatCodes.BuildGct(CheatCodes.ParseText(arcBlock));
+                var glWhy = GeckoLoaderTool.Patch(glDolFile, glGct, tmp, default);
+                var glOut = File.ReadAllBytes(glDolFile);
+                T("code handler tool: the real GeckoLoader adds the handler and the 60 FPS code to a DOL (new section, new entry point)",
+                    glWhy == null && glOut.Length > GlDol(true).Length + glGct.Length && System.Buffers.Binary.BinaryPrimitives.ReadUInt32BigEndian(glOut.AsSpan(0xE0)) != 0x80003100, glWhy ?? "");
+                var glNoHook = Path.Combine(tmp, "gl-nohook.dol"); File.WriteAllBytes(glNoHook, GlDol(false));
+                var glWhy2 = GeckoLoaderTool.Patch(glNoHook, glGct, tmp, default);
+                T("code handler tool: a DOL it finds no hook in fails with the reason and is left untouched", glWhy2 != null && glWhy2.Contains("hook") && File.ReadAllBytes(glNoHook).SequenceEqual(GlDol(false)), glWhy2 ?? "");
+            }
             T("cheats window: the paste box has a fixed height and a scroll bar", new CheatsWindow("RPJE7U", "Arc Rise Fantasia", true).Content is Avalonia.Controls.StackPanel sp
                 && sp.Children.OfType<Avalonia.Controls.TextBox>().FirstOrDefault() is { } tb && tb.Height == 110 && Avalonia.Controls.ScrollViewer.GetVerticalScrollBarVisibility(tb) == Avalonia.Controls.Primitives.ScrollBarVisibility.Auto);
             T("cheats: wiki page address of a game", CheatCodes.WikiUrl("Skies of Arcadia Legends") == "https://wiki.dolphin-emu.org/index.php?title=Skies_of_Arcadia_Legends");

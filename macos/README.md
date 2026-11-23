@@ -121,9 +121,17 @@ Nintendont from the SD Card menu also copies every saved `.gct`.
 - A code named "60Hz" on a PAL disc gets a note: Nintendont's own 60 Hz forcing delays the audio (`AUDIO-DELAY.md`), a code that sets the mode inside the game was not measured.
 
 **Wii:** a Wii game in a WUP has no code handler, so the ticked codes are saved as `<id6>.codes.txt` (same folder as the app's settings, `codes/`), and the next build of that
-game writes them into its `sys/main.dol` before packing. This only fits plain 8, 16 and 32 bit writes whose addresses are inside the DOL, so codes that patch the game's own
-code (widescreen, frame rate, region) work and codes that change values the game keeps in memory while it runs (lives, health) are greyed out or reported as not applied in the
-build log. A cheat is written whole or not at all. With "Disable trimming" on, a game that has saved codes is still extracted so the DOL can be edited. Not built on a real game yet.
+game puts them into its `sys/main.dol` before packing. Two ways, chosen by the build:
+
+- **Plain writes** (8, 16 and 32 bit writes whose addresses are inside the DOL: widescreen, frame rate, region patches) are written straight into the DOL, a cheat whole or not at all. No extra tool.
+- **Any other Gecko code** (assembly `C2`, conditional, pointer, like the Arc Rise Fantasia "60 FPS" code) needs a code handler. The cheat codes window has an "Install code handler tool" button that downloads
+  [GeckoLoader](https://github.com/JoshuaMKW/GeckoLoader) by JoshuaMK (GPL-3.0; the app does not bundle it, it runs it as a separate program) with a Python environment into `tools/GeckoLoader` next to the app's
+  settings (it needs `git` and `python3`, about 60 MB, a minute). With it installed those codes can be ticked, and the build adds GeckoLoader's code handler and a list of all the ticked codes to `main.dol`:
+  GeckoLoader makes the DOL start at its own loader, which installs the handler and hooks it into the game's video code (a byte pattern search, so it can fail on a game it does not recognise).
+  If it fails, or is not installed, the build still finishes, writes only the plain writes, and the build log says why (`[cheats] ERROR: ...` or `... code handler tool is not installed`).
+
+With "Disable trimming" on, a game that has saved codes is still extracted so the DOL can be edited. The plain writes were checked with an ISO rebuilt by `wit`; the code handler was checked the same way with a
+synthetic DOL that carries GeckoLoader's hook pattern (the real tool, `WIIVC_GECKOLOADER_DIR` points the tests at it). **Neither has run on a real Wii game on a console.**
 - Not tried on a console.
 
 ## Checks

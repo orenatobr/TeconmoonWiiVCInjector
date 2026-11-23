@@ -510,9 +510,9 @@ public partial class MainWindow : Window
 
     private async void CheatsDownload_Click(object? s, RoutedEventArgs e)
     {
-        if (SystemType != "gcn")
+        if (SystemType is not ("gcn" or "wii"))
         {
-            await Dialogs.Info(this, "Cheat codes work for GameCube games. Nintendont runs them with its Gecko code handler; a Wii game in a WUP has no such handler.", "GameCube only");
+            await Dialogs.Info(this, "Cheat codes work for Wii and GameCube discs. Pick one of those two modes and load the game first.", "Wii and GameCube only");
             return;
         }
         if (!CheatCodes.IsValidId(CucholixRepoID))
@@ -521,7 +521,7 @@ public partial class MainWindow : Window
             return;
         }
         var name = InternalGameName != "" ? InternalGameName : GameTdb.GetName(CucholixRepoID) ?? CucholixRepoID;
-        await new CheatsWindow(CucholixRepoID, name).ShowDialog(this);
+        await new CheatsWindow(CucholixRepoID, name, SystemType == "wii").ShowDialog(this);
     }
 
     private async void RepoDownload_Click(object? s, RoutedEventArgs e)

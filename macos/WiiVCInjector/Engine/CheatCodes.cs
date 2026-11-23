@@ -52,6 +52,12 @@ public static partial class CheatCodes
 
     public static string GctPath(string id) => Path.Combine(LibraryDir, id + ".gct");
 
+    /// <summary>The ticked cheats of a Wii game as text (read back by <see cref="ParseText"/>), which the build writes into main.dol.</summary>
+    public static string CodesTextPath(string id) => Path.Combine(LibraryDir, id + ".codes.txt");
+
+    public static string ToText(IEnumerable<Cheat> cheats) =>
+        string.Concat(cheats.Where(c => c.Unusable == null).Select(c => "$" + c.Name + "\n" + string.Concat(c.Lines.Select(l => $"{l.Address:X8} {l.Value:X8}\n"))));
+
     /// <summary>
     /// Action Replay "normal" codes that write 8, 16 or 32 bits (first byte 00 to 05) have the same words as the Gecko 00, 02 and 04 codes,
     /// so they pass through. The other Action Replay types (conditional, fill, master code) have no Gecko equivalent here.

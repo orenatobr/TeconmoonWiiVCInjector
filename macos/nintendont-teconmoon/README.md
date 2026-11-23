@@ -48,7 +48,9 @@ silicon it runs under emulation and takes 15 to 40 minutes.
 What was checked when this build was made:
 
 - Built with the toolchain above (devkitPPC r35-1 instead of the r35-2 the Nintendont README names, which only exists for Windows).
-  `Assets/nintendont-teconmoon/boot.dol` is 1651328 bytes with sha256 `11eec5d856dba34e08464cc23a1907e9722f7f8fc5b1b3cc0f25d5876356c7ce`, and `UiSelfTest` checks that hash.
+  `Assets/nintendont-teconmoon/boot.dol` is 1651904 bytes with sha256 `ef1571fc7e7976c986ee7735f66e4ed3713e52b5ffa46949546eacbd82bb4191`, and `UiSelfTest` checks that hash.
+- The cheat change is in the kernel, whose release build has no debug text and keeps its strings out of plain sight, so it cannot be found in `boot.dol` with `strings`. It was checked
+  only by the patch applying and the kernel compiling, and the file size and contents changing. Not run.
 - The loader string `PAL disc: Force Progressive ignored, it delays the audio` and the menu text `Ignored on PAL games: 60 Hz` are in the binary. The unpatched
   build of the same toolchain is a different file (`3176ef6f...` for the earlier build of this toolchain).
 

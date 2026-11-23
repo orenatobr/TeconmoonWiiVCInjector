@@ -398,7 +398,7 @@ public static class UiSelfTest
             T("nintendont source: the real build output ships the Teconmoon files", SDCardWindow.ChooseNintendontSource(false, AppContext.BaseDirectory).Source == SDCardWindow.NintendontSource.Teconmoon, AppContext.BaseDirectory);
             var shippedDol = File.ReadAllBytes(Path.Combine(AppContext.BaseDirectory, "Assets", "nintendont-teconmoon", "boot.dol"));
             T("nintendont build: the shipped boot.dol is the one nintendont-teconmoon/README.md documents",
-                Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(shippedDol)).Equals("11eec5d856dba34e08464cc23a1907e9722f7f8fc5b1b3cc0f25d5876356c7ce", StringComparison.OrdinalIgnoreCase));
+                Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(shippedDol)).Equals("ef1571fc7e7976c986ee7735f66e4ed3713e52b5ffa46949546eacbd82bb4191", StringComparison.OrdinalIgnoreCase));
             T("nintendont build: the shipped boot.dol carries the PAL guard", System.Text.Encoding.ASCII.GetString(shippedDol).Contains("PAL disc: Force Progressive ignored"));
             T("nintendont source: upstream still available when the build is shipped", SDCardWindow.ChooseNintendontSource(true, tmp) == (SDCardWindow.NintendontSource.Upstream, null));
 
@@ -441,6 +441,42 @@ public static class UiSelfTest
                 T("cheats download: a game Dolphin has no file for gives no cheats", CheatCodes.DownloadAsync("ZZZE01", http).GetAwaiter().GetResult().Count == 0);
             }
             T("cheats window: builds for a game", new CheatsWindow("GEAP8P", "Skies of Arcadia Legends").Title == "Cheat codes");
+            // --- cheat codes written into a Wii game's main.dol: text section 0x100 bytes at 0x80003100, data section 0x80 bytes at 0x80004000
+            var dolImg = new byte[0x100 + 0x100 + 0x80];
+            void Be(int at, uint v) => System.Buffers.Binary.BinaryPrimitives.WriteUInt32BigEndian(dolImg.AsSpan(at), v);
+            Be(0, 0x100); Be(0x1C, 0x200); Be(0x48, 0x80003100); Be(0x64, 0x80004000); Be(0x90, 0x100); Be(0xAC, 0x80);
+            Cheat Mk(string n, params (uint, uint)[] l) { var c = new Cheat { Name = n }; c.Lines.AddRange(l); return c; }
+            var (okDol, noDol) = DolCheats.Apply(dolImg, new[]
+            {
+                Mk("word", (0x04003104, 0x3F400000u)),
+                Mk("halves", (0x02003110, 0x0002ABCDu)),
+                Mk("bytes", (0x00004004, 0x00000707u)),
+                Mk("outside", (0x04200000, 1u)),
+                Mk("half in half out", (0x04003108, 1u), (0x04200000, 2u)),
+                Mk("conditional", (0x20003100, 5u), (0x04003108, 1u)),
+            });
+            T("dol cheats: writes inside the sections are applied, the rest is reported",
+                string.Join(",", okDol) == "word,halves,bytes" && noDol.Count == 3 && noDol[0].StartsWith("outside") && noDol[2].StartsWith("conditional"), string.Join("|", noDol));
+            T("dol cheats: the bytes land at the section offset (32 bit, 16 bit repeated, 8 bit repeated)",
+                Convert.ToHexString(dolImg[0x104..0x108]) == "3F400000" && Convert.ToHexString(dolImg[0x110..0x116]) == "ABCDABCDABCD" && Convert.ToHexString(dolImg[0x204..0x20C]) == "0707070707070707"
+                , Convert.ToHexString(dolImg[0x204..0x20C]));
+            T("dol cheats: a cheat with a write outside the file is not written at all", dolImg[0x108] == 0 && dolImg[0x109] == 0);
+            T("dol cheats: Action Replay plain writes pass through as the same words, a short file is refused",
+                CheatCodes.ParseIni("[ActionReplay]\n$A\n04003100 00000001\n")[0].Unusable == null && DolCheats.Apply(new byte[10], new[] { Mk("x", (0x04003100, 1u)) }).Skipped.Count == 1);
+            var oldSettings = Environment.GetEnvironmentVariable("WIIVC_SETTINGS");
+            Environment.SetEnvironmentVariable("WIIVC_SETTINGS", Path.Combine(tmp, "appdata", "settings.json"));
+            try
+            {
+                var wiiIso = Path.Combine(tmp, "wiicheats.iso");
+                File.WriteAllBytes(wiiIso, Iso("RSPE01", "Wii Sports", GameHeader.WiiType));
+                T("dol cheats: no saved list gives no cheats", BuildEngine.SavedWiiCheats(wiiIso).Count == 0);
+                Directory.CreateDirectory(CheatCodes.LibraryDir);
+                File.WriteAllText(CheatCodes.CodesTextPath("RSPE01"), CheatCodes.ToText(new[] { Mk("Widescreen", (0x04003104, 0x3F400000u)) }));
+                var saved = BuildEngine.SavedWiiCheats(wiiIso);
+                T("dol cheats: the saved list of the disc's 6 character id is read back", saved.Count == 1 && saved[0].Name == "Widescreen" && saved[0].Lines[0] == (0x04003104u, 0x3F400000u));
+                T("cheats window: builds in Wii mode", new CheatsWindow("RSPE01", "Wii Sports", true).Title == "Cheat codes");
+            }
+            finally { Environment.SetEnvironmentVariable("WIIVC_SETTINGS", oldSettings); }
             var lib = Path.Combine(tmp, "lib"); var card = Path.Combine(tmp, "card");
             Directory.CreateDirectory(lib); Directory.CreateDirectory(card);
             File.WriteAllBytes(Path.Combine(lib, "GEAP8P.gct"), gct);

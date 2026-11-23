@@ -391,7 +391,7 @@ public static class UiSelfTest
             T("nintendont source: the real build output ships the Teconmoon files", SDCardWindow.ChooseNintendontSource(false, AppContext.BaseDirectory).Source == SDCardWindow.NintendontSource.Teconmoon, AppContext.BaseDirectory);
             var shippedDol = File.ReadAllBytes(Path.Combine(AppContext.BaseDirectory, "Assets", "nintendont-teconmoon", "boot.dol"));
             T("nintendont build: the shipped boot.dol is the one nintendont-teconmoon/README.md documents",
-                Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(shippedDol)).Equals("a32f92354107b70a3805cd7648784ddaf5b4aad86909d47e05b2fd81abd43027", StringComparison.OrdinalIgnoreCase));
+                Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(shippedDol)).Equals("11eec5d856dba34e08464cc23a1907e9722f7f8fc5b1b3cc0f25d5876356c7ce", StringComparison.OrdinalIgnoreCase));
             T("nintendont build: the shipped boot.dol carries the PAL guard", System.Text.Encoding.ASCII.GetString(shippedDol).Contains("PAL disc: Force Progressive ignored"));
             T("nintendont source: upstream still available when the build is shipped", SDCardWindow.ChooseNintendontSource(true, tmp) == (SDCardWindow.NintendontSource.Upstream, null));
         }

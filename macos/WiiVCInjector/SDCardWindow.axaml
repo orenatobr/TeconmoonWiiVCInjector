@@ -28,9 +28,9 @@
             </Button>
             <local:WfLabel Name="ActionStatus" Grid.Column="1" Classes="sub" VerticalAlignment="Center" Text="" />
           </Grid>
-          <local:WfLabel Classes="sub" Text="Installs the Teconmoon build of Nintendont. In game, press L + R + A to switch the screen between 4:3 and 16:9 (Wii U only). PAL discs always stay at 50 Hz, so their audio stays in sync." />
+          <local:WfLabel Classes="sub" Text="Installs the Teconmoon build of Nintendont. PAL discs always stay at 50 Hz, so their audio stays in sync." />
           <CheckBox Name="NintendontUpstream" Content="Install the plain upstream Nintendont instead"
-                    ToolTip.Tip="Downloads FIX94's latest loader.dol from GitHub. It has no L + R + A shortcut and does not stop Force Progressive from delaying the audio of PAL games." />
+                    ToolTip.Tip="Downloads FIX94's latest loader.dol from GitHub. It does not stop Force Progressive from delaying the audio of PAL games." />
         </StackPanel>
       </Border>
 

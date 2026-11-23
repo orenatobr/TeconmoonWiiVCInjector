@@ -619,6 +619,19 @@ E0000000 80008000 //end
                 CheatCodes.Warning(fpsCode, "RPJE7U", true) is { } fw && fw.Contains("slow motion") && fw.Contains("cafe2wii") && fw.Contains("1.215 GHz")
                 && CheatCodes.Warning(fpsCode, "GEAE8P", false) == null && CheatCodes.Warning(new Cheat { Name = "Widescreen" }, "RPJE7U", true) == null
                 && CheatCodes.Warning(new Cheat { Name = "60Hz" }, "GEAP8P", true) is { } hz && hz.Contains("PAL disc"));
+            {
+                // a tiny class file: Utf8 "a", a Long (two pool slots), Utf8 "/code/rvlt.tik", then a trailer
+                var cls = new List<byte> { 0xCA, 0xFE, 0xBA, 0xBE, 0, 0, 0, 52, 0, 5 };
+                cls.AddRange(new byte[] { 1, 0, 1, (byte)'a' });
+                cls.AddRange(new byte[] { 5, 0, 0, 0, 0, 0, 0, 0, 1 });
+                cls.AddRange(new byte[] { 1, 0, 14 }); cls.AddRange(System.Text.Encoding.UTF8.GetBytes("/code/rvlt.tik"));
+                cls.AddRange(new byte[] { 0xAA, 0xBB });
+                var outc = NusPackerRules.ReplaceUtf8(cls.ToArray(), new[] { ("/code/rvlt.tik", "/code/dmcu.d.hex") });
+                var text = System.Text.Encoding.UTF8.GetString(outc);
+                T("nuspacker rules: a class file constant is replaced, the pool and the trailer stay intact",
+                    text.Contains("/code/dmcu.d.hex") && !text.Contains("rvlt") && outc[9] == 5 && outc[^2] == 0xAA && outc[^1] == 0xBB && outc[(10 + 4 + 9 + 1)..(10 + 4 + 9 + 3)].SequenceEqual(new byte[] { 0, 16 }));
+                T("nuspacker rules: a pattern that is not in the class is an error", Throws(() => NusPackerRules.ReplaceUtf8(cls.ToArray(), new[] { ("/nope", "/x") })));
+            }
             T("cheats: wiki page address of a game", CheatCodes.WikiUrl("Skies of Arcadia Legends") == "https://wiki.dolphin-emu.org/index.php?title=Skies_of_Arcadia_Legends");
             var cheatUrls = new List<string>();
             using (var http = new HttpClient(new StubHandler(req =>

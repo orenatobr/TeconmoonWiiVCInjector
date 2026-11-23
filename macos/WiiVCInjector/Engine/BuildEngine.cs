@@ -99,7 +99,9 @@ public static class BuildEngine
             P(85, "Encrypting contents into installable WUP Package...");
             var outPath = Path.Combine(o.OutputDir, $"{Sanitize(o.Title1)} WUP-N-{ids.Text}_{ids.Packed}");
             Directory.CreateDirectory(outPath);
-            Exec(Tools.Java(), ["-jar", Tools.Jar("NUSPacker"), "-in", "BUILDDIR", "-out", outPath, "-encryptKeyWith", o.CommonKey], work);
+            // cafe2wii adds files NUSPacker's own rules do not know; it would stop with "not assigned to any content"
+            var packer = o.C2wPatch ? NusPackerRules.Cafe2wiJar(Tools.Jar("NUSPacker"), work) : Tools.Jar("NUSPacker");
+            Exec(Tools.Java(), ["-jar", packer, "-in", "BUILDDIR", "-out", outPath, "-encryptKeyWith", o.CommonKey], work);
             foreach (var f in new[] { "title.tmd", "title.tik", "title.cert" })
                 if (!File.Exists(Path.Combine(outPath, f))) throw new InvalidOperationException($"NUSPacker did not produce {f}.");
             // The original app packs with nuspacker.exe 0.4, which leaves the two SHA-256 fields of the TMD (the hash of the

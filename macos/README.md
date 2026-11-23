@@ -79,6 +79,29 @@ or a failed build is skipped and listed in the final summary; the other games st
 - The Nintendont SD card menu installs the Teconmoon build of Nintendont by default (see `nintendont-teconmoon/README.md`): PAL discs ignore Force Progressive,
   Patch PAL50 and forced 60 Hz modes so their audio stays in sync. A box installs the plain upstream build instead.
 
+## Cheat codes (GameCube and Wii)
+
+The button "Download from https://dolphin-emu.org/compat/" (next to the game file, Wii Retail or GC Retail mode) opens a list of Gecko and Action Replay codes for the loaded game.
+
+**GameCube:** the ticked codes are written as `codes/<id6>.gct`, the file Nintendont loads. The Teconmoon Nintendont (SD Card menu) turns the Gecko code handler on by itself for a game
+started from a WUP when that file is on the card, so the WUP does not need rebuilding. "Copy to SD card..." in the list window writes the file to the card; installing
+Nintendont from the SD Card menu also copies every saved `.gct`.
+
+- Where the codes come from: the compatibility list at `dolphin-emu.org/compat` only lists ratings and links each game to its Dolphin wiki page, and the codes people
+  wrote are on that page. The wiki (like the list) answers automated requests with a bot check, which the app does not try to get past: "Open wiki page" opens the
+  page in your browser, you copy a code block and paste it into the window. What the app downloads by itself are the codes Dolphin ships in its open source
+  `Data/Sys/GameSettings/<id>.ini` files (`<id3>.ini` and `<id6>.ini`), which many games do not have (Skies of Arcadia has none there, its codes are on the wiki).
+- Gecko codes are used as written. Action Replay codes are only used when they are plain 8, 16 and 32 bit writes (their words are the Gecko 00, 02 and 04 codes);
+  other Action Replay types are listed but cannot be ticked. Pasted codes are taken as Gecko codes.
+- Nothing is ticked by default, because codes such as infinite health are not meant to run together.
+- A code named "60Hz" on a PAL disc gets a note: Nintendont's own 60 Hz forcing delays the audio (`AUDIO-DELAY.md`), a code that sets the mode inside the game was not measured.
+
+**Wii:** a Wii game in a WUP has no code handler, so the ticked codes are saved as `<id6>.codes.txt` (same folder as the app's settings, `codes/`), and the next build of that
+game writes them into its `sys/main.dol` before packing. This only fits plain 8, 16 and 32 bit writes whose addresses are inside the DOL, so codes that patch the game's own
+code (widescreen, frame rate, region) work and codes that change values the game keeps in memory while it runs (lives, health) are greyed out or reported as not applied in the
+build log. A cheat is written whole or not at all. With "Disable trimming" on, a game that has saved codes is still extracted so the DOL can be edited. Not built on a real game yet.
+- Not tried on a console.
+
 ## Checks
 
 - `WIIVC_SNAPSHOT=out.png [WIIVC_TAB=n] dotnet bin/Release/net10.0/WiiVCInjector.dll` renders a tab to a PNG and exits.

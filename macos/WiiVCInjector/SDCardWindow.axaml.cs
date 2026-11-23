@@ -172,12 +172,13 @@ public partial class SDCardWindow : Window
 
         if (_driveSpecified)
         {
-            if (TryFileOp(() => InstallToDrive(tempPath, _selectedDrive)) is { } err)
+            var codes = 0;
+            if (TryFileOp(() => { InstallToDrive(tempPath, _selectedDrive); codes = CheatCodes.CopyLibraryTo(_selectedDrive); }) is { } err)
             {
                 await Info(this, $"Could not write to {_selectedDrive}: {err}\n{DriveHint}", "Error");
                 return;
             }
-            await Info(this, "Download complete.", "Success");
+            await Info(this, codes > 0 ? $"Download complete.\n{codes} saved cheat file(s) copied to codes/ on the card." : "Download complete.", "Success");
         }
         else if (await Dialogs.Ask(this, "SD Card not specified.\nDo you wish to save Nintendont somewhere else?", "Drive not specified"))
         {

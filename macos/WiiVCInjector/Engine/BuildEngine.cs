@@ -130,13 +130,26 @@ public static class BuildEngine
     /// <summary>Retail Wii common key (public). Checked by decrypting the first block of a disc partition: it starts with the game id.</summary>
     static readonly byte[] WiiCommonKey = Convert.FromHexString("EBE42A225E8593E448D9C5457381AAF7");
 
+    /// <summary>The cheats the user saved for this Wii disc (6 character id), empty when there are none.</summary>
+    internal static List<Cheat> SavedWiiCheats(string gamePath)
+    {
+        try
+        {
+            var id = GameHeader.ParseFile(gamePath).RepoId;
+            var file = CheatCodes.IsValidId(id) ? CheatCodes.CodesTextPath(id) : "";
+            return File.Exists(file) ? CheatCodes.ParseText(File.ReadAllText(file)) : new();
+        }
+        catch (IOException) { return new(); }
+    }
+
     internal static string PrepareIso(BuildOptions o, string work, string wit, Action<string, IEnumerable<string>, string?> exec, CancellationToken ct)
     {
         var iso = Path.Combine(work, "game.iso");
         if (o.System == "wii")
         {
             var game = o.GamePath;
-            var trimming = !(o.DisableTrimming && !o.ForceCC);
+            var cheats = SavedWiiCheats(game);
+            var trimming = !(o.DisableTrimming && !o.ForceCC && cheats.Count == 0);
             // wit extract reads WBFS directly (the extracted tree is identical apart from the image-type line of setup.txt),
             // so the 6+ GB WBFS to ISO copy is only needed when the ISO itself is used without trimming.
             if (game.EndsWith(".wbfs", StringComparison.OrdinalIgnoreCase) && !trimming)
@@ -151,6 +164,16 @@ public static class BuildEngine
             var extract = Path.Combine(work, "ISOEXTRACT");
             exec(wit, ["extract", game, "--DEST", extract, "--psel", "data,-update", "-ovv"], null);
             if (o.ForceCC) exec(Tools.Native("getexttypepatcher"), [Path.Combine(extract, "sys", "main.dol"), "-nc"], null);
+            if (cheats.Count > 0)
+            {
+                var dolFile = Path.Combine(extract, "sys", "main.dol");
+                var bytes = File.ReadAllBytes(dolFile);
+                var (applied, skipped) = DolCheats.Apply(bytes, cheats);
+                Emit($"Cheat codes written into main.dol: {applied.Count} of {cheats.Count}");
+                foreach (var n in applied) Emit("[cheats] applied: " + n);
+                foreach (var n in skipped) Emit("[cheats] not applied: " + n);
+                File.WriteAllBytes(dolFile, bytes);
+            }
             if (o.VideoModeChange)
             {
                 var dolPath = Path.Combine(extract, "sys", "main.dol");

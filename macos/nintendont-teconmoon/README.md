@@ -1,6 +1,6 @@
 # Teconmoon Nintendont
 
-A build of [FIX94/Nintendont](https://github.com/FIX94/Nintendont) with one change for the Wii U (vWii). The app's Nintendont SD Card menu
+A build of [FIX94/Nintendont](https://github.com/FIX94/Nintendont) with two changes for the Wii U (vWii). The app's Nintendont SD Card menu
 installs it by default; a box in that window installs the plain upstream build instead.
 
 ## What it changes
@@ -16,13 +16,18 @@ Force Progressive, Patch PAL50 and any forced video mode other than PAL50 in the
 Only Force Progressive was measured on hardware; the other two are cleared because they also run a PAL game at 60 Hz. The Nintendont menu
 text for Force Progressive says it is ignored on PAL games.
 
-The patch is `teconmoon.patch`, 23 added lines in two files, on top of upstream commit `7a183459939653cb7bcf59ab137c2758a9f9fae0`.
+**Cheat codes load for a game started from a WUP.** A WUP starts Nintendont with its own embedded config (game path `di`), so there is no Cheats box to tick.
+In `kernel/Patch.c`, when the game path is `di` and Nintendont's own lookup finds a `.gct` file for the game (`/codes/<id6>.gct` on the card, the same names it already
+searches), the Gecko code handler is switched on. Any other start (a game file on the card) behaves as upstream: the Cheats option decides. The app writes the `.gct`
+(see "Cheat codes" in `../README.md`). Not tried on a console.
+
+The patch is `teconmoon.patch`, 28 added lines in three files, on top of upstream commit `7a183459939653cb7bcf59ab137c2758a9f9fae0`.
 `Assets/nintendont-teconmoon/icon.png` is the file from that same commit. `meta.xml` is the upstream one with the name, author and description changed so the Homebrew Channel shows this is the Teconmoon build (the version number is still upstream's 4.431).
 
 ## What was and was not checked
 
 - Checked: the patch applies to the pinned commit and the toolchain below builds it (see the hashes at the end).
-- Not checked: any of it on a real console. The PAL guard runs in the loader, so it applies to a game started from the Nintendont menu and to one started
+- Not checked: any of it on a real console, including the cheat codes. The PAL guard runs in the loader, so it applies to a game started from the Nintendont menu and to one started
   by the WUP autobooter (both go through the same launch code). It does not change the `nincfg.bin` file on the card.
 
 ## How to use it
@@ -43,7 +48,9 @@ silicon it runs under emulation and takes 15 to 40 minutes.
 What was checked when this build was made:
 
 - Built with the toolchain above (devkitPPC r35-1 instead of the r35-2 the Nintendont README names, which only exists for Windows).
-  `Assets/nintendont-teconmoon/boot.dol` is 1651328 bytes with sha256 `11eec5d856dba34e08464cc23a1907e9722f7f8fc5b1b3cc0f25d5876356c7ce`, and `UiSelfTest` checks that hash.
+  `Assets/nintendont-teconmoon/boot.dol` is 1651904 bytes with sha256 `ef1571fc7e7976c986ee7735f66e4ed3713e52b5ffa46949546eacbd82bb4191`, and `UiSelfTest` checks that hash.
+- The cheat change is in the kernel, whose release build has no debug text and keeps its strings out of plain sight, so it cannot be found in `boot.dol` with `strings`. It was checked
+  only by the patch applying and the kernel compiling, and the file size and contents changing. Not run.
 - The loader string `PAL disc: Force Progressive ignored, it delays the audio` and the menu text `Ignored on PAL games: 60 Hz` are in the binary. The unpatched
   build of the same toolchain is a different file (`3176ef6f...` for the earlier build of this toolchain).
 

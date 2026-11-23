@@ -1,3 +1,19 @@
+diff --git a/kernel/Patch.c b/kernel/Patch.c
+index a03e33e..ff1f23d 100644
+--- a/kernel/Patch.c
++++ b/kernel/Patch.c
+@@ -1814,6 +1814,11 @@ void DoPatches( char *Buffer, u32 Length, u32 DiscOffset )
+ 	u32 cheatsWanted = 0, debuggerWanted = 0;
+ 	if(ConfigGetConfig(NIN_CFG_CHEATS))
+ 		cheatsWanted = 1;
++	else if(strcmp(ConfigGetGamePath(), "di") == 0 && Check_Cheats() == 0)
++	{	//Teconmoon: a Wii U (WUP) game cannot tick Cheats, so a /codes/<game id>.gct on the card is enough
++		dbgprintf("Patch:Cheats on for a Wii U disc game, found %s\r\n", cheatPath);
++		cheatsWanted = 1;
++	}
+ 	if(!IsWiiU() && ConfigGetConfig(NIN_CFG_DEBUGGER))
+ 		debuggerWanted = 1;
+ 	if(cheatsWanted || debuggerWanted)
 diff --git a/loader/source/main.c b/loader/source/main.c
 index aef1e55..ebd6340 100644
 --- a/loader/source/main.c

@@ -277,6 +277,7 @@ internal static class SelfTest
             };
             VerifyPackage("wiiware build", RunTracked(o, prog), "00050002" + Convert.ToHexString("WTST"u8.ToArray()), Path.Combine(tmp, "out-ww"));
             VideoModeBuild(tmp, icon, commonKey, titleKey, prog);
+            CheatsBuild(tmp, icon, commonKey, titleKey, prog);
             C2wStep();
         }
         finally { try { Directory.Delete(tmp, true); } catch { } }
@@ -292,6 +293,49 @@ internal static class SelfTest
         for (var i = 0; i < 24; i++) m[26 + i] = 6;
         new byte[] { 7, 7, 12, 12, 12, 7, 7 }.CopyTo(m, 50);
         return m;
+    }
+
+    /// <summary>Saved cheat codes of a Wii disc end up in the main.dol of the rebuilt ISO.</summary>
+    static void CheatsBuild(string tmp, string icon, string commonKey, string titleKey, IProgress<(int Percent, string Status)> prog)
+    {
+        var wit = Tools.Native("wit");
+        var baseDir = Path.Combine(tmp, "CHBASE");
+        Tools.CopyDir(Path.Combine(Tools.Root, "BASE"), baseDir);
+        var dol = new byte[0x400];
+        void U32(int o, uint v) { dol[o] = (byte)(v >> 24); dol[o + 1] = (byte)(v >> 16); dol[o + 2] = (byte)(v >> 8); dol[o + 3] = (byte)v; }
+        U32(0x00, 0x100); U32(0x48, 0x80003100); U32(0x90, 0x300); U32(0xE0, 0x80003100);
+        File.WriteAllBytes(Path.Combine(baseDir, "sys", "main.dol"), dol);
+        Directory.CreateDirectory(Path.Combine(baseDir, "files"));
+        var iso = Path.Combine(tmp, "ch.iso");
+        Tools.Run(wit, ["copy", baseDir, iso, "--links", "--iso"], null, default);
+        var id = GameHeader.ParseFile(iso).RepoId;
+        var old = Environment.GetEnvironmentVariable("WIIVC_SETTINGS");
+        Environment.SetEnvironmentVariable("WIIVC_SETTINGS", Path.Combine(tmp, "ch-appdata", "settings.json"));
+        try
+        {
+            Directory.CreateDirectory(CheatCodes.LibraryDir);
+            File.WriteAllText(CheatCodes.CodesTextPath(id), "$Widescreen\n04003104 3F400000\n$Outside the dol\n04200000 00000001\n");
+            BuildEngine.IsoReady = p =>
+            {
+                var ex = Path.Combine(tmp, "CHBACK");
+                Tools.Run(wit, ["extract", p, "--DEST", ex, "--psel", "data,-update", "-ovv"], null, default);
+                File.Copy(Path.Combine(ex, "sys", "main.dol"), Path.Combine(tmp, "ch-main.dol"), true);
+            };
+            var o = new BuildOptions
+            {
+                System = "wii", GamePath = iso, OutputDir = Path.Combine(tmp, "out-ch"), Title1 = "Test Cheats", IconPath = icon, BannerPath = icon,
+                CommonKey = commonKey, TitleKey = titleKey, DisableTrimming = true,
+            };
+            var log = new List<string>();
+            void L(string l) => log.Add(l);
+            BuildEngine.Log += L;
+            try { BuildEngine.RunAsync(o, prog).GetAwaiter().GetResult(); } finally { BuildEngine.IsoReady = null; BuildEngine.Log -= L; }
+            var after = File.ReadAllBytes(Path.Combine(tmp, "ch-main.dol"));
+            Check("cheats: the saved code is written into main.dol of the rebuilt ISO (even with trimming disabled)", after.Length >= 0x400 && Convert.ToHexString(after[0x104..0x108]) == "3F400000");
+            Check("cheats: the build log says what was and was not applied",
+                log.Any(l => l.Contains("1 of 2")) && log.Any(l => l.Contains("applied: Widescreen")) && log.Any(l => l.Contains("not applied: Outside the dol")));
+        }
+        finally { Environment.SetEnvironmentVariable("WIIVC_SETTINGS", old); }
     }
 
     static void VideoModeBuild(string tmp, string icon, string commonKey, string titleKey, IProgress<(int Percent, string Status)> prog)

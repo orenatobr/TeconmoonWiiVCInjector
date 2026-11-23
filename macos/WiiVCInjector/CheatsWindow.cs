@@ -101,9 +101,6 @@ public sealed class CheatsWindow : Window
     {
         var picked = _rows.Where(r => r.Box.IsChecked == true).Select(r => r.Cheat).ToList();
         if (picked.Count == 0) { await Dialogs.Info(this, "Tick at least one code first.", "No code picked"); return; }
-        if (picked.Select(c => CheatCodes.Warning(c, _id)).FirstOrDefault(w => w != null) is { } warn
-            && !await Dialogs.Ask(this, warn + "\nSave anyway?", "Audio delay"))
-            return;
         try
         {
             Directory.CreateDirectory(CheatCodes.LibraryDir);

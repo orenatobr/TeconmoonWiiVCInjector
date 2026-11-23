@@ -93,7 +93,7 @@ Nintendont from the SD Card menu also copies every saved `.gct`.
 - Gecko codes are used as written. Action Replay codes are only used when they are plain 8, 16 and 32 bit writes (their words are the Gecko 00, 02 and 04 codes);
   other Action Replay types are listed but cannot be ticked. Pasted codes are taken as Gecko codes.
 - Nothing is ticked by default, because codes such as infinite health are not meant to run together.
-- A code named "60Hz" on a PAL disc gets a warning: forcing 60 Hz on a PAL disc is the cause of the audio delay (`AUDIO-DELAY.md`).
+- A code named "60Hz" on a PAL disc gets a note: Nintendont's own 60 Hz forcing delays the audio (`AUDIO-DELAY.md`), a code that sets the mode inside the game was not measured.
 - GameCube only. A Wii game in a WUP has no code handler.
 - Not tried on a console.
 

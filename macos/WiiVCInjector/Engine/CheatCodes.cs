@@ -37,9 +37,12 @@ public static partial class CheatCodes
     /// <summary>GameCube region letters that are PAL (the 4th id character).</summary>
     public static bool IsPal(string id) => id.Length > 3 && "PDFISHUXYZ".Contains(id[3]);
 
-    /// <summary>A PAL disc made to run at 60 Hz plays its sound late (measured with Force Progressive, see AUDIO-DELAY.md).</summary>
+    /// <summary>
+    /// A note for a 60 Hz code on a PAL disc. Nintendont's Force Progressive, which switches the video mode behind the game's back, was measured to delay
+    /// the sound (AUDIO-DELAY.md). A code that changes the game's own video mode was not measured, so this only says to listen for it.
+    /// </summary>
     public static string? Warning(Cheat c, string id) =>
-        IsPal(id) && Hz60Rx().IsMatch(c.Name) ? "Forces 60 Hz on a PAL disc, the sound will play late (see AUDIO-DELAY.md)." : null;
+        IsPal(id) && Hz60Rx().IsMatch(c.Name) ? "60 Hz code on a PAL disc. Nintendont's own 60 Hz forcing delayed the sound; this code was not measured, so check the audio (see AUDIO-DELAY.md)." : null;
 
     /// <summary>The page of the game on the Dolphin wiki, which the compatibility list links to and which holds the codes people wrote.</summary>
     public static string WikiUrl(string gameName) => WikiBase + Uri.EscapeDataString(gameName.Trim().Replace(' ', '_'));

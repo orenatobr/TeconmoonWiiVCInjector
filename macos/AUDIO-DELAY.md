@@ -5,7 +5,7 @@ Fixed for PAL games: the cause is Force Progressive. With it on, `kernel/Patch.c
 
 What to do: leave Force Progressive off for PAL discs. The SD Card window now says so, and the Teconmoon Nintendont build (`nintendont-teconmoon/`) enforces it: for a PAL disc its loader clears Force Progressive, Patch PAL50 and any forced 60 Hz video mode before the game starts. Only Force Progressive was measured on hardware; the other two are blocked because they also put a PAL game on 60 Hz. A PAL game then outputs 50 Hz; if your TV shows a black screen, that is the older black screen of 50 Hz output, not this setting.
 
-Cheat codes that force 60 Hz on a PAL disc (the Dolphin wiki page of Skies of Arcadia has one, `$60Hz`) put the game on 60 Hz the same way, so they are expected to bring the delay back. This was not measured. The cheat codes window warns before saving one for a PAL disc.
+Cheat codes that force 60 Hz on a PAL disc (the Dolphin wiki page of Skies of Arcadia has one, `$60Hz`) are a different thing from Force Progressive: the code changes the video mode inside the game, while Force Progressive switches the mode behind the game's back. Whether the sound stays in sync with such a code was not measured. The cheat codes window shows a note next to it; listen for the delay in the cutscene used above.
 
 ## Ruled out (read in the source and tested)
 - Disc reads through the Wii VC virtual disc (`WDVD_FST_Read`): the same delay appears with the ISO read from the SD card through the Homebrew Channel.

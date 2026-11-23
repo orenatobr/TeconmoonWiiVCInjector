@@ -13,7 +13,7 @@ namespace WiiVCInjector;
 public sealed class GameSettingsWindow : Window
 {
     readonly string _id, _name, _id4;
-    readonly ComboBox _fullscreen, _hack, _progressive, _skipIpl;
+    readonly ComboBox _fullscreen, _hack, _progressive, _skipIpl, _patchPal50;
     readonly TextBox _preview = new() { IsReadOnly = true, AcceptsReturn = true, MinHeight = 120, FontFamily = new FontFamily("Menlo,Monaco,monospace"), FontSize = 12 };
 
     static ComboBox Combo(params string[] items)
@@ -37,6 +37,7 @@ public sealed class GameSettingsWindow : Window
         _hack = Combo("Nintendont setting", "On", "Off");
         _progressive = Combo("Nintendont setting", "On", "Off");
         _skipIpl = Combo("Nintendont setting", "On", "Off");
+        _patchPal50 = Combo("Nintendont setting", "On", "Off");
 
         Control Row(string label, string help, ComboBox box)
         {
@@ -67,7 +68,8 @@ public sealed class GameSettingsWindow : Window
         _hack.SelectedIndex = ToIndex(existing.WidescreenHack);
         _progressive.SelectedIndex = ToIndex(existing.ProgressiveScan);
         _skipIpl.SelectedIndex = ToIndex(existing.SkipIpl);
-        foreach (var c in new[] { _fullscreen, _hack, _progressive, _skipIpl }) c.SelectionChanged += (_, _) => UpdatePreview();
+        _patchPal50.SelectedIndex = ToIndex(existing.PatchPal50);
+        foreach (var c in new[] { _fullscreen, _hack, _progressive, _skipIpl, _patchPal50 }) c.SelectionChanged += (_, _) => UpdatePreview();
 
         Content = new StackPanel
         {
@@ -78,7 +80,8 @@ public sealed class GameSettingsWindow : Window
                 new TextBlock { Text = "Settings for just this game, in the format of Dolphin's GameINI. \"Nintendont setting\" leaves the option as Nintendont has it. They are applied by the Teconmoon Nintendont when the game starts, also from a WUP, and do not change nincfg.bin.", TextWrapping = TextWrapping.Wrap, Opacity = 0.8 },
                 Row("Fullscreen (Wii U Widescreen)", "The Wii U shows this game on the whole 16:9 screen. The picture is stretched unless the game draws in 16:9 (a widescreen Gecko code, or the hack below).", _fullscreen),
                 Row("Widescreen hack (Force Widescreen)", "Nintendont makes the game draw in 16:9. It only works where it finds the game's projection code: not in Skies of Arcadia, use a widescreen Gecko code there.", _hack),
-                Row("Progressive scan (Force Progressive)", "A PAL disc ignores this in the Teconmoon Nintendont, because forcing 60 Hz delays the sound.", _progressive),
+                Row("Progressive scan (Force Progressive)", "Sharp 480p instead of interlaced. A PAL disc normally ignores this in the Teconmoon Nintendont, because forcing 60 Hz delayed the sound; setting it On here keeps it for this game. A widescreen or 60 Hz Gecko code that makes the game itself run at 60 Hz may avoid the delay (not measured).", _progressive),
+                Row("Patch PAL50", "A PAL game's 50 Hz mode is patched to 60 Hz. Also ignored on PAL discs unless set On here; it was part of the setup that delayed the sound.", _patchPal50),
                 Row("Skip IPL", "Skips the GameCube boot screen.", _skipIpl),
                 new TextBlock { Text = "File saved as:", Opacity = 0.8 },
                 _preview,
@@ -95,6 +98,7 @@ public sealed class GameSettingsWindow : Window
     GameSettings Current() => new()
     {
         Fullscreen = FromIndex(_fullscreen), WidescreenHack = FromIndex(_hack), ProgressiveScan = FromIndex(_progressive), SkipIpl = FromIndex(_skipIpl),
+        PatchPal50 = FromIndex(_patchPal50),
     };
 
     void UpdatePreview() => _preview.Text = Current().IsEmpty ? $"teconmoon/{_id4}.ini\n(nothing set: every option follows Nintendont)" : $"teconmoon/{_id4}.ini\n\n" + Current().ToIni(_id, _name);
@@ -135,6 +139,6 @@ public sealed class GameSettingsWindow : Window
         if (_id4 == "" || !File.Exists(GameSettings.PathFor(_id4))) { await Dialogs.Info(this, "No settings are saved for this game.", "Nothing saved"); return; }
         if (!await Dialogs.Ask(this, "Delete the saved settings of this game? A copy already on the SD card stays there.", "Remove")) return;
         File.Delete(GameSettings.PathFor(_id4));
-        _fullscreen.SelectedIndex = _hack.SelectedIndex = _progressive.SelectedIndex = _skipIpl.SelectedIndex = 0;
+        _fullscreen.SelectedIndex = _hack.SelectedIndex = _progressive.SelectedIndex = _skipIpl.SelectedIndex = _patchPal50.SelectedIndex = 0;
     }
 }

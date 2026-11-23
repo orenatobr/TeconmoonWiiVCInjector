@@ -7,6 +7,8 @@ What to do: leave Force Progressive off for PAL discs. The SD Card window now sa
 
 Cheat codes that force 60 Hz on a PAL disc (the Dolphin wiki page of Skies of Arcadia has one, `$60Hz`) are a different thing from Force Progressive: the code changes the video mode inside the game, while Force Progressive switches the mode behind the game's back. Whether the sound stays in sync with such a code was not measured. The cheat codes window shows a note next to it; listen for the delay in the cutscene used above.
 
+Staying at 50 Hz has a visible cost on the Wii U: the loader uses a 528 line interlaced deflicker mode for a PAL disc, which shows black bars above and below and a soft picture (seen on Skies of Arcadia PAL, 1.2.15). A per game setting (`ProgressiveScan = True` in `teconmoon/<id4>.ini`) now keeps Force Progressive for one PAL disc. Whether it delays the sound when the game itself already runs at 60 Hz (the `$60Hz` Gecko code) is not measured.
+
 ## Ruled out (read in the source and tested)
 - Disc reads through the Wii VC virtual disc (`WDVD_FST_Read`): the same delay appears with the ISO read from the SD card through the Homebrew Channel.
 - Disc audio streaming buffer (`kernel/Stream.c`): the game's header has the streaming flag (offset 0x8) at 0, so a smaller buffer cannot change its sound (the half-buffer build tried before is gone).

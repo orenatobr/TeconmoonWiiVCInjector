@@ -90,7 +90,9 @@ starts, also from a WUP, without rebuilding the WUP and without changing `nincfg
 - "Fullscreen" is Nintendont's own Wii U widescreen option: the Wii U shows the game on the whole 16:9 screen, and the picture is stretched unless the game draws in 16:9. For that use a
   widescreen Gecko code (the Skies of Arcadia wiki page has one) or the Widescreen hack where Nintendont can find the game's projection code (it cannot in Skies of Arcadia, its log says
   `C_MTXPerspective not found`). This is applied when the game starts, not switched while it runs: the L + R + A shortcut of 1.2.10 is gone and there is no replacement.
-- A PAL disc ignores Progressive scan, as before (`AUDIO-DELAY.md`).
+- A PAL disc normally ignores Progressive scan and Patch PAL50 (`AUDIO-DELAY.md`), which leaves it on a 528 line interlaced mode with black bars above and below and a soft picture. Setting either one On in the
+  game's own settings keeps it for that game. Progressive scan without Patch PAL50, together with a Gecko code that makes the game run at 60 Hz, is the combination meant to give a sharp full height picture without
+  the sound delay; that is not measured.
 - Dolphin keys other than these four are ignored, so a Dolphin `GameSettings/<id>.ini` can be used as it is.
 - The GamePad staying on with the wiiscreenoff plugin is not covered by this. The kernel now logs what it does with the Wii U aspect registers (`WiiU aspect:` lines in `ndebug.log`), which is the
   first thing to read if Nintendont turns out to interfere with that plugin.

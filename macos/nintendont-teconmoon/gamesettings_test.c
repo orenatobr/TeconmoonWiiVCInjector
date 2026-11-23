@@ -33,6 +33,10 @@ int main(void)
 	check("empty text sets nothing", parse("", s) == 0 && s[GS_WIIU_WIDE] == -1);
 	check("no final newline is fine", parse("SkipIPL = True", s) == 1);
 	{ char b[] = "x"; check("a null text is safe", GameSettingsParse(NULL, s) == 0 && GameSettingsParse(b, s) == 0); }
+	n = parse("[Teconmoon]\nPatchPAL50 = True\nProgressiveScan = True\n", s);
+	check("PatchPAL50 is read next to ProgressiveScan", n == 2 && s[GS_PATCH_PAL50] == 1 && s[GS_FORCE_PROG] == 1);
+	check("PatchPAL50 False and a bad value", parse("PatchPAL50 = no", s) == 1 && s[GS_PATCH_PAL50] == 0 && parse("PatchPAL50 = x", s) == 0 && s[GS_PATCH_PAL50] == -1);
+	check("every setting starts as not mentioned", parse("", s) == 0 && s[GS_PATCH_PAL50] == -1 && s[GS_FORCE_PROG] == -1 && GS_COUNT == 5);
 	printf(fails ? "%d FAILED\n" : "ALL PASS\n", fails);
 	return fails != 0;
 }

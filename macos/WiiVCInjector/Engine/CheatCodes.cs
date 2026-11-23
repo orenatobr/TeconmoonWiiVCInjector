@@ -43,6 +43,10 @@ public static partial class CheatCodes
     [GeneratedRegex(@"\b60\s*Hz\b", RegexOptions.IgnoreCase)]
     private static partial Regex Hz60Rx();
 
+    /// <summary>A frame rate code by its name: "60 FPS", "60FPS", "30-fps"...</summary>
+    [GeneratedRegex(@"\b\d{2,3}\s*-?\s*fps\b", RegexOptions.IgnoreCase)]
+    private static partial Regex FpsRx();
+
     /// <summary>The 6 character id Nintendont names the .gct after (game id plus maker code), safe to use in a file name.</summary>
     public static bool IsValidId(string id) => id.Length == 6 && id.All(char.IsAsciiLetterOrDigit);
 
@@ -53,8 +57,10 @@ public static partial class CheatCodes
     /// A note for a 60 Hz code on a PAL disc. Nintendont's Force Progressive, which switches the video mode behind the game's back, was measured to delay
     /// the sound (AUDIO-DELAY.md). A code that changes the game's own video mode was not measured, so this only says to listen for it.
     /// </summary>
-    public static string? Warning(Cheat c, string id) =>
-        IsPal(id) && Hz60Rx().IsMatch(c.Name) ? "60 Hz code on a PAL disc. Nintendont's own 60 Hz forcing delayed the sound; this code was not measured, so check the audio (see AUDIO-DELAY.md)." : null;
+    public static string? Warning(Cheat c, string id, bool wii = false) =>
+        IsPal(id) && Hz60Rx().IsMatch(c.Name) ? "60 Hz code on a PAL disc. Nintendont's own 60 Hz forcing delayed the sound; this code was not measured, so check the audio (see AUDIO-DELAY.md)."
+        : wii && FpsRx().IsMatch(c.Name) ? "A frame rate code needs CPU to spare. At the vWii's normal speed the game can run in slow motion instead of at 60 FPS (the Dolphin wiki says this kind of code needs more than 125% CPU). The cafe2wii patching option (Advanced tab, needs your Starbuck ancast key) unlocks the 1.215 GHz Wii U speed; it also needs the c2w_patcher Aroma plugin."
+        : null;
 
     /// <summary>
     /// The name to show and to look up on the wiki: the database name when there is one (it has the proper capitals, like the compat list),

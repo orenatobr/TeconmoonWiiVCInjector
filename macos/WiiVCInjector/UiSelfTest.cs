@@ -608,6 +608,11 @@ E0000000 80008000 //end
             }
             T("cheats window: the paste box has a fixed height and a scroll bar", new CheatsWindow("RPJE7U", "Arc Rise Fantasia", true).Content is Avalonia.Controls.StackPanel sp
                 && sp.Children.OfType<Avalonia.Controls.TextBox>().FirstOrDefault() is { } tb && tb.Height == 110 && Avalonia.Controls.ScrollViewer.GetVerticalScrollBarVisibility(tb) == Avalonia.Controls.Primitives.ScrollBarVisibility.Auto);
+            var fpsCode = new Cheat { Name = "60 FPS" };
+            T("cheats: a frame rate code on a Wii game warns about CPU and the cafe2wii patch, on a GameCube game or a code that is not about frame rate it does not",
+                CheatCodes.Warning(fpsCode, "RPJE7U", true) is { } fw && fw.Contains("slow motion") && fw.Contains("cafe2wii") && fw.Contains("1.215 GHz")
+                && CheatCodes.Warning(fpsCode, "GEAE8P", false) == null && CheatCodes.Warning(new Cheat { Name = "Widescreen" }, "RPJE7U", true) == null
+                && CheatCodes.Warning(new Cheat { Name = "60Hz" }, "GEAP8P", true) is { } hz && hz.Contains("PAL disc"));
             T("cheats: wiki page address of a game", CheatCodes.WikiUrl("Skies of Arcadia Legends") == "https://wiki.dolphin-emu.org/index.php?title=Skies_of_Arcadia_Legends");
             var cheatUrls = new List<string>();
             using (var http = new HttpClient(new StubHandler(req =>

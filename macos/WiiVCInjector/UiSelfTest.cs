@@ -398,8 +398,9 @@ public static class UiSelfTest
             T("nintendont source: the real build output ships the Teconmoon files", SDCardWindow.ChooseNintendontSource(false, AppContext.BaseDirectory).Source == SDCardWindow.NintendontSource.Teconmoon, AppContext.BaseDirectory);
             var shippedDol = File.ReadAllBytes(Path.Combine(AppContext.BaseDirectory, "Assets", "nintendont-teconmoon", "boot.dol"));
             T("nintendont build: the shipped boot.dol is the one nintendont-teconmoon/README.md documents",
-                Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(shippedDol)).Equals("d1332cd4ac274f4925f106c63853edeab3c4e1805feead259d9a44d95b6ee819", StringComparison.OrdinalIgnoreCase));
+                Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(shippedDol)).Equals("438848541e7619b12d61a22d78084710717d7f85a90bfd6d74aed8ee7464f0e9", StringComparison.OrdinalIgnoreCase));
             T("nintendont build: the shipped boot.dol carries the PAL guard", System.Text.Encoding.ASCII.GetString(shippedDol).Contains("PAL disc: Force Progressive ignored"));
+            T("nintendont build: the shipped boot.dol keeps a PAL option the game settings ask for", System.Text.Encoding.ASCII.GetString(shippedDol).Contains("PAL disc: Force Progressive kept"));
             T("nintendont build: the shipped boot.dol reads the per game settings file", System.Text.Encoding.ASCII.GetString(shippedDol).Contains("%s:/teconmoon/%s.ini"));
             T("nintendont source: upstream still available when the build is shipped", SDCardWindow.ChooseNintendontSource(true, tmp) == (SDCardWindow.NintendontSource.Upstream, null));
 
@@ -520,6 +521,11 @@ public static class UiSelfTest
                 && !new GameSettings { Fullscreen = false }.ToIni("X", "Y").Contains("[Core]") && new GameSettings { Fullscreen = false }.ToIni("X", "Y").Contains("AspectRatio = 2"));
             T("game settings: what is written is read back the same", GameSettings.Parse(gsFull.ToIni("GEAP8P", "x")) is { Fullscreen: true, WidescreenHack: false, ProgressiveScan: false, SkipIpl: true }
                 && GameSettings.Parse(new GameSettings { Fullscreen = false }.ToIni("GEAP8P", "x")) is { Fullscreen: false, WidescreenHack: null, ProgressiveScan: null, SkipIpl: null } && new GameSettings().IsEmpty);
+            var gsPal = GameSettings.Parse("[Core]\nProgressiveScan = True\n[Teconmoon]\nPatchPAL50 = False\n");
+            T("game settings: Patch PAL50 is read, written in its own section and read back",
+                gsPal.ProgressiveScan == true && gsPal.PatchPal50 == false
+                && new GameSettings { PatchPal50 = true }.ToIni("X", "Y").Contains("[Teconmoon]\nPatchPAL50 = True\n") && !new GameSettings { PatchPal50 = true }.IsEmpty
+                && GameSettings.Parse(new GameSettings { PatchPal50 = true, ProgressiveScan = true }.ToIni("X", "Y")) is { PatchPal50: true, ProgressiveScan: true });
             T("game settings: the file is named by the first 4 id characters", GameSettings.Id4("GEAP8P") == "GEAP" && GameSettings.Id4("GEA") == null && GameSettings.Id4("../AB") == null);
             var gsLib = Path.Combine(tmp, "gslib"); var gsCard = Path.Combine(tmp, "gscard");
             Directory.CreateDirectory(gsLib); Directory.CreateDirectory(gsCard);

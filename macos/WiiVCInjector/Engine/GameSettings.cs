@@ -16,8 +16,10 @@ public sealed class GameSettings
     public bool? ProgressiveScan;
     /// <summary>SkipIPL (Nintendont's "Skip IPL").</summary>
     public bool? SkipIpl;
+    /// <summary>PatchPAL50 (Nintendont's "Patch PAL50"): a PAL game's 50 Hz mode becomes 60 Hz. A key of this app, Dolphin has none.</summary>
+    public bool? PatchPal50;
 
-    public bool IsEmpty => Fullscreen == null && WidescreenHack == null && ProgressiveScan == null && SkipIpl == null;
+    public bool IsEmpty => Fullscreen == null && WidescreenHack == null && ProgressiveScan == null && SkipIpl == null && PatchPal50 == null;
 
     /// <summary>The file is named by the first 4 characters of the disc id, which also carry the region.</summary>
     public static string? Id4(string id) => id.Length >= 4 && id[..4].All(char.IsAsciiLetterOrDigit) ? id[..4] : null;
@@ -46,6 +48,7 @@ public sealed class GameSettings
             else if (key.Equals("wideScreenHack", StringComparison.OrdinalIgnoreCase) && Bool(val) is { } w) s.WidescreenHack = w;
             else if (key.Equals("ProgressiveScan", StringComparison.OrdinalIgnoreCase) && Bool(val) is { } p) s.ProgressiveScan = p;
             else if (key.Equals("SkipIPL", StringComparison.OrdinalIgnoreCase) && Bool(val) is { } i) s.SkipIpl = i;
+            else if (key.Equals("PatchPAL50", StringComparison.OrdinalIgnoreCase) && Bool(val) is { } p50) s.PatchPal50 = p50;
         }
         return s;
     }
@@ -69,6 +72,7 @@ public sealed class GameSettings
             if (ProgressiveScan != null) sb.Append($"ProgressiveScan = {B(ProgressiveScan.Value)}\n");
             if (SkipIpl != null) sb.Append($"SkipIPL = {B(SkipIpl.Value)}\n");
         }
+        if (PatchPal50 != null) sb.Append($"\n[Teconmoon]\nPatchPAL50 = {B(PatchPal50.Value)}\n");
         return sb.ToString();
     }
 

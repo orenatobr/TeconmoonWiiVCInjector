@@ -524,6 +524,22 @@ public partial class MainWindow : Window
         await new CheatsWindow(CucholixRepoID, name, SystemType == "wii").ShowDialog(this);
     }
 
+    private async void GameSettingsButton_Click(object? s, RoutedEventArgs e)
+    {
+        if (SystemType != "gcn")
+        {
+            await Dialogs.Info(this, "Game settings are read by Nintendont, so they work for GameCube games. Pick GC Retail Injection and load the game first.", "GameCube only");
+            return;
+        }
+        if (GameSettings.Id4(CucholixRepoID) == null)
+        {
+            await Dialogs.Info(this, "Please select your game before using this option", "No game specified");
+            return;
+        }
+        var name = InternalGameName != "" ? InternalGameName : GameTdb.GetName(CucholixRepoID) ?? CucholixRepoID;
+        await new GameSettingsWindow(CucholixRepoID, name).ShowDialog(this);
+    }
+
     private async void RepoDownload_Click(object? s, RoutedEventArgs e)
     {
         if (CucholixRepoID == "")

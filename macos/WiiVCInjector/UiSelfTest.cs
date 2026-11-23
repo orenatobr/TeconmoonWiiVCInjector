@@ -398,9 +398,9 @@ public static class UiSelfTest
             T("nintendont source: the real build output ships the Teconmoon files", SDCardWindow.ChooseNintendontSource(false, AppContext.BaseDirectory).Source == SDCardWindow.NintendontSource.Teconmoon, AppContext.BaseDirectory);
             var shippedDol = File.ReadAllBytes(Path.Combine(AppContext.BaseDirectory, "Assets", "nintendont-teconmoon", "boot.dol"));
             T("nintendont build: the shipped boot.dol is the one nintendont-teconmoon/README.md documents",
-                Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(shippedDol)).Equals("9a6ca0105abb65665e7911946ff250ff0bfac37bac2304eda2a2b73724f0b9b8", StringComparison.OrdinalIgnoreCase));
+                Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(shippedDol)).Equals("d1332cd4ac274f4925f106c63853edeab3c4e1805feead259d9a44d95b6ee819", StringComparison.OrdinalIgnoreCase));
             T("nintendont build: the shipped boot.dol carries the PAL guard", System.Text.Encoding.ASCII.GetString(shippedDol).Contains("PAL disc: Force Progressive ignored"));
-            T("nintendont build: the shipped boot.dol reads the per game settings file", System.Text.Encoding.ASCII.GetString(shippedDol).Contains("/teconmoon/%s.ini"));
+            T("nintendont build: the shipped boot.dol reads the per game settings file", System.Text.Encoding.ASCII.GetString(shippedDol).Contains("%s:/teconmoon/%s.ini"));
             T("nintendont source: upstream still available when the build is shipped", SDCardWindow.ChooseNintendontSource(true, tmp) == (SDCardWindow.NintendontSource.Upstream, null));
 
             // --- Gecko and Action Replay codes (Dolphin game settings and wiki text)

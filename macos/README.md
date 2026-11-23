@@ -94,7 +94,7 @@ starts, also from a WUP, without rebuilding the WUP and without changing `nincfg
 - Dolphin keys other than these four are ignored, so a Dolphin `GameSettings/<id>.ini` can be used as it is.
 - The GamePad staying on with the wiiscreenoff plugin is not covered by this. The kernel now logs what it does with the Wii U aspect registers (`WiiU aspect:` lines in `ndebug.log`), which is the
   first thing to read if Nintendont turns out to interfere with that plugin.
-- GameCube only, not tried on a console.
+- GameCube only. Release 1.2.14 did not apply the file at all (the loader read it after closing the card); 1.2.15 does. Not confirmed on a console yet.
 
 ## Cheat codes (GameCube and Wii)
 

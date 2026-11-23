@@ -15,7 +15,7 @@ index a03e33e..ff1f23d 100644
  		debuggerWanted = 1;
  	if(cheatsWanted || debuggerWanted)
 diff --git a/kernel/main.c b/kernel/main.c
-index fac0829..411301c 100644
+index fac0829..bd1c7f4 100644
 --- a/kernel/main.c
 +++ b/kernel/main.c
 @@ -323,12 +323,25 @@ int _main( int argc, char *argv[] )
@@ -23,8 +23,8 @@ index fac0829..411301c 100644
  	{
  		ori_widesetting = read32(0xd8006a0);
 +		//Teconmoon: log what is decided, the DMCU registers also matter to plugins that patch the GamePad display
-+		dbgprintf("WiiU aspect: console 16:9=%d, Wii U Widescreen option=%d, DMCU register 0xd8006a0=%08x\r\n",
-+			isWidescreen, ConfigGetConfig(NIN_CFG_WIIU_WIDE) != 0, ori_widesetting);
++		dbgprintf("WiiU aspect: console 16:9=%d, Wii U Widescreen option=%d, DMCU register 0xd8006a0=%08x, config=%08x\r\n",
++			isWidescreen, ConfigGetConfig(NIN_CFG_WIIU_WIDE) != 0, ori_widesetting, ncfg->Config);
  		// Widescreen setting enabled and consoles aspect ratio set to 4:3
  		if (ConfigGetConfig(NIN_CFG_WIIU_WIDE) && !isWidescreen)
 +		{
@@ -147,7 +147,7 @@ index 0000000..9b588d5
 +
 +#endif
 diff --git a/loader/source/main.c b/loader/source/main.c
-index aef1e55..558a0f8 100644
+index aef1e55..bd2621e 100644
 --- a/loader/source/main.c
 +++ b/loader/source/main.c
 @@ -48,6 +48,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
@@ -173,8 +173,8 @@ index aef1e55..558a0f8 100644
 +	for (i = 0; i < 4; i++)
 +		if (!isalnum((unsigned char)id[i]))
 +			return;
-+	char path[32];
-+	sprintf(path, "/teconmoon/%s.ini", id);
++	char path[40];
++	snprintf(path, sizeof(path), "%s:/teconmoon/%s.ini", GetRootDevice(), id);
 +	static char text[4096];
 +	FIL f;
 +	UINT read = 0;
@@ -210,16 +210,18 @@ index aef1e55..558a0f8 100644
  int main(int argc, char **argv)
  {
  	// Exit after 10 seconds if there is an error
-@@ -1224,6 +1270,8 @@ int main(int argc, char **argv)
- 		WDVD_Close();
+@@ -1026,6 +1072,10 @@ int main(int argc, char **argv)
+ 		ExitToLoader(1);
  	}
  
++	//Teconmoon: per game settings. The game id is final, the card is still open and nincfg.bin is already
++	//written (so nothing here is saved), and everything that reads these options comes after this.
 +	ApplyGameSettings();
 +
- 	//before flushing do game specific patches
- 	if(ncfg->Config & NIN_CFG_FORCE_PROG &&
- 			ncfg->GameID == 0x47584745)
-@@ -1233,6 +1281,26 @@ int main(int argc, char **argv)
+ 	// Save the ISO shift value for multi-game discs.
+ 	*(vu32*)0xD300300C = ISOShift;
+ 
+@@ -1233,6 +1283,26 @@ int main(int argc, char **argv)
  		ncfg->Config &= ~NIN_CFG_FORCE_PROG;
  	}
  

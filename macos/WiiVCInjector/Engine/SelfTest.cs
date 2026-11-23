@@ -304,6 +304,10 @@ internal static class SelfTest
         var dol = new byte[0x400];
         void U32(int o, uint v) { dol[o] = (byte)(v >> 24); dol[o + 1] = (byte)(v >> 16); dol[o + 2] = (byte)(v >> 8); dol[o + 3] = (byte)v; }
         U32(0x00, 0x100); U32(0x48, 0x80003100); U32(0x90, 0x300); U32(0xE0, 0x80003100);
+        U32(0xD8, 0x80010000); U32(0xDC, 0x1000); // a BSS area: GeckoLoader places itself from it, as in every real DOL
+        // the Wii VI hook pattern and a blr after it, where the GeckoLoader code handler hooks in
+        new byte[] { 0x7C, 0xE3, 0x3B, 0x78, 0x38, 0x87, 0x00, 0x34, 0x38, 0xA7, 0x00, 0x38, 0x38, 0xC7, 0x00, 0x4C }.CopyTo(dol, 0x280);
+        U32(0x2A0, 0x4E800020);
         File.WriteAllBytes(Path.Combine(baseDir, "sys", "main.dol"), dol);
         Directory.CreateDirectory(Path.Combine(baseDir, "files"));
         var iso = Path.Combine(tmp, "ch.iso");
@@ -334,6 +338,31 @@ internal static class SelfTest
             Check("cheats: the saved code is written into main.dol of the rebuilt ISO (even with trimming disabled)", after.Length >= 0x400 && Convert.ToHexString(after[0x104..0x108]) == "3F400000");
             Check("cheats: the build log says what was and was not applied",
                 log.Any(l => l.Contains("1 of 2")) && log.Any(l => l.Contains("applied: Widescreen")) && log.Any(l => l.Contains("not applied: Outside the dol")));
+            // a code that needs a code handler (an assembly C2 code), with the handler tool installed or not
+            File.WriteAllText(CheatCodes.CodesTextPath(id), "$Widescreen\n04003104 3F400000\n$Asm insert\nC2003200 00000001\n60000000 00000000\n");
+            var log2 = new List<string>();
+            void L2(string l) => log2.Add(l);
+            BuildEngine.Log += L2;
+            BuildEngine.IsoReady = p =>
+            {
+                var ex = Path.Combine(tmp, "CHBACK2");
+                Tools.Run(wit, ["extract", p, "--DEST", ex, "--psel", "data,-update", "-ovv"], null, default);
+                File.Copy(Path.Combine(ex, "sys", "main.dol"), Path.Combine(tmp, "ch2-main.dol"), true);
+            };
+            o.OutputDir = Path.Combine(tmp, "out-ch2");
+            try { BuildEngine.RunAsync(o, prog).GetAwaiter().GetResult(); } finally { BuildEngine.IsoReady = null; BuildEngine.Log -= L2; }
+            var after2 = File.ReadAllBytes(Path.Combine(tmp, "ch2-main.dol"));
+            if (GeckoLoaderTool.Find() != null)
+            {
+                Check("cheats: a code that needs a handler goes in through the code handler (new entry point, larger DOL, logged)",
+                    log2.Any(l => l.Contains("with a code handler")) && after2.Length > 0x400 + 0x400
+                    && System.Buffers.Binary.BinaryPrimitives.ReadUInt32BigEndian(after2.AsSpan(0xE0)) != 0x80003100);
+            }
+            else
+            {
+                Check("cheats: without the code handler tool the plain write still goes in and the handler code is reported as not installed",
+                    Convert.ToHexString(after2[0x104..0x108]) == "3F400000" && log2.Any(l => l.Contains("code handler tool is not installed")) && log2.Any(l => l.Contains("not applied: Asm insert")));
+            }
         }
         finally { Environment.SetEnvironmentVariable("WIIVC_SETTINGS", old); }
     }

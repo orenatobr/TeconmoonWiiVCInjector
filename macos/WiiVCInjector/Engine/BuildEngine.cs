@@ -130,6 +130,38 @@ public static class BuildEngine
     /// <summary>Retail Wii common key (public). Checked by decrypting the first block of a disc partition: it starts with the game id.</summary>
     static readonly byte[] WiiCommonKey = Convert.FromHexString("EBE42A225E8593E448D9C5457381AAF7");
 
+    /// <summary>
+    /// Puts the saved cheats into the game's main.dol. A cheat that is not a plain memory write (assembly, conditional, pointer) needs a code handler:
+    /// with the GeckoLoader tool installed every usable cheat goes in through a code handler; without it, or when it fails, the plain writes are
+    /// written into the DOL as before and the others are reported as not applied.
+    /// </summary>
+    internal static void ApplyWiiCheats(string dolFile, List<Cheat> cheats, string work, CancellationToken ct)
+    {
+        var usable = cheats.Where(c => c.Unusable == null).ToList();
+        var needHandler = usable.Where(c => DolCheats.Writes(c) == null).ToList();
+        if (needHandler.Count > 0)
+        {
+            if (GeckoLoaderTool.Find() != null)
+            {
+                var why = GeckoLoaderTool.Patch(dolFile, CheatCodes.BuildGct(usable), work, ct);
+                if (why == null)
+                {
+                    Emit($"Cheat codes added to main.dol with a code handler (GeckoLoader): {usable.Count}");
+                    foreach (var c in usable) Emit("[cheats] code handler: " + c.Name);
+                    return;
+                }
+                Emit("[cheats] ERROR: the code handler could not be added, so only plain memory writes are applied: " + why);
+            }
+            else Emit($"[cheats] {needHandler.Count} code(s) need a code handler and the code handler tool is not installed (cheat codes window, Install code handler tool); only plain memory writes are applied");
+        }
+        var bytes = File.ReadAllBytes(dolFile);
+        var (applied, skipped) = DolCheats.Apply(bytes, cheats);
+        Emit($"Cheat codes written into main.dol: {applied.Count} of {cheats.Count}");
+        foreach (var n in applied) Emit("[cheats] applied: " + n);
+        foreach (var n in skipped) Emit("[cheats] not applied: " + n);
+        File.WriteAllBytes(dolFile, bytes);
+    }
+
     /// <summary>The cheats the user saved for this Wii disc (6 character id), empty when there are none.</summary>
     internal static List<Cheat> SavedWiiCheats(string gamePath)
     {
@@ -164,16 +196,7 @@ public static class BuildEngine
             var extract = Path.Combine(work, "ISOEXTRACT");
             exec(wit, ["extract", game, "--DEST", extract, "--psel", "data,-update", "-ovv"], null);
             if (o.ForceCC) exec(Tools.Native("getexttypepatcher"), [Path.Combine(extract, "sys", "main.dol"), "-nc"], null);
-            if (cheats.Count > 0)
-            {
-                var dolFile = Path.Combine(extract, "sys", "main.dol");
-                var bytes = File.ReadAllBytes(dolFile);
-                var (applied, skipped) = DolCheats.Apply(bytes, cheats);
-                Emit($"Cheat codes written into main.dol: {applied.Count} of {cheats.Count}");
-                foreach (var n in applied) Emit("[cheats] applied: " + n);
-                foreach (var n in skipped) Emit("[cheats] not applied: " + n);
-                File.WriteAllBytes(dolFile, bytes);
-            }
+            if (cheats.Count > 0) ApplyWiiCheats(Path.Combine(extract, "sys", "main.dol"), cheats, work, ct);
             if (o.VideoModeChange)
             {
                 var dolPath = Path.Combine(extract, "sys", "main.dol");

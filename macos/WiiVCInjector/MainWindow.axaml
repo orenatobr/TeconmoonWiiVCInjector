@@ -160,7 +160,7 @@
                 </Grid>
                 <Grid ColumnDefinitions="*,Auto" ColumnSpacing="16">
                   <TextBlock Classes="sub" VerticalAlignment="Center" TextWrapping="Wrap" Text="Want cheats? Gecko and Action Replay codes for this Wii or GameCube game." />
-                  <Button Name="CheatsDownload" Grid.Column="1" Click="CheatsDownload_Click">
+                  <Button Name="CheatsDownload" Grid.Column="1" Click="CheatsDownload_Click" ToolTip.Tip="The compat page lists ratings, not codes, and its site blocks programs. The codes are downloaded from the Gecko code database and from Dolphin's game settings; for other games, paste the game's Dolphin wiki page in the window. GameCube codes go to the SD card, Wii codes into the game's main.dol.">
                     <StackPanel Orientation="Horizontal" Spacing="8">
                       <Path Classes="icon muted" Data="{StaticResource IconDownload}" />
                       <TextBlock Text="Download from https://dolphin-emu.org/compat/" />

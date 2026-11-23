@@ -63,6 +63,7 @@ public static class UiSelfTest
             T("gc: enabled matrix", w.GC2SourceButton.IsEnabled && w.Force43NINTENDONT.IsEnabled && w.ForceInterlacedNINTENDONT.IsEnabled
                 && w.CustomMainDol.IsEnabled && w.DisableNintendontAutoboot.IsEnabled && w.DisableGamePad.IsEnabled
                 && !w.DisablePassthrough.IsEnabled && !w.C2WPatchFlag.IsEnabled && !w.DisableTrimming.IsEnabled && w.RepoDownload.IsEnabled);
+            T("gc: the cheat codes button tooltip says where the codes really come from", Avalonia.Controls.ToolTip.GetTip(w.CheatsDownload) is string tip && tip.Contains("compat") && tip.Contains("Gecko code database") && tip.Contains("SD card"));
             T("gc: cheat codes button is there with the requested text", w.CheatsDownload.IsEnabled
                 && ((w.CheatsDownload.Content as Avalonia.Controls.StackPanel)?.Children.OfType<Avalonia.Controls.TextBlock>().FirstOrDefault()?.Text) == "Download from https://dolphin-emu.org/compat/");
 

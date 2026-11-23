@@ -40,6 +40,7 @@ public sealed class CheatsWindow : Window
         TextBlock T(string text, double opacity = 1) => new() { Text = text, TextWrapping = TextWrapping.Wrap, Opacity = opacity };
 
         _copyButton = B("Copy to SD card...", CopyToSd_Click);
+        ToolTip.SetTip(_copyButton, "Puts codes/<id>.gct on the card. The Teconmoon Nintendont loads it when the game starts; the code is not inside the WUP.");
 
         Content = new StackPanel
         {
@@ -47,8 +48,8 @@ public sealed class CheatsWindow : Window
             Children =
             {
                 new TextBlock { Text = $"{name} ({id})", FontWeight = Avalonia.Media.FontWeight.SemiBold, FontSize = 15, TextWrapping = TextWrapping.Wrap },
-                T(wii ? "Gecko and Action Replay codes from the Dolphin project. A Wii game in a WUP has no code handler, so the build writes the ticked codes into the game's main.dol. That works for codes that patch the game's own code (widescreen, frame rate), not for ones that change values the game keeps in memory (lives, health): those are greyed out."
-                    : "Gecko and Action Replay codes from the Dolphin project. Nintendont runs them for GameCube games, including a game inside a WUP."),
+                T(wii ? "Gecko and Action Replay codes. A Wii game in a WUP has no code handler, so the build writes the ticked codes into the game's main.dol. That works for plain memory writes that patch the game's own code (widescreen, frame rate). Greyed out: conditional, pointer and assembly (C2) Gecko codes, and Action Replay codes that are not plain writes; codes that change values the game keeps while it runs (lives, health) are reported as not applied in the build log."
+                    : "Gecko and Action Replay codes. They are saved on the SD card as codes/<id>.gct and the Teconmoon Nintendont runs them when the game starts, also from a WUP; they are not stored inside the WUP. Gecko codes are used as they are; Action Replay codes only when they are plain memory writes (converted to Gecko), the other Action Replay types are greyed out."),
                 _status,
                 new ScrollViewer { MaxHeight = 220, Content = _list },
                 T("Codes people wrote for this game are on its Dolphin wiki page. The wiki checks for bots, so it opens in your browser: select the whole page there (Cmd+A, Cmd+C) and paste it here. Only the code blocks are taken, and the ones labelled for another region are left out.", 0.8),

@@ -29,7 +29,6 @@ public partial class SDCardWindow : Window
         Opt(0).IsChecked = true;
         // 720 fills the whole 720 pixel line; Auto gives 640 and thin black bars at the sides.
         VideoWidth.Value = 720;
-        NintendontAudioExperiment.IsVisible = ChooseNintendontSource(true, AppContext.BaseDirectory).Source == NintendontSource.Experiment;
         CheckForBoxes();
     }
 
@@ -97,17 +96,17 @@ public partial class SDCardWindow : Window
 
     // ---- Nintendont download
     /// <summary>Where the Nintendont files come from.</summary>
-    internal enum NintendontSource { Upstream, Experiment, Unavailable }
+    internal enum NintendontSource { Upstream, Teconmoon, Unavailable }
 
-    /// <summary>Picks the Nintendont source. Upstream is the default; the bundled audio experiment (smaller stream buffers) is opt-in.</summary>
-    /// <param name="experiment">Whether the user ticked the experiment box.</param>
+    /// <summary>Picks the Nintendont source. The bundled Teconmoon build (L + R + A aspect toggle, PAL discs kept at 50 Hz) is the default; upstream is opt-in.</summary>
+    /// <param name="upstream">Whether the user ticked the upstream box.</param>
     /// <param name="baseDir">Folder the app runs from (<see cref="AppContext.BaseDirectory"/>).</param>
-    /// <returns>The source and, for the experiment, the folder holding its boot.dol, meta.xml and icon.png.</returns>
-    internal static (NintendontSource Source, string? Dir) ChooseNintendontSource(bool experiment, string baseDir)
+    /// <returns>The source and, for the Teconmoon build, the folder holding its boot.dol, meta.xml and icon.png.</returns>
+    internal static (NintendontSource Source, string? Dir) ChooseNintendontSource(bool upstream, string baseDir)
     {
-        if (!experiment) return (NintendontSource.Upstream, null);
-        var dir = Path.Combine(baseDir, "Assets", "nintendont-audio-exp");
-        return NintendontFiles.All(f => File.Exists(Path.Combine(dir, f))) ? (NintendontSource.Experiment, dir) : (NintendontSource.Unavailable, null);
+        if (upstream) return (NintendontSource.Upstream, null);
+        var dir = Path.Combine(baseDir, "Assets", "nintendont-teconmoon");
+        return NintendontFiles.All(f => File.Exists(Path.Combine(dir, f))) ? (NintendontSource.Teconmoon, dir) : (NintendontSource.Unavailable, null);
     }
 
     /// <summary>The only files an install puts under apps/nintendont on the SD card.</summary>
@@ -140,10 +139,10 @@ public partial class SDCardWindow : Window
     {
         string downloadPath = Path.Combine(Path.GetTempPath(), "WiiVCInjector", "SOURCETEMP", "Download");
         string tempPath = Path.Combine(downloadPath, "apps", "nintendont");
-        var (source, experimentDir) = ChooseNintendontSource(NintendontAudioExperiment.IsChecked == true, AppContext.BaseDirectory);
+        var (source, bundledDir) = ChooseNintendontSource(NintendontUpstream.IsChecked == true, AppContext.BaseDirectory);
         if (source == NintendontSource.Unavailable)
         {
-            await Info(this, "This install does not include the audio experiment build.", "Error");
+            await Info(this, "This install does not include the Teconmoon Nintendont build. Tick the upstream box to download the plain upstream build instead.", "Error");
             return;
         }
         try
@@ -151,10 +150,10 @@ public partial class SDCardWindow : Window
             ActionStatus.Text = "Downloading...";
             if (Directory.Exists(downloadPath)) Directory.Delete(downloadPath, true);
             Directory.CreateDirectory(tempPath);
-            if (experimentDir != null)
+            if (bundledDir != null)
             {
                 // boot.dol, meta.xml and icon.png all come from the same pinned commit, so the version shown in the Homebrew Channel matches the loader.
-                foreach (var f in NintendontFiles) File.Copy(Path.Combine(experimentDir, f), Path.Combine(tempPath, f), true);
+                foreach (var f in NintendontFiles) File.Copy(Path.Combine(bundledDir, f), Path.Combine(tempPath, f), true);
             }
             else
             {

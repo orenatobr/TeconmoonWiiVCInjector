@@ -89,8 +89,10 @@ Nintendont from the SD Card menu also copies every saved `.gct`.
 
 - Where the codes come from: the compatibility list at `dolphin-emu.org/compat` only lists ratings and links each game to its Dolphin wiki page, and the codes people
   wrote are on that page. The wiki (like the list) answers automated requests with a bot check, which the app does not try to get past: "Open wiki page" opens the
-  page in your browser, you copy a code block and paste it into the window. What the app downloads by itself are the codes Dolphin ships in its open source
-  `Data/Sys/GameSettings/<id>.ini` files (`<id3>.ini` and `<id6>.ini`), which many games do not have (Skies of Arcadia has none there, its codes are on the wiki).
+  page in your browser, you copy a code block and paste it into the window. What the app downloads by itself, with nothing to paste, is: the Gecko code database the
+  Wii loaders (USB Loader GX, WiiFlow) use, `codes.rc24.xyz/txt.php?txt=<id6>`, one list per 6 character disc id (the only thing sent is the public disc id), and the codes
+  Dolphin ships in its open source `Data/Sys/GameSettings/<id3>.ini` and `<id6>.ini` files. A game only gets codes when its own id is listed, because the addresses change
+  with the region: Skies of Arcadia NTSC-U (`GEAE8P`) downloads 124 codes, the PAL disc (`GEAP8P`) none, and for it the codes are only on the wiki page.
 - Gecko codes are used as written. Action Replay codes are only used when they are plain 8, 16 and 32 bit writes (their words are the Gecko 00, 02 and 04 codes);
   other Action Replay types are listed but cannot be ticked. Pasted codes are taken as Gecko codes.
 - Nothing is ticked by default, because codes such as infinite health are not meant to run together.

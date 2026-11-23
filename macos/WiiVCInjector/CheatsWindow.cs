@@ -70,17 +70,17 @@ public sealed class CheatsWindow : Window
     async Task LoadAsync()
     {
         var note = File.Exists(SavedFile) ? "\nCodes are already saved for this game. Saving replaces them." : "";
-        _status.Text = "Downloading Dolphin's game settings..." + note;
+        _status.Text = "Downloading the codes for this game..." + note;
         try
         {
             var found = await CheatCodes.DownloadAsync(_id, Http);
             AddRows(found);
-            _status.Text = (found.Count > 0 ? $"Found {found.Count} code(s) in Dolphin's game settings. Tick the ones you want, nothing is on by default."
-                : "Dolphin's game settings have no codes for this game. Open the wiki page, copy a code block and paste it below.") + note;
+            _status.Text = (found.Count > 0 ? $"Found {found.Count} code(s) for {_id} (Dolphin's game settings and the Gecko code database). Tick the ones you want, nothing is on by default."
+                : $"No downloadable codes for {_id}. Codes depend on the disc's region, so another region's list would not fit. The Dolphin wiki page may have some: open it, copy a code block and paste it below.") + note;
         }
         catch (Exception ex)
         {
-            _status.Text = "Could not reach Dolphin's game settings (" + ex.Message + "). You can still paste codes from the wiki page below." + note;
+            _status.Text = "Could not download the codes (" + ex.Message + "). You can still paste codes from the wiki page below." + note;
         }
     }
 

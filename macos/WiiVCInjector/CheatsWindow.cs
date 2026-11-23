@@ -130,7 +130,7 @@ public sealed class CheatsWindow : Window
         foreach (var c in cheats)
         {
             var text = $"{c.Name}  ({c.Source}, {c.Lines.Count} line(s))";
-            if (CheatCodes.Warning(c, _id) is { } w) text += "\n" + w;
+            if (CheatCodes.Warning(c, _id, _wii) is { } w) text += "\n" + w;
             var needsHandler = _wii && c.Unusable == null && DolCheats.Writes(c) == null;
             var reason = c.Unusable ?? (needsHandler && !_handler ? "Needs a code handler, which a Wii game in a WUP does not have. Install the code handler tool (button above the paste box) to use it." : null);
             var baseText = text;

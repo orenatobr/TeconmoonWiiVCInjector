@@ -130,6 +130,13 @@ game puts them into its `sys/main.dol` before packing. Two ways, chosen by the b
   GeckoLoader makes the DOL start at its own loader, which installs the handler and hooks it into the game's video code (a byte pattern search, so it can fail on a game it does not recognise).
   If it fails, or is not installed, the build still finishes, writes only the plain writes, and the build log says why (`[cheats] ERROR: ...` or `... code handler tool is not installed`).
 
+**Frame rate codes (for example "60 FPS") on a Wii game.** They change the game's time step per frame and its frame interval, so the game has to really deliver 60 frames per second, or it runs in slow
+motion. A real Wii (and so a vWii at its normal speed) usually cannot: the Dolphin wiki says the Arc Rise Fantasia 60 FPS code needs more than 125% CPU. The cheat codes window warns about it. What can help
+is the **cafe2wii patching** option (Advanced tab, port of FIX94's c2w_patcher, needs your Starbuck ancast key), which unlocks the Wii U CPU speed in vWii (1.215 GHz); the console also needs the `c2w_patcher`
+Aroma plugin and signature patches for injected titles. It does not speed up the Wii's graphics chip, so a game that is graphics bound can still be slow. When testing, change one thing at a time (the
+"Patch video mode" option is a separate variable). Checked on the real Arc Rise Fantasia (USA) `main.dol`: the code's variables are in BSS (only a code handler can set them, and the handler hooks a function that
+runs once per displayed frame), and every `C2` block matches the game's own instructions, so it is the right version of the game for the code.
+
 With "Disable trimming" on, a game that has saved codes is still extracted so the DOL can be edited. The plain writes were checked with an ISO rebuilt by `wit`; the code handler was checked the same way with a
 synthetic DOL that carries GeckoLoader's hook pattern (the real tool, `WIIVC_GECKOLOADER_DIR` points the tests at it). **Neither has run on a real Wii game on a console.**
 - Not tried on a console.

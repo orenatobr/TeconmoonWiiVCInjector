@@ -22,7 +22,7 @@ public sealed class CheatsWindow : Window
     readonly List<(Cheat Cheat, CheckBox Box)> _rows = new();
     readonly StackPanel _list = new() { Spacing = 4 };
     readonly TextBlock _status = new() { TextWrapping = TextWrapping.Wrap, Opacity = 0.8 };
-    readonly TextBox _paste = new() { AcceptsReturn = true, MinHeight = 90, TextWrapping = TextWrapping.Wrap, Watermark = "Paste the code block here, for example:\n$Widescreen\n04345894 3F400000" };
+    readonly TextBox _paste = new() { AcceptsReturn = true, MinHeight = 90, TextWrapping = TextWrapping.Wrap, Watermark = "Paste the wiki page (or just a code block) here" };
 
     public CheatsWindow(string id, string name, bool wii = false)
     {
@@ -51,7 +51,7 @@ public sealed class CheatsWindow : Window
                     : "Gecko and Action Replay codes from the Dolphin project. Nintendont runs them for GameCube games, including a game inside a WUP."),
                 _status,
                 new ScrollViewer { MaxHeight = 220, Content = _list },
-                T("Codes people wrote for this game are on its Dolphin wiki page. The wiki checks for bots, so it opens in your browser: copy a code block there and paste it here.", 0.8),
+                T("Codes people wrote for this game are on its Dolphin wiki page. The wiki checks for bots, so it opens in your browser: select the whole page there (Cmd+A, Cmd+C) and paste it here. Only the code blocks are taken, and the ones labelled for another region are left out.", 0.8),
                 new StackPanel { Orientation = Orientation.Horizontal, Spacing = 8, Children = { B("Open wiki page", (_, _) => MainWindow.Open(CheatCodes.WikiUrl(_name))), B("Add pasted codes", AddPasted_Click) } },
                 _paste,
                 new StackPanel
@@ -70,17 +70,17 @@ public sealed class CheatsWindow : Window
     async Task LoadAsync()
     {
         var note = File.Exists(SavedFile) ? "\nCodes are already saved for this game. Saving replaces them." : "";
-        _status.Text = "Downloading Dolphin's game settings..." + note;
+        _status.Text = "Downloading the codes for this game..." + note;
         try
         {
             var found = await CheatCodes.DownloadAsync(_id, Http);
             AddRows(found);
-            _status.Text = (found.Count > 0 ? $"Found {found.Count} code(s) in Dolphin's game settings. Tick the ones you want, nothing is on by default."
-                : "Dolphin's game settings have no codes for this game. Open the wiki page, copy a code block and paste it below.") + note;
+            _status.Text = (found.Count > 0 ? $"Found {found.Count} code(s) for {_id} (Dolphin's game settings and the Gecko code database). Tick the ones you want, nothing is on by default."
+                : $"No downloadable codes for {_id}. Codes depend on the disc's region, so another region's list would not fit. The Dolphin wiki page may have some: open it, copy a code block and paste it below.") + note;
         }
         catch (Exception ex)
         {
-            _status.Text = "Could not reach Dolphin's game settings (" + ex.Message + "). You can still paste codes from the wiki page below." + note;
+            _status.Text = "Could not download the codes (" + ex.Message + "). You can still paste codes from the wiki page below." + note;
         }
     }
 
@@ -100,10 +100,14 @@ public sealed class CheatsWindow : Window
 
     async void AddPasted_Click(object? s, Avalonia.Interactivity.RoutedEventArgs e)
     {
-        var added = CheatCodes.ParseText(_paste.Text ?? "");
-        if (added.Count == 0) { await Dialogs.Info(this, "No code lines found. A code line is two groups of 8 hex digits, like 04345894 3F400000.", "Nothing to add"); return; }
+        var parsed = CheatCodes.ParseText(_paste.Text ?? "");
+        if (parsed.Count == 0) { await Dialogs.Info(this, "No code lines found. A code line is two groups of 8 hex digits, like 04345894 3F400000.", "Nothing to add"); return; }
+        var mine = CheatCodes.RegionOf(_id);
+        var added = parsed.Where(c => c.Region == null || mine == null || c.Region == mine).ToList();
+        if (added.Count == 0) { await Dialogs.Info(this, $"All {parsed.Count} code(s) are labelled for another region than this disc ({_id}). Codes only fit their own region.", "Other region"); return; }
         AddRows(added);
         _paste.Text = "";
+        if (added.Count < parsed.Count) _status.Text = $"Added {added.Count} code(s); {parsed.Count - added.Count} labelled for another region were left out.";
     }
 
     async void Save_Click(object? s, Avalonia.Interactivity.RoutedEventArgs e)

@@ -10,6 +10,8 @@ public sealed class Cheat
     /// <summary>Where it came from: "Gecko" or "Action Replay" (Dolphin game settings), or "Pasted".</summary>
     public string Source = "";
     public List<(uint Address, uint Value)> Lines = new();
+    /// <summary>"NA", "PAL" or "JP" when the text it came from labels the codes for one region, else null (fits any).</summary>
+    public string? Region;
     /// <summary>Why Nintendont cannot run it, or null when it can.</summary>
     public string? Unusable;
 }
@@ -23,10 +25,19 @@ public static partial class CheatCodes
     /// <summary>Dolphin's own game settings, where the codes that ship with the emulator live (open data, no bot check).</summary>
     public const string GameSettingsBase = "https://raw.githubusercontent.com/dolphin-emu/dolphin/master/Data/Sys/GameSettings/";
 
+    /// <summary>
+    /// The Gecko code database the Wii loaders (USB Loader GX, WiiFlow) download from, one text file per 6 character game id. It has no bot check.
+    /// Only the public disc id is sent. Codes depend on the disc's region, so a game only gets codes when its own id is listed.
+    /// </summary>
+    public const string CodesTxtBase = "https://codes.rc24.xyz/txt.php?txt=";
+
     public const string WikiBase = "https://wiki.dolphin-emu.org/index.php?title=";
 
     [GeneratedRegex(@"^\s*([0-9A-Fa-f]{8})\s+([0-9A-Fa-f]{8})\s*$")]
     private static partial Regex PairRx();
+
+    [GeneratedRegex(@"^(NA|US|USA|NTSC-U|NTSC|PAL|EU|EUR|JP|JPN|JAP|NTSC-J)\s*:?$", RegexOptions.IgnoreCase)]
+    private static partial Regex RegionRx();
 
     [GeneratedRegex(@"\b60\s*Hz\b", RegexOptions.IgnoreCase)]
     private static partial Regex Hz60Rx();
@@ -95,15 +106,32 @@ public static partial class CheatCodes
         return cheats.Where(c => c.Lines.Count > 0).ToList();
     }
 
+    static string? NormalizeRegion(string label) => label.TrimEnd(':').Trim().ToUpperInvariant() switch
+    {
+        "NA" or "US" or "USA" or "NTSC-U" or "NTSC" => "NA",
+        "PAL" or "EU" or "EUR" => "PAL",
+        "JP" or "JPN" or "JAP" or "NTSC-J" => "JP",
+        _ => null,
+    };
+
+    /// <summary>The region of a disc, from the 4th character of its id: E is NA, J is JP, the PAL letters are PAL, others (Korea, demos) are unknown.</summary>
+    public static string? RegionOf(string id) => id.Length < 4 ? null : id[3] == 'E' ? "NA" : id[3] == 'J' ? "JP" : IsPal(id) ? "PAL" : null;
+
+    /// <summary>A line that reads like a heading rather than a sentence.</summary>
+    static bool IsHeading(string line) => line.Length <= 48 && !line.EndsWith('.') && !line.Contains(". ");
+
     /// <summary>
-    /// Cheats from text copied off a wiki page or a forum: each run of code lines is one cheat, named by the lines above it
-    /// ("$60Hz", "Normal HUD", "NA:"). Pasted codes are Gecko codes.
+    /// Cheats from text copied off a wiki page or a forum, or a whole page: every run of code lines is a cheat. A "$Name" line names it; otherwise the
+    /// nearest short heading above it does ("Normal HUD"), and a region label ("NA:", "PAL:") puts the region in the name and in <see cref="Cheat.Region"/>.
+    /// Other lines (sentences, menus) are ignored. Pasted codes are Gecko codes.
     /// </summary>
     public static List<Cheat> ParseText(string text)
     {
         var cheats = new List<Cheat>();
+        var pending = new List<string>();
+        string heading = "", name = "";
+        string? region = null;
         Cheat? cur = null;
-        var label = "";
         foreach (var raw in text.Split('\n'))
         {
             var line = raw.Trim();
@@ -112,18 +140,19 @@ public static partial class CheatCodes
             {
                 if (cur == null)
                 {
-                    cur = new Cheat { Name = label.Length > 0 ? label : "Pasted code", Source = "Pasted" };
+                    if (pending.LastOrDefault(IsHeading) is { } h) heading = h;
+                    var baseName = name.Length > 0 ? name : heading.Length > 0 ? heading : "Pasted code";
+                    cur = new Cheat { Name = region != null ? $"{baseName} ({region})" : baseName, Source = "Pasted", Region = region };
                     cheats.Add(cur);
-                    label = "";
+                    pending.Clear(); name = ""; region = null;
                 }
                 cur.Lines.Add((Convert.ToUInt32(m.Groups[1].Value, 16), Convert.ToUInt32(m.Groups[2].Value, 16)));
+                continue;
             }
-            else
-            {
-                var name = line.TrimStart('$').TrimEnd(':').Trim();
-                label = label.Length > 0 ? label + " " + name : name;
-                cur = null;
-            }
+            cur = null;
+            if (line[0] == '$') name = line[1..].Trim();
+            else if (RegionRx().IsMatch(line)) region = NormalizeRegion(line);
+            else pending.Add(line);
         }
         return cheats;
     }
@@ -140,15 +169,59 @@ public static partial class CheatCodes
         return ms.ToArray();
     }
 
-    /// <summary>Downloads the cheats Dolphin ships for a game: the 3 character file (all regions) and the 6 character file. Missing files are skipped.</summary>
+    /// <summary>
+    /// Cheats of a code database text file: blocks split by blank lines, the first line of a block is the name, the lines that are two groups
+    /// of 8 hex digits are the codes, and anything else in the block (Note:, Limitation:, Contact:, Video:) is dropped.
+    /// The first block (game id and title) has no codes and is skipped.
+    /// </summary>
+    public static List<Cheat> ParseCodesTxt(string text)
+    {
+        var cheats = new List<Cheat>();
+        Cheat? cur = null;
+        var named = false;
+        foreach (var raw in text.Split('\n'))
+        {
+            var line = raw.Trim();
+            if (line.Length == 0) { cur = null; named = false; continue; }
+            if (PairRx().Match(line) is { Success: true } m)
+            {
+                if (cur == null) { cur = new Cheat { Name = "Unnamed code", Source = "Gecko code database" }; cheats.Add(cur); }
+                cur.Lines.Add((Convert.ToUInt32(m.Groups[1].Value, 16), Convert.ToUInt32(m.Groups[2].Value, 16)));
+            }
+            else if (!named)
+            {
+                named = true;
+                cur = new Cheat { Name = line, Source = "Gecko code database" };
+                cheats.Add(cur);
+            }
+        }
+        return cheats.Where(c => c.Lines.Count > 0).ToList();
+    }
+
+    /// <summary>
+    /// Downloads the cheats listed for a game: Dolphin's game settings (the 3 character file for all regions and the 6 character file) and the Gecko
+    /// code database. A missing file is skipped; a source that cannot be reached is skipped too unless nothing at all could be read, then the error is thrown.
+    /// </summary>
     public static async Task<List<Cheat>> DownloadAsync(string id, HttpClient http, CancellationToken ct = default)
     {
         var cheats = new List<Cheat>();
-        foreach (var file in new[] { id[..3] + ".ini", id + ".ini" })
+        Exception? failure = null;
+        var reached = false;
+        foreach (var (url, parse) in new (string, Func<string, List<Cheat>>)[]
         {
-            using var r = await http.GetAsync(GameSettingsBase + file, ct);
-            if (r.IsSuccessStatusCode) cheats.AddRange(ParseIni(await r.Content.ReadAsStringAsync(ct)));
+            (GameSettingsBase + id[..3] + ".ini", ParseIni), (GameSettingsBase + id + ".ini", ParseIni), (CodesTxtBase + id, ParseCodesTxt),
+        })
+        {
+            try
+            {
+                using var r = await http.GetAsync(url, ct);
+                reached = true;
+                if (r.IsSuccessStatusCode) cheats.AddRange(parse(await r.Content.ReadAsStringAsync(ct)));
+            }
+            catch (HttpRequestException ex) { failure = ex; }
+            catch (TaskCanceledException ex) when (!ct.IsCancellationRequested) { failure = ex; }
         }
+        if (!reached && failure != null) throw failure;
         return cheats;
     }
 

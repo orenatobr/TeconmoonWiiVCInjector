@@ -410,12 +410,16 @@ public static class UiSelfTest
                 string.Join("|", parsed.Select(c => c.Name)) == "Infinite Rings [Someone]|Conditional|Widescreen", string.Join("|", parsed.Select(c => c.Name)));
             T("cheats ini: plain Action Replay writes are usable, the conditional one is not",
                 parsed[0].Unusable == null && parsed[0].Lines.Count == 2 && parsed[1].Unusable != null && parsed[2].Unusable == null && parsed[2].Source == "Gecko");
-            const string wiki = "Normal HUD\nThis hack unstretches the HUD\nNA:\n04345894 3F400000\n043463C0 3B190000\nC22AB718 00000003\n90010010 3C003B4D\n3C608034 900363C0\n\n"
-                + "PAL:\n04348E54 3F400000\n\n$60Hz\n04241FC8 38600000\n042FEE50 00000014\n";
+            const string wiki = "Skies of Arcadia Legends\nDeveloper(s) Overworks\nEnhancements\nHD Texture\n16:9 Widescreen Gecko Code\nThe following Gecko codes fix clipping issues. Disable the hack before using.\n"
+                + "Normal HUD\nThis hack unstretches the HUD but will break cutscenes.\nNA:\n04345894 3F400000\n043463C0 3B190000\nC22AB718 00000003\n90010010 3C003B4D\n3C608034 900363C0\n60000000 00000000\n"
+                + "PAL:\n04348E54 3F400000\nStretched HUD\nThe HUD along with other cutscene elements will be stretched.\nNA:\n04345894 3F400000\nPAL:\n04348E54 3F400000\n"
+                + "60Hz PAL\nIn the PAL-Version the 60Hz mode cannot be activated at startup. Use this Gecko code to force the 60Hz mode.\n$60Hz\n04241FC8 38600000\n042FEE50 00000014\nConfiguration\nThis title does not need settings.\n";
             var pasted = CheatCodes.ParseText(wiki);
-            T("cheats text: wiki blocks become cheats named by the lines above them",
-                pasted.Count == 3 && pasted[0].Name == "Normal HUD This hack unstretches the HUD NA" && pasted[0].Lines.Count == 5 && pasted[1].Name == "PAL" && pasted[2].Name == "60Hz" && pasted[2].Lines.Count == 2,
+            T("cheats text: a whole wiki page gives the code blocks named by heading and region, the rest is ignored",
+                string.Join("|", pasted.Select(c => c.Name + ":" + c.Lines.Count)) == "Normal HUD (NA):6|Normal HUD (PAL):1|Stretched HUD (NA):1|Stretched HUD (PAL):1|60Hz:2"
+                && pasted.Select(c => c.Region).SequenceEqual(new string?[] { "NA", "PAL", "NA", "PAL", null }),
                 string.Join("|", pasted.Select(c => c.Name + ":" + c.Lines.Count)));
+            T("cheats text: the region of a disc comes from its id", CheatCodes.RegionOf("GEAP8P") == "PAL" && CheatCodes.RegionOf("GEAE8P") == "NA" && CheatCodes.RegionOf("GEAJ8P") == "JP" && CheatCodes.RegionOf("GEA") == null);
             T("cheats text: no code lines gives no cheats, bare codes get a default name",
                 CheatCodes.ParseText("just words").Count == 0 && CheatCodes.ParseText("04345894 3F400000")[0].Name == "Pasted code");
             var gct = CheatCodes.BuildGct(new[] { parsed[0], parsed[1], parsed[2] });
@@ -425,7 +429,7 @@ public static class UiSelfTest
             T("cheats: ids Nintendont can use as a file name", CheatCodes.IsValidId("GEAP8P") && !CheatCodes.IsValidId("GEAP") && !CheatCodes.IsValidId("../..AB"));
             T("cheats: PAL discs are told apart by the region letter", CheatCodes.IsPal("GEAP8P") && !CheatCodes.IsPal("GEAE8P") && !CheatCodes.IsPal("GEAJ8P"));
             T("cheats: a 60 Hz code on a PAL disc is warned about, on an NTSC disc it is not",
-                CheatCodes.Warning(pasted[2], "GEAP8P") != null && CheatCodes.Warning(pasted[2], "GEAE8P") == null && CheatCodes.Warning(pasted[0], "GEAP8P") == null);
+                CheatCodes.Warning(pasted[4], "GEAP8P") != null && CheatCodes.Warning(pasted[4], "GEAE8P") == null && CheatCodes.Warning(pasted[0], "GEAP8P") == null);
             T("cheats: wiki page address of a game", CheatCodes.WikiUrl("Skies of Arcadia Legends") == "https://wiki.dolphin-emu.org/index.php?title=Skies_of_Arcadia_Legends");
             var cheatUrls = new List<string>();
             using (var http = new HttpClient(new StubHandler(req =>
@@ -437,7 +441,8 @@ public static class UiSelfTest
             })))
             {
                 var got = CheatCodes.DownloadAsync("GXXE01", http).GetAwaiter().GetResult();
-                T("cheats download: asks for the 3 and 6 character settings files and keeps what exists", string.Join(",", cheatUrls) == "GXX.ini,GXXE01.ini" && got.Count == 3, string.Join(",", cheatUrls));
+                T("cheats download: asks for the 3 and 6 character settings files and the code database, keeps what exists",
+                    string.Join(",", cheatUrls) == "GXX.ini,GXXE01.ini," + CheatCodes.CodesTxtBase + "GXXE01" && got.Count == 3, string.Join(",", cheatUrls));
                 T("cheats download: a game Dolphin has no file for gives no cheats", CheatCodes.DownloadAsync("ZZZE01", http).GetAwaiter().GetResult().Count == 0);
             }
             T("cheats window: builds for a game", new CheatsWindow("GEAP8P", "Skies of Arcadia Legends").Title == "Cheat codes");
@@ -477,6 +482,29 @@ public static class UiSelfTest
                 T("cheats window: builds in Wii mode", new CheatsWindow("RSPE01", "Wii Sports", true).Title == "Cheat codes");
             }
             finally { Environment.SetEnvironmentVariable("WIIVC_SETTINGS", oldSettings); }
+            const string dbTxt = "GXXE01\r\nSome Game \r\n\r\nVersion 1.0\r\n\r\n9 Outs/Side [Someone]\r\n044BE1E4 00000009\r\n0426868C 60000000\r\nNote: each side gets 27 outs\r\nContact: someone@example.com\r\n\r\n"
+                + "Shadow Ball\r\n42000000 92000000\r\n042771A4 42C80000\r\nE0000000 80008000\r\nVideo: http://example.com/v\r\n\r\nInfinite Gold\r\n0430BB40 05F5E0FF";
+            var fromDb = CheatCodes.ParseCodesTxt(dbTxt);
+            T("cheats database: names from the first line of a block, notes dropped, header blocks skipped",
+                string.Join("|", fromDb.Select(c => c.Name + ":" + c.Lines.Count)) == "9 Outs/Side [Someone]:2|Shadow Ball:3|Infinite Gold:1" && fromDb[0].Source == "Gecko code database",
+                string.Join("|", fromDb.Select(c => c.Name + ":" + c.Lines.Count)));
+            T("cheats database: a pointer code is kept for Nintendont but is not a plain write for a Wii main.dol", fromDb[1].Unusable == null && DolCheats.Writes(fromDb[1]) == null && DolCheats.Writes(fromDb[0]) != null);
+            using (var db = new HttpClient(new StubHandler(req => req.RequestUri!.AbsoluteUri.StartsWith(CheatCodes.CodesTxtBase)
+                ? new HttpResponseMessage(System.Net.HttpStatusCode.OK) { Content = new StringContent(dbTxt) } : new HttpResponseMessage(System.Net.HttpStatusCode.NotFound))))
+                T("cheats download: the code database list is returned for a game Dolphin has no file for", CheatCodes.DownloadAsync("GXXE01", db).GetAwaiter().GetResult().Count == 3);
+            using (var half = new HttpClient(new StubHandler(req => req.RequestUri!.AbsoluteUri.StartsWith(CheatCodes.CodesTxtBase)
+                ? throw new HttpRequestException("offline") : new HttpResponseMessage(System.Net.HttpStatusCode.OK) { Content = new StringContent(ini) })))
+                T("cheats download: one source offline still gives the codes of the other", CheatCodes.DownloadAsync("GXXE01", half).GetAwaiter().GetResult().Count > 0);
+            using (var none = new HttpClient(new StubHandler(_ => throw new HttpRequestException("offline"))))
+                T("cheats download: everything offline is an error, not an empty list", Throws<HttpRequestException>(() => CheatCodes.DownloadAsync("GXXE01", none).GetAwaiter().GetResult()));
+            if (Environment.GetEnvironmentVariable("WIIVC_LIVE") == "1")
+            {
+                using var live = new HttpClient { Timeout = TimeSpan.FromSeconds(30) };
+                var ntsc = Task.Run(() => CheatCodes.DownloadAsync("GEAE8P", live)).GetAwaiter().GetResult();
+                var pal = Task.Run(() => CheatCodes.DownloadAsync("GEAP8P", live)).GetAwaiter().GetResult();
+                T("live: Skies of Arcadia NTSC-U has downloadable codes, PAL has none", ntsc.Count > 10 && pal.Count == 0, $"{ntsc.Count} / {pal.Count}");
+                T("live: Wii Sports codes have names and code lines", Task.Run(() => CheatCodes.DownloadAsync("RSPE01", live)).GetAwaiter().GetResult() is { Count: > 10 } ws && ws.All(c => c.Name.Length > 0 && c.Lines.Count > 0));
+            }
             var lib = Path.Combine(tmp, "lib"); var card = Path.Combine(tmp, "card");
             Directory.CreateDirectory(lib); Directory.CreateDirectory(card);
             File.WriteAllBytes(Path.Combine(lib, "GEAP8P.gct"), gct);

@@ -22,7 +22,8 @@ public sealed class CheatsWindow : Window
     readonly List<(Cheat Cheat, CheckBox Box)> _rows = new();
     readonly StackPanel _list = new() { Spacing = 4 };
     readonly TextBlock _status = new() { TextWrapping = TextWrapping.Wrap, Opacity = 0.8 };
-    readonly TextBox _paste = new() { AcceptsReturn = true, MinHeight = 90, TextWrapping = TextWrapping.Wrap, Watermark = "Paste the wiki page (or just a code block) here" };
+    // a fixed height with a scroll bar: a long pasted page must not make the window grow
+    readonly TextBox _paste = new() { AcceptsReturn = true, Height = 110, TextWrapping = TextWrapping.Wrap, Watermark = "Paste the wiki page (or just a code block) here" };
 
     public CheatsWindow(string id, string name, bool wii = false)
     {
@@ -39,6 +40,7 @@ public sealed class CheatsWindow : Window
         }
         TextBlock T(string text, double opacity = 1) => new() { Text = text, TextWrapping = TextWrapping.Wrap, Opacity = opacity };
 
+        ScrollViewer.SetVerticalScrollBarVisibility(_paste, Avalonia.Controls.Primitives.ScrollBarVisibility.Auto);
         _copyButton = B("Copy to SD card...", CopyToSd_Click);
         ToolTip.SetTip(_copyButton, "Puts codes/<id>.gct on the card. The Teconmoon Nintendont loads it when the game starts; the code is not inside the WUP.");
 

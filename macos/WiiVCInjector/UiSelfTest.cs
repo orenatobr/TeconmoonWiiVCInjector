@@ -398,8 +398,9 @@ public static class UiSelfTest
             T("nintendont source: the real build output ships the Teconmoon files", SDCardWindow.ChooseNintendontSource(false, AppContext.BaseDirectory).Source == SDCardWindow.NintendontSource.Teconmoon, AppContext.BaseDirectory);
             var shippedDol = File.ReadAllBytes(Path.Combine(AppContext.BaseDirectory, "Assets", "nintendont-teconmoon", "boot.dol"));
             T("nintendont build: the shipped boot.dol is the one nintendont-teconmoon/README.md documents",
-                Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(shippedDol)).Equals("ef1571fc7e7976c986ee7735f66e4ed3713e52b5ffa46949546eacbd82bb4191", StringComparison.OrdinalIgnoreCase));
+                Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(shippedDol)).Equals("9a6ca0105abb65665e7911946ff250ff0bfac37bac2304eda2a2b73724f0b9b8", StringComparison.OrdinalIgnoreCase));
             T("nintendont build: the shipped boot.dol carries the PAL guard", System.Text.Encoding.ASCII.GetString(shippedDol).Contains("PAL disc: Force Progressive ignored"));
+            T("nintendont build: the shipped boot.dol reads the per game settings file", System.Text.Encoding.ASCII.GetString(shippedDol).Contains("/teconmoon/%s.ini"));
             T("nintendont source: upstream still available when the build is shipped", SDCardWindow.ChooseNintendontSource(true, tmp) == (SDCardWindow.NintendontSource.Upstream, null));
 
             // --- Gecko and Action Replay codes (Dolphin game settings and wiki text)
@@ -505,6 +506,29 @@ public static class UiSelfTest
                 T("live: Skies of Arcadia NTSC-U has downloadable codes, PAL has none", ntsc.Count > 10 && pal.Count == 0, $"{ntsc.Count} / {pal.Count}");
                 T("live: Wii Sports codes have names and code lines", Task.Run(() => CheatCodes.DownloadAsync("RSPE01", live)).GetAwaiter().GetResult() is { Count: > 10 } ws && ws.All(c => c.Name.Length > 0 && c.Lines.Count > 0));
             }
+            // --- per game settings (Dolphin GameINI format, read by the Teconmoon Nintendont)
+            var gsDolphin = GameSettings.Parse("[Core]\r\nCPUThread = False\r\nProgressiveScan = True\r\n[Video_Settings]\r\nAspectRatio = 1\r\nwideScreenHack = False\r\nSafeTextureCacheColorSamples = 512\r\n");
+            T("game settings: the known keys of a Dolphin GameINI are read, the others skipped",
+                gsDolphin.Fullscreen == true && gsDolphin.WidescreenHack == false && gsDolphin.ProgressiveScan == true && gsDolphin.SkipIpl == null);
+            T("game settings: AspectRatio 2 is 4:3, other values leave it", GameSettings.Parse("AspectRatio = 2").Fullscreen == false && GameSettings.Parse("AspectRatio = 3").Fullscreen == null && GameSettings.Parse("AspectRatio = 0").Fullscreen == null);
+            T("game settings: keys and values are not case sensitive, comments and sections are skipped",
+                GameSettings.Parse("# SkipIPL = 1\n[SkipIPL = 1]\nskipipl = YES").SkipIpl == true && GameSettings.Parse("; SkipIPL = 1\nSkipIPL = maybe").IsEmpty);
+            var gsFull = new GameSettings { Fullscreen = true, WidescreenHack = false, ProgressiveScan = false, SkipIpl = true };
+            T("game settings: the GameINI text has only the settings that are set, in their sections",
+                gsFull.ToIni("GEAP8P", "Skies of Arcadia Legends") == "# GEAP8P - Skies of Arcadia Legends\n# Per game settings in Dolphin's GameINI format, read by the Teconmoon Nintendont. A line that is missing keeps the Nintendont setting.\n"
+                    + "\n[Video_Settings]\nAspectRatio = 1\nwideScreenHack = False\n\n[Core]\nProgressiveScan = False\nSkipIPL = True\n"
+                && !new GameSettings { Fullscreen = false }.ToIni("X", "Y").Contains("[Core]") && new GameSettings { Fullscreen = false }.ToIni("X", "Y").Contains("AspectRatio = 2"));
+            T("game settings: what is written is read back the same", GameSettings.Parse(gsFull.ToIni("GEAP8P", "x")) is { Fullscreen: true, WidescreenHack: false, ProgressiveScan: false, SkipIpl: true }
+                && GameSettings.Parse(new GameSettings { Fullscreen = false }.ToIni("GEAP8P", "x")) is { Fullscreen: false, WidescreenHack: null, ProgressiveScan: null, SkipIpl: null } && new GameSettings().IsEmpty);
+            T("game settings: the file is named by the first 4 id characters", GameSettings.Id4("GEAP8P") == "GEAP" && GameSettings.Id4("GEA") == null && GameSettings.Id4("../AB") == null);
+            var gsLib = Path.Combine(tmp, "gslib"); var gsCard = Path.Combine(tmp, "gscard");
+            Directory.CreateDirectory(gsLib); Directory.CreateDirectory(gsCard);
+            File.WriteAllText(Path.Combine(gsLib, "GEAP.ini"), gsFull.ToIni("GEAP8P", "x")); File.WriteAllText(Path.Combine(gsLib, "readme.txt"), "x");
+            T("game settings sd: the .ini files go to teconmoon/ on the card, nothing else",
+                GameSettings.CopyLibraryTo(gsCard, gsLib) == 1 && File.Exists(Path.Combine(gsCard, "teconmoon", "GEAP.ini")) && !File.Exists(Path.Combine(gsCard, "teconmoon", "readme.txt")));
+            T("game settings sd: no library copies nothing and makes no folder", GameSettings.CopyLibraryTo(Path.Combine(tmp, "gscard2"), Path.Combine(tmp, "nogslib")) == 0 && !Directory.Exists(Path.Combine(tmp, "gscard2", "teconmoon")));
+            T("game settings window: builds for a game", new GameSettingsWindow("GEAP8P", "Skies of Arcadia Legends").Title == "Game settings");
+            T("game settings: the button is on the game tab", w.GameSettingsButton != null && (w.GameSettingsButton.Content as string) == "Game settings...");
             var lib = Path.Combine(tmp, "lib"); var card = Path.Combine(tmp, "card");
             Directory.CreateDirectory(lib); Directory.CreateDirectory(card);
             File.WriteAllBytes(Path.Combine(lib, "GEAP8P.gct"), gct);

@@ -167,6 +167,10 @@
                     </StackPanel>
                   </Button>
                 </Grid>
+                <Grid ColumnDefinitions="*,Auto" ColumnSpacing="16">
+                  <TextBlock Classes="sub" VerticalAlignment="Center" TextWrapping="Wrap" Text="Settings for just this GameCube game (fullscreen, progressive scan...), like Dolphin's GameINI." />
+                  <Button Name="GameSettingsButton" Grid.Column="1" Click="GameSettingsButton_Click" Content="Game settings..." />
+                </Grid>
               </StackPanel>
             </Border>
 

@@ -25,6 +25,8 @@ jobs:
         run: dotnet build macos/WiiVCInjector -c Release -o "$RUNNER_TEMP/app"
       - name: UI logic self-test
         run: WIIVC_UITEST=1 xvfb-run -a dotnet "$RUNNER_TEMP/app/WiiVCInjector.dll"
+      - name: Nintendont per game settings parser (C)
+        run: macos/nintendont-teconmoon/test-gamesettings.sh
       - name: Render both themes
         run: |
           mkdir -p "$RUNNER_TEMP/shots"

@@ -79,6 +79,23 @@ or a failed build is skipped and listed in the final summary; the other games st
 - The Nintendont SD card menu installs the Teconmoon build of Nintendont by default (see `nintendont-teconmoon/README.md`): PAL discs ignore Force Progressive,
   Patch PAL50 and forced 60 Hz modes so their audio stays in sync. A box installs the plain upstream build instead.
 
+## Game settings (GameCube)
+
+The button "Game settings..." (GC Retail mode, under the cheat codes button) sets options for one game only, in the format of Dolphin's GameINI. Each option can follow the Nintendont
+setting, be forced on or be forced off: Fullscreen (`AspectRatio = 1` or `2`, Nintendont's "WiiU Widescreen"), Widescreen hack (`wideScreenHack`, "Force Widescreen"), Progressive scan
+(`ProgressiveScan`, "Force Progressive") and Skip IPL (`SkipIPL`). The window shows the text of the file. "Save" keeps it in `~/Library/Application Support/WiiVCInjector/gamesettings/<id4>.ini`,
+"Copy to SD card..." puts it at `teconmoon/<id4>.ini` on the card, and installing Nintendont from the SD Card menu copies every saved file. The Teconmoon Nintendont applies it when that game
+starts, also from a WUP, without rebuilding the WUP and without changing `nincfg.bin` (see `nintendont-teconmoon/README.md`).
+
+- "Fullscreen" is Nintendont's own Wii U widescreen option: the Wii U shows the game on the whole 16:9 screen, and the picture is stretched unless the game draws in 16:9. For that use a
+  widescreen Gecko code (the Skies of Arcadia wiki page has one) or the Widescreen hack where Nintendont can find the game's projection code (it cannot in Skies of Arcadia, its log says
+  `C_MTXPerspective not found`). This is applied when the game starts, not switched while it runs: the L + R + A shortcut of 1.2.10 is gone and there is no replacement.
+- A PAL disc ignores Progressive scan, as before (`AUDIO-DELAY.md`).
+- Dolphin keys other than these four are ignored, so a Dolphin `GameSettings/<id>.ini` can be used as it is.
+- The GamePad staying on with the wiiscreenoff plugin is not covered by this. The kernel now logs what it does with the Wii U aspect registers (`WiiU aspect:` lines in `ndebug.log`), which is the
+  first thing to read if Nintendont turns out to interfere with that plugin.
+- GameCube only, not tried on a console.
+
 ## Cheat codes (GameCube and Wii)
 
 The button "Download from https://dolphin-emu.org/compat/" (next to the game file, Wii Retail or GC Retail mode) opens a list of Gecko and Action Replay codes for the loaded game.

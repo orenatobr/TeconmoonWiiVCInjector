@@ -43,6 +43,115 @@ public static class UiSelfTest
         protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken ct) => Task.FromResult(answer(request));
     }
 
+    const string arcBlock = """
+$60 FPS
+04001820 40000000 //Gecko Register 1820
+04535c98 42BA0000 //ship move speed halved 1
+04535c9c 42700000 //ship move speed halved 2
+04535be8 3C80AE10 //world map camera rotate adjust
+04535bf0 3D410518 //Ship camera rotate use 3D75C28F for faster rotation
+C21A33DC 00000003 //Halve World Player Move
+3E808000 62941820
+C2940000 EFDEA024
+C058000C 00000000 //end
+C21BEA70 00000003 //Halve World Enemy Move
+3E808000 62941820
+C2940000 EC21A024
+FFC00890 00000000 //end
+C21A3BD4 00000006 //world map run sound fix
+3C608000 6063180C //  using Gecko Register 180C
+82830000 2C140000
+41820010 38050001
+3A800000 4800000C
+7CA02B78 3A800001
+92830000 00000000
+C22135B4 00000003
+3D008000 6108180C
+3A600001 92680000
+39000000 00000000 //end
+C2209674 00000003 //Native 60FPS moments
+38000002 3E408000
+6252182C 90120000
+38000001 00000000
+C220968C 00000003
+38000000 3E408000
+6252182C 90120000
+38000002 00000000 //end
+C20C8328 00000006 //Main Animation and Auto move 30FPS revert
+3C608000 60631824 //Uses 182C
+80830008 2C040002
+41820018 38800000
+2C000000 40810008
+38800001 90830008
+2C000000 00000000
+C22135B4 00000003
+3D008000 6108180C
+3A600001 92680000
+39000000 00000000
+C20C831C 00000003 //not auto moving
+38600000 3D608000
+616B1820 906B0008
+60000000 00000000
+C20C8328 00000006
+3C608000 60631824
+80830008 2C040002
+41820018 38800000
+2C000000 40810008
+38800001 90830008
+2C000000 00000000
+C21AF244 00000003 //auto off world
+3FC08000 63DE182C
+38800000 909E0000
+7C7E1B78 00000000 //end Auto Move
+C20365A8 00000004 //Elevator event timer
+3EA08000 62B51820
+8295FFEC 22940001
+7C04A214 9295FFEC
+60000000 00000000 //end
+C2039DD0 00000003 //Camera version 1. Optional
+C05D08B0 EC221024
+EC21082A EC420824
+D05D08B0 00000000
+C2039E74 00000003
+C01D193C EE800024
+EE94A02A EC00A024
+60000000 00000000 //end
+C203EA78 00000002 //No movement fix
+38630001 7C1D1800
+60000000 00000000 //end
+C203DCE0 00000001 //Run Spaz Fix
+EC031828 00000000 //end
+C203DD44 00000001 //Run sound fix
+2C000014 00000000 //  Change 14 to adjust timing. End
+C203E570 00000003 //Movement Speed Setup
+7C791B78 3E604000
+8246260C 9266260C
+60000000 00000000
+C203EB18 00000002
+38210110 9257F78C
+60000000 00000000 
+C203DEB8 00000005 //Fluid Movement for 60FPS
+3E808044 6294260C
+82940000 7C149000
+40820010 12831824
+1294A514 1021A024
+1002082A 00000000
+C203DEC8 00000002
+40820008 1021A024
+1002082A 00000000 //end
+04442610 3F800000 //Animation
+0444260C 3F800000 //Animation and Walk
+04442614 00000000 //60FPS
+04442618 00000001 //Battle and UI speed
+2000182C 00000001 //Revert to 30FPS some times
+22441BB0 00000002 //60FPS cutscenes
+04442610 40000000 //undo to 30FPS when needed
+0444260C 40000000 //undo
+04442618 00000002 //undo
+04442614 00000001 //undo
+E0000000 80008000 //end
+""";
+
     public static int Run(MainWindow w)
     {
         var tmp = Path.Combine(Path.GetTempPath(), "wiivc-uitest-" + Environment.ProcessId);
@@ -455,6 +564,20 @@ public static class UiSelfTest
             T("cheats: PAL discs are told apart by the region letter", CheatCodes.IsPal("GEAP8P") && !CheatCodes.IsPal("GEAE8P") && !CheatCodes.IsPal("GEAJ8P"));
             T("cheats: a 60 Hz code on a PAL disc is warned about, on an NTSC disc it is not",
                 CheatCodes.Warning(pasted[4], "GEAP8P") != null && CheatCodes.Warning(pasted[4], "GEAE8P") == null && CheatCodes.Warning(pasted[0], "GEAP8P") == null);
+            // --- a long code with // comments after the lines (Arc Rise Fantasia, 60 FPS) must be one cheat
+            var arc = CheatCodes.ParseText(arcBlock);
+            var arcLines = arcBlock.Split('\n').Count(l => System.Text.RegularExpressions.Regex.IsMatch(l.Trim(), @"^[0-9A-Fa-f]{8}\s+[0-9A-Fa-f]{8}"));
+            T("cheats text: a long block with // comments after the lines is one cheat named from its $ line",
+                arc.Count == 1 && arc[0].Name == "60 FPS" && arc[0].Lines.Count == arcLines && arcLines > 100, $"{arc.Count} cheat(s), {arc.FirstOrDefault()?.Lines.Count} of {arcLines} lines");
+            T("cheats text: the first and last lines of that block are kept with their values", arc[0].Lines[0] == (0x04001820u, 0x40000000u) && arc[0].Lines[^1] == (0xE0000000u, 0x80008000u));
+            T("cheats text: a comment-only line inside a block does not split it", CheatCodes.ParseText("$A\n04000000 00000001\n// note\n04000004 00000002\n") is { Count: 1 } one && one[0].Lines.Count == 2);
+            T("cheats text: a name line after a code still starts a new cheat", CheatCodes.ParseText("$A\n04000000 00000001 //x\n$B\n04000004 00000002\n") is { Count: 2 } two && two[1].Name == "B");
+            T("cheats: a game name in capitals is shown in Title Case and used for the wiki",
+                CheatCodes.DisplayName(null, "ARC RISE FANTASIA", "RPJE7U") == "Arc Rise Fantasia" && CheatCodes.WikiUrl(CheatCodes.DisplayName(null, "ARC RISE FANTASIA", "RPJE7U")) == "https://wiki.dolphin-emu.org/index.php?title=Arc_Rise_Fantasia");
+            T("cheats: the database name wins, a mixed case header name is kept, an empty one falls back to the id",
+                CheatCodes.DisplayName("Skies of Arcadia Legends", "SKIES OF ARCADIA", "GEAP8P") == "Skies of Arcadia Legends" && CheatCodes.DisplayName("", "Wii Sports", "RSPE01") == "Wii Sports" && CheatCodes.DisplayName(null, "", "RSPE01") == "RSPE01");
+            T("cheats window: the paste box has a fixed height and a scroll bar", new CheatsWindow("RPJE7U", "Arc Rise Fantasia", true).Content is Avalonia.Controls.StackPanel sp
+                && sp.Children.OfType<Avalonia.Controls.TextBox>().FirstOrDefault() is { } tb && tb.Height == 110 && Avalonia.Controls.ScrollViewer.GetVerticalScrollBarVisibility(tb) == Avalonia.Controls.Primitives.ScrollBarVisibility.Auto);
             T("cheats: wiki page address of a game", CheatCodes.WikiUrl("Skies of Arcadia Legends") == "https://wiki.dolphin-emu.org/index.php?title=Skies_of_Arcadia_Legends");
             var cheatUrls = new List<string>();
             using (var http = new HttpClient(new StubHandler(req =>

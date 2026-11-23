@@ -33,7 +33,8 @@ public static partial class CheatCodes
 
     public const string WikiBase = "https://wiki.dolphin-emu.org/index.php?title=";
 
-    [GeneratedRegex(@"^\s*([0-9A-Fa-f]{8})\s+([0-9A-Fa-f]{8})\s*$")]
+    /// <summary>A code line: two groups of 8 hex digits, optionally followed by a <c>//</c> comment (people annotate their codes that way).</summary>
+    [GeneratedRegex(@"^\s*([0-9A-Fa-f]{8})\s+([0-9A-Fa-f]{8})\s*(?://.*)?$")]
     private static partial Regex PairRx();
 
     [GeneratedRegex(@"^(NA|US|USA|NTSC-U|NTSC|PAL|EU|EUR|JP|JPN|JAP|NTSC-J)\s*:?$", RegexOptions.IgnoreCase)]
@@ -54,6 +55,17 @@ public static partial class CheatCodes
     /// </summary>
     public static string? Warning(Cheat c, string id) =>
         IsPal(id) && Hz60Rx().IsMatch(c.Name) ? "60 Hz code on a PAL disc. Nintendont's own 60 Hz forcing delayed the sound; this code was not measured, so check the audio (see AUDIO-DELAY.md)." : null;
+
+    /// <summary>
+    /// The name to show and to look up on the wiki: the database name when there is one (it has the proper capitals, like the compat list),
+    /// else the name in the disc header, which many games write in capitals ("ARC RISE FANTASIA"), turned into Title Case.
+    /// </summary>
+    public static string DisplayName(string? databaseName, string headerName, string id)
+    {
+        if (!string.IsNullOrWhiteSpace(databaseName)) return databaseName;
+        if (string.IsNullOrWhiteSpace(headerName)) return id;
+        return headerName.Any(char.IsLower) ? headerName : System.Globalization.CultureInfo.InvariantCulture.TextInfo.ToTitleCase(headerName.ToLowerInvariant());
+    }
 
     /// <summary>The page of the game on the Dolphin wiki, which the compatibility list links to and which holds the codes people wrote.</summary>
     public static string WikiUrl(string gameName) => WikiBase + Uri.EscapeDataString(gameName.Trim().Replace(' ', '_'));
@@ -89,7 +101,7 @@ public static partial class CheatCodes
                 kind = line switch { "[Gecko]" => "Gecko", "[ActionReplay]" => "Action Replay", _ => null };
                 cur = null;
             }
-            else if (kind == null || line.Length == 0 || line[0] == '*') continue;
+            else if (kind == null || line.Length == 0 || line[0] == '*' || line.StartsWith("//")) continue;
             else if (line[0] == '$')
             {
                 cur = new Cheat { Name = line[1..].Trim(), Source = kind };
@@ -135,7 +147,7 @@ public static partial class CheatCodes
         foreach (var raw in text.Split('\n'))
         {
             var line = raw.Trim();
-            if (line.Length == 0) continue;
+            if (line.Length == 0 || line.StartsWith("//")) continue;
             if (PairRx().Match(line) is { Success: true } m)
             {
                 if (cur == null)

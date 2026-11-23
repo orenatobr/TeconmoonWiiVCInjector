@@ -520,7 +520,7 @@ public partial class MainWindow : Window
             await Dialogs.Info(this, "Please select your game before using this option", "No game specified");
             return;
         }
-        var name = InternalGameName != "" ? InternalGameName : GameTdb.GetName(CucholixRepoID) ?? CucholixRepoID;
+        var name = CheatCodes.DisplayName(GameTdb.GetName(CucholixRepoID), InternalGameName, CucholixRepoID);
         await new CheatsWindow(CucholixRepoID, name, SystemType == "wii").ShowDialog(this);
     }
 
@@ -536,7 +536,7 @@ public partial class MainWindow : Window
             await Dialogs.Info(this, "Please select your game before using this option", "No game specified");
             return;
         }
-        var name = InternalGameName != "" ? InternalGameName : GameTdb.GetName(CucholixRepoID) ?? CucholixRepoID;
+        var name = CheatCodes.DisplayName(GameTdb.GetName(CucholixRepoID), InternalGameName, CucholixRepoID);
         await new GameSettingsWindow(CucholixRepoID, name).ShowDialog(this);
     }
 

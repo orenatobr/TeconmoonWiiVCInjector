@@ -38,6 +38,11 @@ public static class UiSelfTest
         return b;
     }
 
+    sealed class StubHandler(Func<HttpRequestMessage, HttpResponseMessage> answer) : HttpMessageHandler
+    {
+        protected override Task<HttpResponseMessage> SendAsync(HttpRequestMessage request, CancellationToken ct) => Task.FromResult(answer(request));
+    }
+
     public static int Run(MainWindow w)
     {
         var tmp = Path.Combine(Path.GetTempPath(), "wiivc-uitest-" + Environment.ProcessId);
@@ -58,6 +63,8 @@ public static class UiSelfTest
             T("gc: enabled matrix", w.GC2SourceButton.IsEnabled && w.Force43NINTENDONT.IsEnabled && w.ForceInterlacedNINTENDONT.IsEnabled
                 && w.CustomMainDol.IsEnabled && w.DisableNintendontAutoboot.IsEnabled && w.DisableGamePad.IsEnabled
                 && !w.DisablePassthrough.IsEnabled && !w.C2WPatchFlag.IsEnabled && !w.DisableTrimming.IsEnabled && w.RepoDownload.IsEnabled);
+            T("gc: cheat codes button is there with the requested text", w.CheatsDownload.IsEnabled
+                && ((w.CheatsDownload.Content as Avalonia.Controls.StackPanel)?.Children.OfType<Avalonia.Controls.TextBlock>().FirstOrDefault()?.Text) == "Download from https://dolphin-emu.org/compat/");
 
             Dialogs.Auto = (title, _) => title.Contains("Title ID") ? "abcd" : "Yes";
             w.WiiNAND.IsChecked = true;
@@ -394,6 +401,53 @@ public static class UiSelfTest
                 Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(shippedDol)).Equals("11eec5d856dba34e08464cc23a1907e9722f7f8fc5b1b3cc0f25d5876356c7ce", StringComparison.OrdinalIgnoreCase));
             T("nintendont build: the shipped boot.dol carries the PAL guard", System.Text.Encoding.ASCII.GetString(shippedDol).Contains("PAL disc: Force Progressive ignored"));
             T("nintendont source: upstream still available when the build is shipped", SDCardWindow.ChooseNintendontSource(true, tmp) == (SDCardWindow.NintendontSource.Upstream, null));
+
+            // --- Gecko and Action Replay codes (Dolphin game settings and wiki text)
+            const string ini = "# GXXX01 - Test\n[Core]\nCPUThread = False\n[ActionReplay]\n$Infinite Rings [Someone]\n04123456 000003E7\n02123458 0000FFFF\n"
+                + "$Conditional\n08123456 00000001\n[Gecko]\n*a comment\n$Widescreen\n04345894 3F400000\n[Gecko_Enabled]\n$Widescreen\n[OnFrame]\n$Not a cheat\n04000000 00000000\n";
+            var parsed = CheatCodes.ParseIni(ini);
+            T("cheats ini: the names of the Gecko and Action Replay sections, nothing from other sections",
+                string.Join("|", parsed.Select(c => c.Name)) == "Infinite Rings [Someone]|Conditional|Widescreen", string.Join("|", parsed.Select(c => c.Name)));
+            T("cheats ini: plain Action Replay writes are usable, the conditional one is not",
+                parsed[0].Unusable == null && parsed[0].Lines.Count == 2 && parsed[1].Unusable != null && parsed[2].Unusable == null && parsed[2].Source == "Gecko");
+            const string wiki = "Normal HUD\nThis hack unstretches the HUD\nNA:\n04345894 3F400000\n043463C0 3B190000\nC22AB718 00000003\n90010010 3C003B4D\n3C608034 900363C0\n\n"
+                + "PAL:\n04348E54 3F400000\n\n$60Hz\n04241FC8 38600000\n042FEE50 00000014\n";
+            var pasted = CheatCodes.ParseText(wiki);
+            T("cheats text: wiki blocks become cheats named by the lines above them",
+                pasted.Count == 3 && pasted[0].Name == "Normal HUD This hack unstretches the HUD NA" && pasted[0].Lines.Count == 5 && pasted[1].Name == "PAL" && pasted[2].Name == "60Hz" && pasted[2].Lines.Count == 2,
+                string.Join("|", pasted.Select(c => c.Name + ":" + c.Lines.Count)));
+            T("cheats text: no code lines gives no cheats, bare codes get a default name",
+                CheatCodes.ParseText("just words").Count == 0 && CheatCodes.ParseText("04345894 3F400000")[0].Name == "Pasted code");
+            var gct = CheatCodes.BuildGct(new[] { parsed[0], parsed[1], parsed[2] });
+            T("cheats gct: header, the usable codes only, end marker",
+                gct.Length == 8 + 3 * 8 + 8 && Convert.ToHexString(gct[..8]) == "00D0C0DE00D0C0DE" && Convert.ToHexString(gct[8..16]) == "04123456000003E7"
+                && Convert.ToHexString(gct[^8..]) == "F000000000000000", Convert.ToHexString(gct));
+            T("cheats: ids Nintendont can use as a file name", CheatCodes.IsValidId("GEAP8P") && !CheatCodes.IsValidId("GEAP") && !CheatCodes.IsValidId("../..AB"));
+            T("cheats: PAL discs are told apart by the region letter", CheatCodes.IsPal("GEAP8P") && !CheatCodes.IsPal("GEAE8P") && !CheatCodes.IsPal("GEAJ8P"));
+            T("cheats: a 60 Hz code on a PAL disc is warned about, on an NTSC disc it is not",
+                CheatCodes.Warning(pasted[2], "GEAP8P") != null && CheatCodes.Warning(pasted[2], "GEAE8P") == null && CheatCodes.Warning(pasted[0], "GEAP8P") == null);
+            T("cheats: wiki page address of a game", CheatCodes.WikiUrl("Skies of Arcadia Legends") == "https://wiki.dolphin-emu.org/index.php?title=Skies_of_Arcadia_Legends");
+            var cheatUrls = new List<string>();
+            using (var http = new HttpClient(new StubHandler(req =>
+            {
+                cheatUrls.Add(req.RequestUri!.AbsoluteUri.Replace(CheatCodes.GameSettingsBase, ""));
+                return req.RequestUri!.AbsoluteUri.EndsWith("/GXX.ini")
+                    ? new HttpResponseMessage(System.Net.HttpStatusCode.OK) { Content = new StringContent(ini) }
+                    : new HttpResponseMessage(System.Net.HttpStatusCode.NotFound);
+            })))
+            {
+                var got = CheatCodes.DownloadAsync("GXXE01", http).GetAwaiter().GetResult();
+                T("cheats download: asks for the 3 and 6 character settings files and keeps what exists", string.Join(",", cheatUrls) == "GXX.ini,GXXE01.ini" && got.Count == 3, string.Join(",", cheatUrls));
+                T("cheats download: a game Dolphin has no file for gives no cheats", CheatCodes.DownloadAsync("ZZZE01", http).GetAwaiter().GetResult().Count == 0);
+            }
+            T("cheats window: builds for a game", new CheatsWindow("GEAP8P", "Skies of Arcadia Legends").Title == "Cheat codes");
+            var lib = Path.Combine(tmp, "lib"); var card = Path.Combine(tmp, "card");
+            Directory.CreateDirectory(lib); Directory.CreateDirectory(card);
+            File.WriteAllBytes(Path.Combine(lib, "GEAP8P.gct"), gct);
+            File.WriteAllText(Path.Combine(lib, "notes.txt"), "x");
+            T("cheats sd: the .gct files go to codes/ on the card, nothing else",
+                CheatCodes.CopyLibraryTo(card, lib) == 1 && File.ReadAllBytes(Path.Combine(card, "codes", "GEAP8P.gct")).SequenceEqual(gct) && !File.Exists(Path.Combine(card, "codes", "notes.txt")));
+            T("cheats sd: an empty library copies nothing and makes no folder", CheatCodes.CopyLibraryTo(Path.Combine(tmp, "card2"), Path.Combine(tmp, "nolib")) == 0 && !Directory.Exists(Path.Combine(tmp, "card2", "codes")));
         }
         catch (Exception ex)
         {

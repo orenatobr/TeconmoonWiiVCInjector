@@ -159,7 +159,7 @@ public partial class MainWindow : Window
         return r.Select(f => f.TryGetLocalPath()).OfType<string>().ToList();
     }
 
-    static void Open(string urlOrPath)
+    internal static void Open(string urlOrPath)
     {
         try { Process.Start(new ProcessStartInfo("open") { ArgumentList = { urlOrPath }, UseShellExecute = false }); }
         catch { }
@@ -506,6 +506,22 @@ public partial class MainWindow : Window
         FlagIconSpecified = true;
         FlagBannerSpecified = true;
         FlagRepo = true;
+    }
+
+    private async void CheatsDownload_Click(object? s, RoutedEventArgs e)
+    {
+        if (SystemType != "gcn")
+        {
+            await Dialogs.Info(this, "Cheat codes work for GameCube games. Nintendont runs them with its Gecko code handler; a Wii game in a WUP has no such handler.", "GameCube only");
+            return;
+        }
+        if (!CheatCodes.IsValidId(CucholixRepoID))
+        {
+            await Dialogs.Info(this, "Please select your game before using this option", "No game specified");
+            return;
+        }
+        var name = InternalGameName != "" ? InternalGameName : GameTdb.GetName(CucholixRepoID) ?? CucholixRepoID;
+        await new CheatsWindow(CucholixRepoID, name).ShowDialog(this);
     }
 
     private async void RepoDownload_Click(object? s, RoutedEventArgs e)

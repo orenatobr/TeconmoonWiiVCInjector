@@ -279,6 +279,7 @@ internal static class SelfTest
             VideoModeBuild(tmp, icon, commonKey, titleKey, prog);
             CheatsBuild(tmp, icon, commonKey, titleKey, prog);
             C2wStep();
+            C2wPackStep(tmp, commonKey);
         }
         finally { try { Directory.Delete(tmp, true); } catch { } }
     }
@@ -427,6 +428,41 @@ internal static class SelfTest
             Check("c2w step: code/c2w.img patched in place", back[0x1001] == 0xC2 && back[0x1403] == 0x9D);
         }
         finally { Directory.Delete(dir, true); }
+    }
+
+    /// <summary>The five files cafe2wii adds under code/ stopped the stock NUSPacker ("did not produce title.tmd"); the patched copy packs them.</summary>
+    static void C2wPackStep(string tmp, string commonKey)
+    {
+        var dl = BaseFiles.DownloadsDir;
+        var src = new[] { BaseFiles.Rhf, "0005001010004000", "0005001010004001" }.Select(d => Path.Combine(dl, d)).ToArray();
+        if (!src.All(Directory.Exists)) { Console.WriteLine("  SKIP c2w pack: base files are not downloaded yet"); return; }
+        var work = Path.Combine(tmp, "c2wpack"); var build = Path.Combine(work, "BUILDDIR");
+        foreach (var d in src) Tools.CopyDir(d, build);
+        var ids = Metadata.Ids("RTST", "wii");
+        File.WriteAllText(Path.Combine(build, "code", "app.xml"), Metadata.AppXml(ids));
+        File.WriteAllText(Path.Combine(build, "meta", "meta.xml"), Metadata.MetaXml(ids, "Test", null, "1"));
+        Directory.CreateDirectory(Path.Combine(build, "content"));
+        var nfs = new byte[4096]; "EGGS"u8.CopyTo(nfs); File.WriteAllBytes(Path.Combine(build, "content", "hif_000000.nfs"), nfs);
+        // what nfs2iso2nfs and the image step add in a real build, so the validator sees a complete package
+        foreach (var f in new[] { "code/rvlt.tik", "code/rvlt.tmd", "meta/iconTex.tga", "meta/bootTvTex.tga", "meta/bootDrcTex.tga" })
+            File.WriteAllBytes(Path.Combine(build, f), new byte[512]);
+        string Pack(string jar, string name)
+        {
+            var o = Path.Combine(work, name); Directory.CreateDirectory(o);
+            try { Tools.Run(Tools.Java(), ["-jar", jar, "-in", "BUILDDIR", "-out", o, "-encryptKeyWith", commonKey], work, default); } catch (InvalidOperationException e) { Console.WriteLine($"    {name}: {e.Message.ReplaceLineEndings(" | ")[^Math.Min(500, e.Message.Length)..]}"); }
+            return o;
+        }
+        Check("c2w pack: the stock NUSPacker still refuses the cafe2wii files (the reason for the patched copy)", !File.Exists(Path.Combine(Pack(Tools.Jar("NUSPacker"), "stock"), "title.tmd")));
+        var pkg = Pack(NusPackerRules.Cafe2wiJar(Tools.Jar("NUSPacker"), work), "patched");
+        Check("c2w pack: the patched NUSPacker produces title.tmd, title.tik and title.cert", new[] { "title.tmd", "title.tik", "title.cert" }.All(f => File.Exists(Path.Combine(pkg, f))));
+        if (File.Exists(Path.Combine(pkg, "title.tmd")))
+            {
+                var rep = WupValidator.Validate(pkg, commonKey);
+                // the test images are placeholders, so TGA checks are not meaningful here; everything else (FST, hashes, tmd) is
+                var bad = rep.Errors.Where(er => !er.Contains(".tga")).ToList();
+                foreach (var er in bad) Console.WriteLine("    validator: " + er);
+                Check("c2w pack: the package passes the WUP validator (FST, content hashes, TMD)", bad.Count == 0);
+            }
     }
 
     static long _isoLen;

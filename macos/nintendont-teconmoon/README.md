@@ -30,7 +30,7 @@ The PAL guard below still runs after it, except that `ProgressiveScan = True`, `
 The Wii U decides 4:3 or 16:9 for a game in `kernel/main.c`: it writes the DMCU registers `0xd8006a0` and `0xd8006a8` only when the Wii U Widescreen option and the console's own aspect setting disagree, and restores them when the game ends.
 The kernel now logs that decision in `ndebug.log` (`WiiU aspect: ...`, with the register value and whether it writes), because those registers are also what display patches such as wiiscreenoff touch.
 
-**Black switch to the game's video mode.** `loader/source/main.c` keeps the screen black while it changes to the game's video mode and blanks the framebuffer it still shows, so no stale lines are scanned out. This is aimed at the green stripe at the bottom of the screen when a game starts (upstream FIX94/Nintendont issue 1301, unfixed there). The cause is not proven and the change is not tested on a console. The source of this build is the `teconmoon` branch of the fork github.com/orenatobr/Nintendont (upstream 7a18345 plus this patch, commit 7845573).
+**Black switch to the game's video mode.** `loader/source/main.c` keeps the screen black while it changes to the game's video mode and blanks the framebuffer it still shows (and `loader/source/grrlib.c` blanks the screen right after `VIDEO_Init`), so no stale lines are scanned out. This is aimed at the green stripe at the bottom of the screen when a game starts (upstream FIX94/Nintendont issue 1301, unfixed there). The cause is not proven and the change is not tested on a console. The source of this build is the `teconmoon` branch of the fork github.com/orenatobr/Nintendont (upstream 7a18345 plus this patch, commit 609a345).
 
 **Picture width and position per game.** `VideoScale = 40 to 120` and `VideoOffset = -20 to 20` under `[Teconmoon]` set the menu's Video Width and Video Offset for that game only (`GameSettings.c`, applied in `loader/source/main.c` before `ReconfigVideo`). A wider picture covers more of the 720 pixel signal, which shrinks side bars; an offset moves a picture that sits to one side. Not tested on a console.
 
@@ -67,7 +67,7 @@ silicon it runs under emulation and takes 15 to 40 minutes.
 What was checked when this build was made:
 
 - Built with the toolchain above (devkitPPC r35-1 instead of the r35-2 the Nintendont README names, which only exists for Windows).
-  `Assets/nintendont-teconmoon/boot.dol` is 1655520 bytes with sha256 `8f7ae2ca2d7a85de4a3ea19c0a456cbd4181c13b09d8c4296d800667f67c1512`, and `UiSelfTest` checks that hash.
+  `Assets/nintendont-teconmoon/boot.dol` is 1655584 bytes with sha256 `fb3cee728dc29bae37d979966a6a85592475702e49911b69b25abc75f7c43041`, and `UiSelfTest` checks that hash.
 - Release 1.2.14 read the file after the loader had already closed the card, so it never opened it and every option kept its WUP value: the console log of a Skies of Arcadia run showed
   `WiiU aspect: console 16:9=1, Wii U Widescreen option=0` although `GEAP.ini` had `AspectRatio = 1`. The host test of the parser could not catch that, it does not run the loader. 1.2.15 moves the call
   and the kernel log now prints the whole config, so `ndebug.log` shows whether the file arrived.

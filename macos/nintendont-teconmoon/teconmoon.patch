@@ -194,6 +194,20 @@ index 0000000..fbaacc0
 +int GameSettingsParse(char *text, signed char out[GS_COUNT]);
 +
 +#endif
+diff --git a/loader/source/grrlib.c b/loader/source/grrlib.c
+index 0675b30..13f4f73 100644
+--- a/loader/source/grrlib.c
++++ b/loader/source/grrlib.c
+@@ -73,6 +73,9 @@ int  GRRLIB_Init (void) {
+ 	if (is_setup)  return 0;
+ 	
+ 	VIDEO_Init();
++	//Teconmoon: nothing is scanned out until the first frame is drawn (GRRLIB_Render turns the output on), so leftovers of the previous screen cannot show as a green stripe
++	VIDEO_SetBlack(TRUE);
++	VIDEO_Flush();
+ 
+ 	if(CONF_GetProgressiveScan() > 0 && VIDEO_HaveComponentCable())
+ 	{
 diff --git a/loader/source/main.c b/loader/source/main.c
 index aef1e55..e92aa5b 100644
 --- a/loader/source/main.c

@@ -40,7 +40,7 @@ public sealed class GameSettingsWindow : Window
         _patchPal50 = Combo("Nintendont setting", "On", "Off");
         _videoMode = Combo("Nintendont setting", "Auto (the game decides)", "PAL50 (stay at 50 Hz)", "PAL60", "NTSC", "MPAL");
         _deflicker = Combo("Nintendont setting", "On", "Off");
-        _scale = Combo("Nintendont setting", "40", "50", "60", "70", "80", "90", "100", "110", "120");
+        _scale = Combo("Nintendont setting", "40", "50", "60", "70", "80", "90", "100");
         _offset = Combo("Nintendont setting", "-20", "-15", "-10", "-5", "0", "5", "10", "15", "20");
         _codes = Combo("Widescreen cheats", "On: copied to the card", "Off: stretch only");
 
@@ -76,7 +76,7 @@ public sealed class GameSettingsWindow : Window
         _patchPal50.SelectedIndex = ToIndex(existing.PatchPal50);
         _videoMode.SelectedIndex = existing.VideoMode == null ? 0 : Array.IndexOf(GameSettings.VideoModes, existing.VideoMode) + 1;
         _deflicker.SelectedIndex = ToIndex(existing.Deflicker);
-        _scale.SelectedIndex = existing.VideoScale is { } sc ? 1 + Math.Clamp((sc - 40 + 5) / 10, 0, 8) : 0;
+        _scale.SelectedIndex = existing.VideoScale is { } sc ? 1 + Math.Clamp((sc - 40 + 5) / 10, 0, 6) : 0;
         _offset.SelectedIndex = existing.VideoOffset is { } of ? 1 + Math.Clamp((of + 20 + 2) / 5, 0, 8) : 0;
         _codes.SelectedIndex = existing.Widescreen == false ? 2 : existing.Widescreen == true ? 1 : 0;
         foreach (var c in new[] { _fullscreen, _hack, _progressive, _skipIpl, _patchPal50, _videoMode, _deflicker, _codes, _scale, _offset }) c.SelectionChanged += (_, _) => UpdatePreview();
@@ -95,7 +95,7 @@ public sealed class GameSettingsWindow : Window
                 Row("Video mode", "Forces the video mode. PAL50 keeps a PAL game at 50 Hz, where the sound was in sync. A mode of 60 Hz is kept on a PAL disc when set here.", _videoMode),
                 Row("Deflicker filter", "Only with a forced video mode. Off is sharper on interlaced output (the default filter blurs it a little), but thin lines may flicker.", _deflicker),
                 Row("Widescreen cheats (stretch only)", "Off leaves the widescreen cheats (16:9, aspect) out of the Gecko file on the card (kept: the other cheats of a saved cheat list; a game with only a .gct and no saved list gets no file at all), so the Wii U only stretches the 4:3 picture to the whole 16:9 screen (set Fullscreen to 16:9 too). Use it when a widescreen code leaves black bars or shifts the picture.", _codes),
-                Row("Video width (stretch)", "How much of the 720 pixel signal the picture covers: 40 is the normal 640, 120 is the whole 720. Wider shrinks the black side bars; the picture gets cut a little at the edges.", _scale),
+                Row("Video width (stretch)", "How much of the 720 pixel signal the picture covers: 40 is the normal 640 and also puts the picture back in the middle when the game shifts it to one side (Sonic Adventure DX). Wider shrinks the black side bars and cuts the edges. 110 and 120 gave a black screen in Super Mario Sunshine, so they are not offered.", _scale),
                 Row("Video offset", "Moves the picture left (negative) or right, in steps of 5. For a picture shifted to one side, where the loss on one edge is the same as the black bar on the other.", _offset),
                 Row("Skip IPL", "Skips the GameCube boot screen.", _skipIpl),
                 new TextBlock { Text = "File saved as:", Opacity = 0.8 },

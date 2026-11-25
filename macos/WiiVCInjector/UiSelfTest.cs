@@ -733,10 +733,10 @@ E0000000 80008000 //end
                 && !new GameSettings { Fullscreen = false }.ToIni("X", "Y").Contains("[Core]") && new GameSettings { Fullscreen = false }.ToIni("X", "Y").Contains("AspectRatio = 2"));
             T("game settings: what is written is read back the same", GameSettings.Parse(gsFull.ToIni("GEAP8P", "x")) is { Fullscreen: true, WidescreenHack: false, ProgressiveScan: false, SkipIpl: true }
                 && GameSettings.Parse(new GameSettings { Fullscreen = false }.ToIni("GEAP8P", "x")) is { Fullscreen: false, WidescreenHack: null, ProgressiveScan: null, SkipIpl: null } && new GameSettings().IsEmpty);
-            var gsVid = GameSettings.Parse("[Teconmoon]\nVideoScale = 110\nVideoOffset = -10\n");
+            var gsVid = GameSettings.Parse("[Teconmoon]\nVideoScale = 100\nVideoOffset = -10\n");
             T("game settings: VideoScale and VideoOffset are read, written and read back, a value out of range is ignored",
-                gsVid is { VideoScale: 110, VideoOffset: -10 } && GameSettings.Parse(gsVid.ToIni("GMSE01", "x")) is { VideoScale: 110, VideoOffset: -10 }
-                && GameSettings.Parse("VideoScale = 30\nVideoOffset = 25").IsEmpty);
+                gsVid is { VideoScale: 100, VideoOffset: -10 } && GameSettings.Parse(gsVid.ToIni("GMSE01", "x")) is { VideoScale: 100, VideoOffset: -10 }
+                && GameSettings.Parse("VideoScale = 30\nVideoOffset = 25").IsEmpty && GameSettings.Parse("VideoScale = 120").IsEmpty);
             var gsPal = GameSettings.Parse("[Core]\nProgressiveScan = True\n[Teconmoon]\nPatchPAL50 = False\n");
             T("game settings: Patch PAL50 is read, written in its own section and read back",
                 gsPal.ProgressiveScan == true && gsPal.PatchPal50 == false

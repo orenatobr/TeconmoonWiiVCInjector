@@ -263,8 +263,28 @@ public static partial class CheatCodes
         return cheats;
     }
 
-    /// <summary>Copies every .gct of <paramref name="library"/> to <c>codes/</c> on the card. Returns how many files.</summary>
-    public static int CopyLibraryTo(string drive, string? library = null)
+    /// <summary>Copies one library .gct into <paramref name="dest"/>. When the game's settings say Widescreen = False the widescreen cheats are left out (read from the saved cheat list; with none saved, or nothing else in it, the card's file is removed). Returns whether a file is on the card afterwards.</summary>
+    public static bool CopyFileTo(string gct, string dest, string? settingsLibrary = null, List<string>? skipped = null)
+    {
+        var id = Path.GetFileNameWithoutExtension(gct);
+        var target = Path.Combine(dest, Path.GetFileName(gct));
+        if (GameSettings.WidescreenOff(id, settingsLibrary))
+        {
+            skipped?.Add(id);
+            var text = Path.ChangeExtension(gct, ".codes.txt");
+            var rest = File.Exists(text) ? ParseText(File.ReadAllText(text)).Where(c => !IsWidescreen(c)).ToList() : new List<Cheat>();
+            if (rest.Count == 0) { File.Delete(target); return false; }
+            File.WriteAllBytes(target, BuildGct(rest));
+            return true;
+        }
+        File.Copy(gct, target, true);
+        return true;
+    }
+
+    static bool IsWidescreen(Cheat c) => Regex.IsMatch(c.Name, "widescreen|16[:x]9|aspect ratio", RegexOptions.IgnoreCase);
+
+    /// <summary>Copies every .gct of <paramref name="library"/> to <c>codes/</c> on the card, except the games whose settings say Widescreen = False (those are removed from the card). Returns how many files; the ids left off are added to <paramref name="skipped"/>.</summary>
+    public static int CopyLibraryTo(string drive, string? library = null, string? settingsLibrary = null, List<string>? skipped = null)
     {
         library ??= LibraryDir;
         if (!Directory.Exists(library)) return 0;
@@ -272,7 +292,9 @@ public static partial class CheatCodes
         if (files.Length == 0) return 0;
         var dest = Path.Combine(drive, "codes");
         Directory.CreateDirectory(dest);
-        foreach (var f in files) File.Copy(f, Path.Combine(dest, Path.GetFileName(f)), true);
-        return files.Length;
+        int copied = 0;
+        foreach (var f in files)
+            if (CopyFileTo(f, dest, settingsLibrary, skipped)) copied++;
+        return copied;
     }
 }

@@ -21,16 +21,15 @@ public partial class SDCardWindow : Window
         foreach (var i in Enumerable.Range(0, 14)) Opt(i).IsCheckedChanged += (_, _) => CheckForBoxes();
         ReloadDriveList();
         SpecifyDrive();
-        // The owner's Nintendont menu: Memcard Emulation (251 blocks, multi), Unlock Read Speed, Wiimote CC Rumble, BBA Emulation,
-        // Force Widescreen (which also turns on WiiU Widescreen), Force Progressive, Skip IPL and Log on; Video Force (Deflicker), NTSC.
-        foreach (var i in new[] { 0, 3, 4, 6, 9, 10, 11, 13 }) Opt(i).IsChecked = true;
+        // The config the owner's games ran well with: Memcard Emulation (251 blocks, multi), Unlock Read Speed, Skip IPL and Log on,
+        // Video None. Force Widescreen stays off: most games get 16:9 from a Gecko code and the Nintendont hack on top of it
+        // double-applies it. Width 688: 720 gave a black screen in Super Mario Sunshine, Auto gives 640 and wider side bars.
+        foreach (var i in new[] { 0, 3, 11, 13 }) Opt(i).IsChecked = true;
         MemcardMulti.IsChecked = true;
         MemcardBlocks.SelectedIndex = 2;
-        VideoForceMode.SelectedIndex = 2;
-        VideoTypeMode.SelectedIndex = 1;
+        VideoForceMode.SelectedIndex = 3;
         LanguageBox.SelectedIndex = 0;
         wiiUGamepadSlotBox.SelectedIndex = 0;
-        // 688 is the width of that menu: 720 fills the whole line but gave a black screen in Super Mario Sunshine, Auto gives 640 and wider side bars.
         VideoWidth.Value = 688;
         CheckForBoxes();
     }

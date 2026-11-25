@@ -56,10 +56,10 @@ index fac0829..bd1c7f4 100644
  	while (1)
 diff --git a/loader/source/GameSettings.c b/loader/source/GameSettings.c
 new file mode 100644
-index 0000000..ab2da4e
+index 0000000..4bd662a
 --- /dev/null
 +++ b/loader/source/GameSettings.c
-@@ -0,0 +1,75 @@
+@@ -0,0 +1,89 @@
 +#include <string.h>
 +#include <strings.h>
 +#include <stdlib.h>
@@ -83,6 +83,16 @@ index 0000000..ab2da4e
 +	if (!strcasecmp(v, "false") || !strcmp(v, "0") || !strcasecmp(v, "no"))
 +		return 0;
 +	return -1;
++}
++
++/* the number in s when it is between lo and hi, plus bias; -1 otherwise */
++static int Num(const char *s, int lo, int hi, int bias)
++{
++	char *e;
++	long n = strtol(s, &e, 10);
++	if (e == s || *e || n < lo || n > hi)
++		return -1;
++	return (int)n + bias;
 +}
 +
 +int GameSettingsParse(char *text, signed char out[GS_COUNT])
@@ -120,6 +130,10 @@ index 0000000..ab2da4e
 +			which = GS_PATCH_PAL50, v = Bool(val);
 +		else if (!strcasecmp(key, "Deflicker"))
 +			which = GS_DEFLICKER, v = Bool(val);
++		else if (!strcasecmp(key, "VideoScale"))
++			which = GS_VIDEO_SCALE, v = Num(val, 40, 120, 0);
++		else if (!strcasecmp(key, "VideoOffset"))
++			which = GS_VIDEO_OFFSET, v = Num(val, -20, 20, 64);
 +		else if (!strcasecmp(key, "VideoMode"))
 +		{
 +			which = GS_VIDEO_MODE;
@@ -137,10 +151,10 @@ index 0000000..ab2da4e
 +}
 diff --git a/loader/source/GameSettings.h b/loader/source/GameSettings.h
 new file mode 100644
-index 0000000..5fa6822
+index 0000000..fbaacc0
 --- /dev/null
 +++ b/loader/source/GameSettings.h
-@@ -0,0 +1,34 @@
+@@ -0,0 +1,39 @@
 +#ifndef GAMESETTINGS_H
 +#define GAMESETTINGS_H
 +
@@ -156,6 +170,9 @@ index 0000000..5fa6822
 + *   VideoMode       = Auto, PAL50, PAL60, NTSC or MPAL   force that video mode, or leave it to the game (Teconmoon key)
 + *   Deflicker       = True or False         with a forced VideoMode: the GX deflicker filter on or off (Teconmoon key)
 + *
++ *   VideoScale      = 40 to 120             horizontal size of the picture: 640 + the value - 40 pixels of the 720 wide signal (Teconmoon key; the menu's Video Width)
++ *   VideoOffset     = -20 to 20             moves the picture left (negative) or right (Teconmoon key; the menu's Video Offset)
++ *
 + * ProgressiveScan = True, PatchPAL50 = True and a forced VideoMode other than Auto also switch off the PAL guard of this loader for that
 + * game: it is the user's choice. VideoMode = PAL50 keeps a PAL game at 50 Hz, so with Deflicker = False it only turns the filter off.
 + */
@@ -168,6 +185,8 @@ index 0000000..5fa6822
 +	GS_PATCH_PAL50,
 +	GS_VIDEO_MODE,		/* 0 Auto, 1 PAL50, 2 PAL60, 3 NTSC, 4 MPAL */
 +	GS_DEFLICKER,
++	GS_VIDEO_SCALE,		/* 40 to 120 as is */
++	GS_VIDEO_OFFSET,	/* -20 to 20, stored as the value + 64 */
 +	GS_COUNT
 +};
 +
@@ -176,7 +195,7 @@ index 0000000..5fa6822
 +
 +#endif
 diff --git a/loader/source/main.c b/loader/source/main.c
-index aef1e55..fb4e961 100644
+index aef1e55..e92aa5b 100644
 --- a/loader/source/main.c
 +++ b/loader/source/main.c
 @@ -48,6 +48,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
@@ -188,7 +207,7 @@ index aef1e55..fb4e961 100644
  
  #include "ff_utf8.h"
  #include "diskio.h"
-@@ -554,6 +556,77 @@ static char dev_es[] ATTRIBUTE_ALIGN(32) = "/dev/es";
+@@ -554,6 +556,88 @@ static char dev_es[] ATTRIBUTE_ALIGN(32) = "/dev/es";
  
  extern vu32 FoundVersion;
  extern void _jmp813();
@@ -258,6 +277,17 @@ index aef1e55..fb4e961 100644
 +			ncfg->VideoMode |= (set[GS_DEFLICKER] == 1 ? NIN_VID_FORCE_DF : NIN_VID_FORCE) | modes[(int)set[GS_VIDEO_MODE]];
 +		gprintf("Game settings: Video mode %s, deflicker %s\r\n", names[(int)set[GS_VIDEO_MODE]], set[GS_DEFLICKER] == 1 ? "on" : "off");
 +	}
++	//the picture's width and position, the menu's Video Width and Video Offset, for this start only
++	if (set[GS_VIDEO_SCALE] >= 0)
++	{
++		ncfg->VideoScale = set[GS_VIDEO_SCALE];
++		gprintf("Game settings: Video width %d\r\n", set[GS_VIDEO_SCALE]);
++	}
++	if (set[GS_VIDEO_OFFSET] >= 0)
++	{
++		ncfg->VideoOffset = set[GS_VIDEO_OFFSET] - 64;
++		gprintf("Game settings: Video offset %d\r\n", set[GS_VIDEO_OFFSET] - 64);
++	}
 +	gsKeepProg = set[GS_FORCE_PROG] == 1;
 +	gsKeepPal50 = set[GS_PATCH_PAL50] == 1;
 +	gsKeepVideo = set[GS_VIDEO_MODE] > 0;
@@ -266,7 +296,7 @@ index aef1e55..fb4e961 100644
  int main(int argc, char **argv)
  {
  	// Exit after 10 seconds if there is an error
-@@ -1026,6 +1099,10 @@ int main(int argc, char **argv)
+@@ -1026,6 +1110,10 @@ int main(int argc, char **argv)
  		ExitToLoader(1);
  	}
  
@@ -277,7 +307,7 @@ index aef1e55..fb4e961 100644
  	// Save the ISO shift value for multi-game discs.
  	*(vu32*)0xD300300C = ISOShift;
  
-@@ -1233,6 +1310,32 @@ int main(int argc, char **argv)
+@@ -1233,6 +1321,32 @@ int main(int argc, char **argv)
  		ncfg->Config &= ~NIN_CFG_FORCE_PROG;
  	}
  
@@ -310,7 +340,7 @@ index aef1e55..fb4e961 100644
  	//make sure the cfg gets to the kernel
  	DCStoreRange((void*)ncfg, sizeof(NIN_CFG));
  
-@@ -1510,7 +1613,19 @@ int main(int argc, char **argv)
+@@ -1510,7 +1624,19 @@ int main(int argc, char **argv)
  		while(!__SYS_SyncSram());
  	}
  	

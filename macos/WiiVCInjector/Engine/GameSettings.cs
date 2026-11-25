@@ -26,8 +26,12 @@ public sealed class GameSettings
     public bool? Deflicker;
     /// <summary>Widescreen (a key of this app, Dolphin has none): false keeps the widescreen cheats (names with "widescreen", "16:9" or "aspect") out of this game's Gecko file on the card, so the Wii U only stretches the 4:3 picture to 16:9. For a widescreen code that leaves bars or shifts the picture; the other cheats of a saved cheat list stay (a game with only a .gct and no saved list gets no file).</summary>
     public bool? Widescreen;
+    /// <summary>VideoScale, 40 to 120: the width of the picture is 600 plus this many of the 720 pixels (Nintendont's "Video Width"; 40 is the normal 640). A key of this app. Wider fills a screen that shows side bars.</summary>
+    public int? VideoScale;
+    /// <summary>VideoOffset, -20 to 20: moves the picture left (negative) or right (Nintendont's "Video Offset"). A key of this app. For a picture shifted to one side.</summary>
+    public int? VideoOffset;
 
-    public bool IsEmpty => Fullscreen == null && WidescreenHack == null && ProgressiveScan == null && SkipIpl == null && PatchPal50 == null && VideoMode == null && Deflicker == null && Widescreen == null;
+    public bool IsEmpty => Fullscreen == null && WidescreenHack == null && ProgressiveScan == null && SkipIpl == null && PatchPal50 == null && VideoMode == null && Deflicker == null && Widescreen == null && VideoScale == null && VideoOffset == null;
 
     /// <summary>The file is named by the first 4 characters of the disc id, which also carry the region.</summary>
     public static string? Id4(string id) => id.Length >= 4 && id[..4].All(char.IsAsciiLetterOrDigit) ? id[..4] : null;
@@ -59,6 +63,8 @@ public sealed class GameSettings
             else if (key.Equals("PatchPAL50", StringComparison.OrdinalIgnoreCase) && Bool(val) is { } p50) s.PatchPal50 = p50;
             else if (key.Equals("Deflicker", StringComparison.OrdinalIgnoreCase) && Bool(val) is { } df) s.Deflicker = df;
             else if (key.Equals("Widescreen", StringComparison.OrdinalIgnoreCase) && Bool(val) is { } cd) s.Widescreen = cd;
+            else if (key.Equals("VideoScale", StringComparison.OrdinalIgnoreCase) && int.TryParse(val, out var vs) && vs is >= 40 and <= 120) s.VideoScale = vs;
+            else if (key.Equals("VideoOffset", StringComparison.OrdinalIgnoreCase) && int.TryParse(val, out var vo) && vo is >= -20 and <= 20) s.VideoOffset = vo;
             else if (key.Equals("VideoMode", StringComparison.OrdinalIgnoreCase) && VideoModes.FirstOrDefault(m => m.Equals(val, StringComparison.OrdinalIgnoreCase)) is { } vm) s.VideoMode = vm;
         }
         return s;
@@ -83,13 +89,15 @@ public sealed class GameSettings
             if (ProgressiveScan != null) sb.Append($"ProgressiveScan = {B(ProgressiveScan.Value)}\n");
             if (SkipIpl != null) sb.Append($"SkipIPL = {B(SkipIpl.Value)}\n");
         }
-        if (PatchPal50 != null || VideoMode != null || Deflicker != null || Widescreen != null)
+        if (PatchPal50 != null || VideoMode != null || Deflicker != null || Widescreen != null || VideoScale != null || VideoOffset != null)
         {
             sb.Append("\n[Teconmoon]\n");
             if (PatchPal50 != null) sb.Append($"PatchPAL50 = {B(PatchPal50.Value)}\n");
             if (VideoMode != null) sb.Append($"VideoMode = {VideoMode}\n");
             if (Deflicker != null) sb.Append($"Deflicker = {B(Deflicker.Value)}\n");
             if (Widescreen != null) sb.Append($"Widescreen = {B(Widescreen.Value)}\n");
+            if (VideoScale != null) sb.Append($"VideoScale = {VideoScale.Value}\n");
+            if (VideoOffset != null) sb.Append($"VideoOffset = {VideoOffset.Value}\n");
         }
         return sb.ToString();
     }

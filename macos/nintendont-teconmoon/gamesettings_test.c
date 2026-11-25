@@ -36,12 +36,16 @@ int main(void)
 	n = parse("[Teconmoon]\nPatchPAL50 = True\nProgressiveScan = True\n", s);
 	check("PatchPAL50 is read next to ProgressiveScan", n == 2 && s[GS_PATCH_PAL50] == 1 && s[GS_FORCE_PROG] == 1);
 	check("PatchPAL50 False and a bad value", parse("PatchPAL50 = no", s) == 1 && s[GS_PATCH_PAL50] == 0 && parse("PatchPAL50 = x", s) == 0 && s[GS_PATCH_PAL50] == -1);
-	check("every setting starts as not mentioned", parse("", s) == 0 && s[GS_PATCH_PAL50] == -1 && s[GS_FORCE_PROG] == -1 && GS_COUNT == 7);
+	check("every setting starts as not mentioned", parse("", s) == 0 && s[GS_PATCH_PAL50] == -1 && s[GS_FORCE_PROG] == -1 && GS_COUNT == 9);
 	n = parse("[Teconmoon]\nVideoMode = PAL50\nDeflicker = False\n", s);
 	check("VideoMode PAL50 with Deflicker False", n == 2 && s[GS_VIDEO_MODE] == 1 && s[GS_DEFLICKER] == 0);
 	check("every VideoMode value", parse("VideoMode=Auto", s) == 1 && s[GS_VIDEO_MODE] == 0 && parse("videomode = PAL60", s) == 1 && s[GS_VIDEO_MODE] == 2
 		&& parse("VideoMode = ntsc", s) == 1 && s[GS_VIDEO_MODE] == 3 && parse("VideoMode = MPAL", s) == 1 && s[GS_VIDEO_MODE] == 4);
 	check("a VideoMode that is not known is ignored", parse("VideoMode = PAL576", s) == 0 && s[GS_VIDEO_MODE] == -1 && parse("Deflicker = maybe", s) == 0);
+	check("VideoScale is read within 40 to 120 and VideoOffset within -20 to 20 (stored plus 64)", parse("VideoScale = 120\nVideoOffset = -8", s) == 2 && s[GS_VIDEO_SCALE] == 120 && s[GS_VIDEO_OFFSET] == 56
+		&& parse("VideoOffset = 0", s) == 1 && s[GS_VIDEO_OFFSET] == 64 && parse("VideoOffset = 20", s) == 1 && s[GS_VIDEO_OFFSET] == 84);
+	check("a VideoScale or VideoOffset out of range or not a number is ignored", parse("VideoScale = 39\nVideoScale = 121\nVideoOffset = 21\nVideoOffset = -21\nVideoOffset = left\nVideoScale = 8x", s) == 0
+		&& s[GS_VIDEO_SCALE] == -1 && s[GS_VIDEO_OFFSET] == -1);
 	printf(fails ? "%d FAILED\n" : "ALL PASS\n", fails);
 	return fails != 0;
 }

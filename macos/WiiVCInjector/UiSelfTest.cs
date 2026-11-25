@@ -514,7 +514,8 @@ E0000000 80008000 //end
             T("nintendont source: the real build output ships the Teconmoon files", SDCardWindow.ChooseNintendontSource(false, AppContext.BaseDirectory).Source == SDCardWindow.NintendontSource.Teconmoon, AppContext.BaseDirectory);
             var shippedDol = File.ReadAllBytes(Path.Combine(AppContext.BaseDirectory, "Assets", "nintendont-teconmoon", "boot.dol"));
             T("nintendont build: the shipped boot.dol is the one nintendont-teconmoon/README.md documents",
-                Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(shippedDol)).Equals("0a116d4bb7d99d30732074f4a9607619f8e2817456b0c77185aafd9ffd31fe7e", StringComparison.OrdinalIgnoreCase));
+                Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(shippedDol)).Equals("8f7ae2ca2d7a85de4a3ea19c0a456cbd4181c13b09d8c4296d800667f67c1512", StringComparison.OrdinalIgnoreCase));
+            T("nintendont build: the shipped boot.dol applies a per game video width", System.Text.Encoding.ASCII.GetString(shippedDol).Contains("Game settings: Video width"));
             T("nintendont build: the shipped boot.dol carries the PAL guard", System.Text.Encoding.ASCII.GetString(shippedDol).Contains("PAL disc: Force Progressive ignored"));
             T("nintendont build: the shipped boot.dol keeps a PAL option the game settings ask for", System.Text.Encoding.ASCII.GetString(shippedDol).Contains("PAL disc: Force Progressive kept"));
             T("nintendont build: the shipped boot.dol applies a forced video mode from the game settings", System.Text.Encoding.ASCII.GetString(shippedDol).Contains("Game settings: Video mode"));
@@ -732,6 +733,10 @@ E0000000 80008000 //end
                 && !new GameSettings { Fullscreen = false }.ToIni("X", "Y").Contains("[Core]") && new GameSettings { Fullscreen = false }.ToIni("X", "Y").Contains("AspectRatio = 2"));
             T("game settings: what is written is read back the same", GameSettings.Parse(gsFull.ToIni("GEAP8P", "x")) is { Fullscreen: true, WidescreenHack: false, ProgressiveScan: false, SkipIpl: true }
                 && GameSettings.Parse(new GameSettings { Fullscreen = false }.ToIni("GEAP8P", "x")) is { Fullscreen: false, WidescreenHack: null, ProgressiveScan: null, SkipIpl: null } && new GameSettings().IsEmpty);
+            var gsVid = GameSettings.Parse("[Teconmoon]\nVideoScale = 110\nVideoOffset = -10\n");
+            T("game settings: VideoScale and VideoOffset are read, written and read back, a value out of range is ignored",
+                gsVid is { VideoScale: 110, VideoOffset: -10 } && GameSettings.Parse(gsVid.ToIni("GMSE01", "x")) is { VideoScale: 110, VideoOffset: -10 }
+                && GameSettings.Parse("VideoScale = 30\nVideoOffset = 25").IsEmpty);
             var gsPal = GameSettings.Parse("[Core]\nProgressiveScan = True\n[Teconmoon]\nPatchPAL50 = False\n");
             T("game settings: Patch PAL50 is read, written in its own section and read back",
                 gsPal.ProgressiveScan == true && gsPal.PatchPal50 == false

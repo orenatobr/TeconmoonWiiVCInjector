@@ -190,18 +190,6 @@ public static class WupValidator
                 h0[b] = SHA1.HashData(data);
             });
         }
-        byte[][] Level(byte[][] input)
-        {
-            var o = new byte[input.Length / 16 + 1][];
-            for (int j = 0; j < o.Length; j++)
-            {
-                var grp = new byte[320];
-                for (int k = 0; k < 16; k++)
-                    if (j * 16 + k < input.Length) Array.Copy(input[j * 16 + k], 0, grp, k * 20, 20);
-                o[j] = SHA1.HashData(grp);
-            }
-            return o;
-        }
         var h1 = Level(h0); var h2 = Level(h1); var h3calc = Level(h2);
         byte[] Group(byte[][] src, int start)
         {
@@ -222,6 +210,21 @@ public static class WupValidator
         var expected = new byte[h3.Length];
         for (int j = 0; j < h3.Length / 20 && j < h3calc.Length; j++) Array.Copy(h3calc[j], 0, expected, j * 20, 20);
         if (!expected.AsSpan().SequenceEqual(h3)) r.Errors.Add($"{c.Id:X8}.h3 does not match the hashes computed from the content");
+    }
+
+    /// <summary>Hashes each group of 16 hashes (zero padded) into one hash of the next level of the tree.</summary>
+    internal static byte[][] Level(byte[][] input)
+    {
+        // ceil(n / 16): a count that is a multiple of 16 must not get an extra, all-zero group
+        var o = new byte[(input.Length + 15) / 16][];
+        for (int j = 0; j < o.Length; j++)
+        {
+            var grp = new byte[320];
+            for (int k = 0; k < 16; k++)
+                if (j * 16 + k < input.Length) Array.Copy(input[j * 16 + k], 0, grp, k * 20, 20);
+            o[j] = SHA1.HashData(grp);
+        }
+        return o;
     }
 
     // ------------------------------------------------------------------ FST

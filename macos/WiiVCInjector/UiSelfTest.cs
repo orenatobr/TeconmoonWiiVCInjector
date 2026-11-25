@@ -366,11 +366,11 @@ E0000000 80008000 //end
                 && r.OutputPath == "/o" && r.OutputPathFixed == "/f", AppSettings.FilePath);
 
             var sdDefaults = new SDCardWindow();
-            T("nincfg defaults: the owner's menu (memcard 251 multi, force widescreen and progressive, skip IPL, log, Force (Deflicker) NTSC, width 688)",
-                sdDefaults.Checked(0) && sdDefaults.Checked(3) && sdDefaults.Checked(4) && sdDefaults.Checked(6) && sdDefaults.Checked(9) && sdDefaults.Checked(10)
-                && sdDefaults.Checked(11) && sdDefaults.Checked(13) && !sdDefaults.Checked(1) && !sdDefaults.Checked(2) && !sdDefaults.Checked(7) && !sdDefaults.Checked(8) && !sdDefaults.Checked(12)
-                && sdDefaults.MemcardMulti.IsChecked == true && sdDefaults.MemcardBlocks.SelectedIndex == 2 && sdDefaults.VideoForceMode.SelectedIndex == 2
-                && sdDefaults.VideoTypeMode.SelectedIndex == 1 && (int)sdDefaults.VideoWidth.Value == 688);
+            T("nincfg defaults: memcard 251 multi, unlock read speed, skip IPL, log, Video None, width 688, and no Force Widescreen",
+                sdDefaults.Checked(0) && sdDefaults.Checked(3) && sdDefaults.Checked(11) && sdDefaults.Checked(13)
+                && !sdDefaults.Checked(9) && !sdDefaults.Checked(10) && !sdDefaults.Checked(4) && !sdDefaults.Checked(6) && !sdDefaults.Checked(1) && !sdDefaults.Checked(2) && !sdDefaults.Checked(7) && !sdDefaults.Checked(8) && !sdDefaults.Checked(12)
+                && sdDefaults.MemcardMulti.IsChecked == true && sdDefaults.MemcardBlocks.SelectedIndex == 2 && sdDefaults.VideoForceMode.SelectedIndex == 3
+                && (int)sdDefaults.VideoWidth.Value == 688);
             // --- nincfg.bin
             var opt = new bool[14]; opt[0] = true; opt[7] = true;
             var cfg = SDCardWindow.BuildConfig(opt, false, 0, 0, 0, 2, 640, 0);

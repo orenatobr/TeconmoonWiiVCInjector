@@ -93,6 +93,24 @@ public static partial class CheatCodes
     /// </summary>
     static bool IsPlainWrite(uint address) => (address >> 24) <= 0x05;
 
+    /// <summary>
+    /// True when every line is a plain write or part of a well formed Gecko insert assembly block (C2 or C3 followed by as many pairs as its value says).
+    /// Some authors put Gecko words in Dolphin's [ActionReplay] section (the 16:9 codes with assembly do); a real Action Replay code does not use C2 or C3,
+    /// so a block that is exactly shaped like that is a Gecko code and Nintendont's handler runs it.
+    /// </summary>
+    static bool IsGeckoShaped(List<(uint Address, uint Value)> lines)
+    {
+        for (var i = 0; i < lines.Count; i++)
+        {
+            var a = lines[i].Address;
+            if (IsPlainWrite(a)) continue;
+            var n = lines[i].Value;
+            if ((a >> 24) is not (0xC2 or 0xC3) || n == 0 || n > lines.Count - 1 - i) return false;
+            i += (int)n;
+        }
+        return true;
+    }
+
     /// <summary>Cheats of the [Gecko] and [ActionReplay] sections of a Dolphin game settings file.</summary>
     public static List<Cheat> ParseIni(string text)
     {
@@ -117,10 +135,12 @@ public static partial class CheatCodes
             {
                 var a = Convert.ToUInt32(m.Groups[1].Value, 16);
                 cur.Lines.Add((a, Convert.ToUInt32(m.Groups[2].Value, 16)));
-                if (kind == "Action Replay" && !IsPlainWrite(a))
-                    cur.Unusable = "This Action Replay code type has no Gecko equivalent.";
             }
         }
+        foreach (var c in cheats.Where(c => c.Source == "Action Replay" && !IsGeckoShaped(c.Lines)))
+            c.Unusable = c.Lines.Any(l => (l.Address >> 24) is 0xC2 or 0xC3)
+                ? "This code looks like a Gecko assembly block but it is cut short or malformed."
+                : "This Action Replay code type has no Gecko equivalent.";
         return cheats.Where(c => c.Lines.Count > 0).ToList();
     }
 

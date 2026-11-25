@@ -550,6 +550,13 @@ E0000000 80008000 //end
                 string.Join("|", parsed.Select(c => c.Name)) == "Infinite Rings [Someone]|Conditional|Widescreen", string.Join("|", parsed.Select(c => c.Name)));
             T("cheats ini: plain Action Replay writes are usable, the conditional one is not",
                 parsed[0].Unusable == null && parsed[0].Lines.Count == 2 && parsed[1].Unusable != null && parsed[2].Unusable == null && parsed[2].Source == "Gecko");
+            var arAsm = CheatCodes.ParseIni("[ActionReplay]\n$Wide\n04007188 4800000C\nC20305DC 00000003\nC0228024 C0410008\nEC420072 D0410008\nC0410010 00000000\n042863B4 41D40000\n");
+            var arBadAsm = CheatCodes.ParseIni("[ActionReplay]\n$Short\nC20305DC 00000003\nC0228024 C0410008\n");
+            T("cheats ini: Gecko assembly blocks in an Action Replay section are usable, a cut off block is not",
+                arAsm[0].Unusable == null && arAsm[0].Lines.Count == 6 && arBadAsm[0].Unusable != null);
+            var billy = CheatCodes.ParseIni("[ActionReplay]\n$16:9 Widescreen [gamemasterplc]\n04007188 4800000C\nC20305DC 00000003\nC0228024 C0410008\nEC420072 D0410008\nC0410010 00000000\n"
+                + "C20CCEE0 00000003\n38810020 C0228024\nC0440000 EC420824\nD0440000 00000000\nC210FC8C 00000003\n933D0060 C0228024\nC05D0048 EC420072\nD05D0048 00000000\n042C6328 3FE22222\n");
+            T("cheats ini: the Billy Hatcher 16:9 code (Gecko assembly in [ActionReplay]) is usable", billy.Count == 1 && billy[0].Unusable == null && billy[0].Lines.Count == 14);
             const string wiki = "Skies of Arcadia Legends\nDeveloper(s) Overworks\nEnhancements\nHD Texture\n16:9 Widescreen Gecko Code\nThe following Gecko codes fix clipping issues. Disable the hack before using.\n"
                 + "Normal HUD\nThis hack unstretches the HUD but will break cutscenes.\nNA:\n04345894 3F400000\n043463C0 3B190000\nC22AB718 00000003\n90010010 3C003B4D\n3C608034 900363C0\n60000000 00000000\n"
                 + "PAL:\n04348E54 3F400000\nStretched HUD\nThe HUD along with other cutscene elements will be stretched.\nNA:\n04345894 3F400000\nPAL:\n04348E54 3F400000\n"

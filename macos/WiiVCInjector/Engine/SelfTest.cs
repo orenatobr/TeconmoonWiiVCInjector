@@ -95,6 +95,7 @@ internal static class SelfTest
     static void Units()
     {
         var w = Metadata.Ids("RSPE", "wii");
+        Check("wup hash tree level count is ceil(n/16)", new[] { 0, 1, 15, 16, 17, 1344 }.Select(n => WupValidator.Level(new byte[n][].Select(_ => new byte[20]).ToArray()).Length).SequenceEqual(new[] { 0, 1, 1, 1, 2, 84 }));
         Check("wii ids", w.Hex == "52535045" && w.Text == "RSPE" && w.Packed == "0005000252535045");
         var d = Metadata.Ids("HAXX", "dol");
         Check("dol ids", d.Text == "BOOT" && d.Packed == "0005000248415858");

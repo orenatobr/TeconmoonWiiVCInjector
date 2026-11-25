@@ -13,7 +13,7 @@ namespace WiiVCInjector;
 public sealed class GameSettingsWindow : Window
 {
     readonly string _id, _name, _id4;
-    readonly ComboBox _fullscreen, _hack, _progressive, _skipIpl, _patchPal50, _videoMode, _deflicker;
+    readonly ComboBox _fullscreen, _hack, _progressive, _skipIpl, _patchPal50, _videoMode, _deflicker, _codes;
     readonly TextBox _preview = new() { IsReadOnly = true, AcceptsReturn = true, MinHeight = 120, FontFamily = new FontFamily("Menlo,Monaco,monospace"), FontSize = 12 };
 
     static ComboBox Combo(params string[] items)
@@ -40,6 +40,7 @@ public sealed class GameSettingsWindow : Window
         _patchPal50 = Combo("Nintendont setting", "On", "Off");
         _videoMode = Combo("Nintendont setting", "Auto (the game decides)", "PAL50 (stay at 50 Hz)", "PAL60", "NTSC", "MPAL");
         _deflicker = Combo("Nintendont setting", "On", "Off");
+        _codes = Combo("Widescreen cheats", "On: copied to the card", "Off: stretch only");
 
         Control Row(string label, string help, ComboBox box)
         {
@@ -73,7 +74,8 @@ public sealed class GameSettingsWindow : Window
         _patchPal50.SelectedIndex = ToIndex(existing.PatchPal50);
         _videoMode.SelectedIndex = existing.VideoMode == null ? 0 : Array.IndexOf(GameSettings.VideoModes, existing.VideoMode) + 1;
         _deflicker.SelectedIndex = ToIndex(existing.Deflicker);
-        foreach (var c in new[] { _fullscreen, _hack, _progressive, _skipIpl, _patchPal50, _videoMode, _deflicker }) c.SelectionChanged += (_, _) => UpdatePreview();
+        _codes.SelectedIndex = existing.Widescreen == false ? 2 : existing.Widescreen == true ? 1 : 0;
+        foreach (var c in new[] { _fullscreen, _hack, _progressive, _skipIpl, _patchPal50, _videoMode, _deflicker, _codes }) c.SelectionChanged += (_, _) => UpdatePreview();
 
         Content = new StackPanel
         {
@@ -88,6 +90,7 @@ public sealed class GameSettingsWindow : Window
                 Row("Patch PAL50", "A PAL game's 50 Hz mode is patched to 60 Hz. Also ignored on PAL discs unless set On here; it was part of the setup that delayed the sound.", _patchPal50),
                 Row("Video mode", "Forces the video mode. PAL50 keeps a PAL game at 50 Hz, where the sound was in sync. A mode of 60 Hz is kept on a PAL disc when set here.", _videoMode),
                 Row("Deflicker filter", "Only with a forced video mode. Off is sharper on interlaced output (the default filter blurs it a little), but thin lines may flicker.", _deflicker),
+                Row("Widescreen cheats (stretch only)", "Off leaves the widescreen cheats (16:9, aspect) out of the Gecko file on the card (kept: the other cheats of a saved cheat list; a game with only a .gct and no saved list gets no file at all), so the Wii U only stretches the 4:3 picture to the whole 16:9 screen (set Fullscreen to 16:9 too). Use it when a widescreen code leaves black bars or shifts the picture.", _codes),
                 Row("Skip IPL", "Skips the GameCube boot screen.", _skipIpl),
                 new TextBlock { Text = "File saved as:", Opacity = 0.8 },
                 _preview,
@@ -106,6 +109,7 @@ public sealed class GameSettingsWindow : Window
         Fullscreen = FromIndex(_fullscreen), WidescreenHack = FromIndex(_hack), ProgressiveScan = FromIndex(_progressive), SkipIpl = FromIndex(_skipIpl),
         PatchPal50 = FromIndex(_patchPal50),
         VideoMode = _videoMode.SelectedIndex > 0 ? GameSettings.VideoModes[_videoMode.SelectedIndex - 1] : null, Deflicker = FromIndex(_deflicker),
+        Widescreen = _codes.SelectedIndex switch { 1 => true, 2 => false, _ => null },
     };
 
     void UpdatePreview() => _preview.Text = Current().IsEmpty ? $"teconmoon/{_id4}.ini\n(nothing set: every option follows Nintendont)" : $"teconmoon/{_id4}.ini\n\n" + Current().ToIni(_id, _name);

@@ -209,8 +209,8 @@ public partial class SDCardWindow : Window
 
         if (_driveSpecified)
         {
-            int codes = 0, games = 0;
-            if (TryFileOp(() => { InstallToDrive(tempPath, _selectedDrive); codes = CheatCodes.CopyLibraryTo(_selectedDrive); games = GameSettings.CopyLibraryTo(_selectedDrive); }) is { } err)
+            int codes = 0, games = 0; var skippedCodes = new List<string>();
+            if (TryFileOp(() => { InstallToDrive(tempPath, _selectedDrive); codes = CheatCodes.CopyLibraryTo(_selectedDrive, null, null, skippedCodes); games = GameSettings.CopyLibraryTo(_selectedDrive); }) is { } err)
             {
                 await Info(this, $"Could not write to {_selectedDrive}: {err}\n{DriveHint}", "Error");
                 return;
@@ -218,6 +218,7 @@ public partial class SDCardWindow : Window
             await Info(this, "Download complete."
                 + (note != null ? "\n" + note : "")
                 + (codes > 0 ? $"\n{codes} saved cheat file(s) copied to codes/ on the card." : "")
+                + (skippedCodes.Count > 0 ? $"\nWidescreen cheats left out (Widescreen = Off in their game settings): {string.Join(", ", skippedCodes)}." : "")
                 + (games > 0 ? $"\n{games} game settings file(s) copied to teconmoon/ on the card." : ""), "Success");
         }
         else if (await Dialogs.Ask(this, "SD Card not specified.\nDo you wish to save Nintendont somewhere else?", "Drive not specified"))

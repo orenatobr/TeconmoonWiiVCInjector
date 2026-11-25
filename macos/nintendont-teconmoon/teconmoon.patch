@@ -176,7 +176,7 @@ index 0000000..5fa6822
 +
 +#endif
 diff --git a/loader/source/main.c b/loader/source/main.c
-index aef1e55..d194142 100644
+index aef1e55..fb4e961 100644
 --- a/loader/source/main.c
 +++ b/loader/source/main.c
 @@ -48,6 +48,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
@@ -310,6 +310,26 @@ index aef1e55..d194142 100644
  	//make sure the cfg gets to the kernel
  	DCStoreRange((void*)ncfg, sizeof(NIN_CFG));
  
+@@ -1510,7 +1613,19 @@ int main(int argc, char **argv)
+ 		while(!__SYS_SyncSram());
+ 	}
+ 	
++	//Teconmoon: stay black while the video mode changes and blank the framebuffer the loader still shows, so no stale lines (the green stripe at the bottom of the screen, upstream issue 1301) are scanned out
++	VIDEO_SetBlack(TRUE);
++	VIDEO_Flush();
++	VIDEO_WaitVSync();
+ 	ReconfigVideo(vmode);
++	{
++		void *cur = VIDEO_GetCurrentFramebuffer();
++		if(cur != NULL)
++		{
++			VIDEO_ClearFrameBuffer(rmode, cur, COLOR_BLACK);
++			DCFlushRange(cur, rmode->fbWidth * rmode->xfbHeight * 2);
++		}
++	}
+ 	VIDEO_SetBlack(FALSE);
+ 	VIDEO_Flush();
+ 	VIDEO_WaitVSync();
 diff --git a/loader/source/menu.c b/loader/source/menu.c
 index 5616bec..099dd74 100644
 --- a/loader/source/menu.c

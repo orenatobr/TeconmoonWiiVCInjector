@@ -514,7 +514,7 @@ E0000000 80008000 //end
             T("nintendont source: the real build output ships the Teconmoon files", SDCardWindow.ChooseNintendontSource(false, AppContext.BaseDirectory).Source == SDCardWindow.NintendontSource.Teconmoon, AppContext.BaseDirectory);
             var shippedDol = File.ReadAllBytes(Path.Combine(AppContext.BaseDirectory, "Assets", "nintendont-teconmoon", "boot.dol"));
             T("nintendont build: the shipped boot.dol is the one nintendont-teconmoon/README.md documents",
-                Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(shippedDol)).Equals("55164337908325ffb1d5edfa9e313d99681dddc798572068eac2220876b0667a", StringComparison.OrdinalIgnoreCase));
+                Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(shippedDol)).Equals("0a116d4bb7d99d30732074f4a9607619f8e2817456b0c77185aafd9ffd31fe7e", StringComparison.OrdinalIgnoreCase));
             T("nintendont build: the shipped boot.dol carries the PAL guard", System.Text.Encoding.ASCII.GetString(shippedDol).Contains("PAL disc: Force Progressive ignored"));
             T("nintendont build: the shipped boot.dol keeps a PAL option the game settings ask for", System.Text.Encoding.ASCII.GetString(shippedDol).Contains("PAL disc: Force Progressive kept"));
             T("nintendont build: the shipped boot.dol applies a forced video mode from the game settings", System.Text.Encoding.ASCII.GetString(shippedDol).Contains("Game settings: Video mode"));
@@ -757,6 +757,15 @@ E0000000 80008000 //end
             File.WriteAllText(Path.Combine(lib, "notes.txt"), "x");
             T("cheats sd: the .gct files go to codes/ on the card, nothing else",
                 CheatCodes.CopyLibraryTo(card, lib) == 1 && File.ReadAllBytes(Path.Combine(card, "codes", "GEAP8P.gct")).SequenceEqual(gct) && !File.Exists(Path.Combine(card, "codes", "notes.txt")));
+            var offSettings = Path.Combine(tmp, "offsettings"); Directory.CreateDirectory(offSettings);
+            File.WriteAllBytes(Path.Combine(lib, "GMSE01.gct"), gct);
+            File.WriteAllText(Path.Combine(lib, "GMSE01.codes.txt"), "$16:9 Widescreen\n04003104 3F400000\n$Infinite Lives\n04003108 00000063\n");
+            File.WriteAllBytes(Path.Combine(card, "codes", "GMSE01.gct"), gct);
+            File.WriteAllText(Path.Combine(offSettings, "GMSE.ini"), new GameSettings { Fullscreen = true, Widescreen = false }.ToIni("GMSE01", "Super Mario Sunshine"));
+            T("game settings: Widescreen = False is written under [Teconmoon] and read back", GameSettings.Parse(File.ReadAllText(Path.Combine(offSettings, "GMSE.ini"))) is { Fullscreen: true, Widescreen: false } && !new GameSettings { Widescreen = false }.IsEmpty);
+            T("cheats sd: a game with Widescreen = False keeps its other cheats on the card, without the widescreen one",
+                CheatCodes.CopyLibraryTo(card, lib, offSettings) == 2 && File.Exists(Path.Combine(card, "codes", "GEAP8P.gct"))
+                && File.ReadAllBytes(Path.Combine(card, "codes", "GMSE01.gct")) is { } kept && kept.SequenceEqual(CheatCodes.BuildGct(CheatCodes.ParseText("$Infinite Lives\n04003108 00000063\n"))));
             T("cheats sd: an empty library copies nothing and makes no folder", CheatCodes.CopyLibraryTo(Path.Combine(tmp, "card2"), Path.Combine(tmp, "nolib")) == 0 && !Directory.Exists(Path.Combine(tmp, "card2", "codes")));
         }
         catch (Exception ex)

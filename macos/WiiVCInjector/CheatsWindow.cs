@@ -187,7 +187,11 @@ public sealed class CheatsWindow : Window
         try
         {
             Directory.CreateDirectory(Path.Combine(sd, "codes"));
-            File.Copy(CheatCodes.GctPath(_id), Path.Combine(sd, "codes", _id + ".gct"), true);
+            if (!CheatCodes.CopyFileTo(CheatCodes.GctPath(_id), Path.Combine(sd, "codes")))
+            {
+                await Dialogs.Info(this, $"This game's settings say Widescreen = Off (stretch only) and no other cheat list is saved for it, so codes/{_id}.gct is not on the card.", "Not copied");
+                return;
+            }
         }
         catch (Exception ex) { await Dialogs.Info(this, "Could not write to the card: " + ex.Message, "Error"); return; }
         await Dialogs.Info(this, $"Copied to codes/{_id}.gct on the card. The Teconmoon Nintendont loads it when the game starts; the plain upstream build only does with Cheats ticked in its menu.", "Copied");

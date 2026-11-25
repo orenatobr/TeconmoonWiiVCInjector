@@ -24,8 +24,10 @@ public sealed class GameSettings
     public string? VideoMode;
     /// <summary>Deflicker: with a forced VideoMode, the GX deflicker filter on or off. Off is sharper on interlaced output.</summary>
     public bool? Deflicker;
+    /// <summary>Widescreen (a key of this app, Dolphin has none): false keeps the widescreen cheats (names with "widescreen", "16:9" or "aspect") out of this game's Gecko file on the card, so the Wii U only stretches the 4:3 picture to 16:9. For a widescreen code that leaves bars or shifts the picture; the other cheats of a saved cheat list stay (a game with only a .gct and no saved list gets no file).</summary>
+    public bool? Widescreen;
 
-    public bool IsEmpty => Fullscreen == null && WidescreenHack == null && ProgressiveScan == null && SkipIpl == null && PatchPal50 == null && VideoMode == null && Deflicker == null;
+    public bool IsEmpty => Fullscreen == null && WidescreenHack == null && ProgressiveScan == null && SkipIpl == null && PatchPal50 == null && VideoMode == null && Deflicker == null && Widescreen == null;
 
     /// <summary>The file is named by the first 4 characters of the disc id, which also carry the region.</summary>
     public static string? Id4(string id) => id.Length >= 4 && id[..4].All(char.IsAsciiLetterOrDigit) ? id[..4] : null;
@@ -56,6 +58,7 @@ public sealed class GameSettings
             else if (key.Equals("SkipIPL", StringComparison.OrdinalIgnoreCase) && Bool(val) is { } i) s.SkipIpl = i;
             else if (key.Equals("PatchPAL50", StringComparison.OrdinalIgnoreCase) && Bool(val) is { } p50) s.PatchPal50 = p50;
             else if (key.Equals("Deflicker", StringComparison.OrdinalIgnoreCase) && Bool(val) is { } df) s.Deflicker = df;
+            else if (key.Equals("Widescreen", StringComparison.OrdinalIgnoreCase) && Bool(val) is { } cd) s.Widescreen = cd;
             else if (key.Equals("VideoMode", StringComparison.OrdinalIgnoreCase) && VideoModes.FirstOrDefault(m => m.Equals(val, StringComparison.OrdinalIgnoreCase)) is { } vm) s.VideoMode = vm;
         }
         return s;
@@ -80,14 +83,23 @@ public sealed class GameSettings
             if (ProgressiveScan != null) sb.Append($"ProgressiveScan = {B(ProgressiveScan.Value)}\n");
             if (SkipIpl != null) sb.Append($"SkipIPL = {B(SkipIpl.Value)}\n");
         }
-        if (PatchPal50 != null || VideoMode != null || Deflicker != null)
+        if (PatchPal50 != null || VideoMode != null || Deflicker != null || Widescreen != null)
         {
             sb.Append("\n[Teconmoon]\n");
             if (PatchPal50 != null) sb.Append($"PatchPAL50 = {B(PatchPal50.Value)}\n");
             if (VideoMode != null) sb.Append($"VideoMode = {VideoMode}\n");
             if (Deflicker != null) sb.Append($"Deflicker = {B(Deflicker.Value)}\n");
+            if (Widescreen != null) sb.Append($"Widescreen = {B(Widescreen.Value)}\n");
         }
         return sb.ToString();
+    }
+
+    /// <summary>True when the settings of this game (first 4 characters of <paramref name="id"/>) say Widescreen = False.</summary>
+    public static bool WidescreenOff(string id, string? library = null)
+    {
+        var id4 = Id4(id);
+        var path = id4 == null ? null : Path.Combine(library ?? LibraryDir, id4 + ".ini");
+        return path != null && File.Exists(path) && Parse(File.ReadAllText(path)).Widescreen == false;
     }
 
     /// <summary>Copies every settings file of <paramref name="library"/> to <c>teconmoon/</c> on the card. Returns how many files.</summary>

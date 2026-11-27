@@ -1,4 +1,4 @@
-# WiiVC Injector for macOS (Avalonia, arm64)
+# TeconMoonWiiVCInjector for macOS (Avalonia, arm64)
 
 ## Build
 
@@ -8,11 +8,11 @@ and a tools tree (`bin/wit`, `bin/getexttypepatcher`, `jar/JNUSTool.jar`, `jar/N
 
     TOOLS_SRC=/path/to/tools VERSION=1.0.0 macos/package.sh
 
-Output: `dist/WiiVCInjector.app` and `dist/WiiVCInjector-macos-arm64.zip` (`dist/` is gitignored).
+Output: `dist/TeconMoonWiiVCInjector.app` and `dist/TeconMoonWiiVCInjector-macos-arm64.zip` (`dist/` is gitignored).
 Defaults: `TOOLS_SRC=/Volumes/Renato/Wii U/tcmoon-mac/tools`, `JDK_HOME` = Homebrew `openjdk@17`.
 
 The app is published self-contained (no .NET install needed) and bundles a jlink-reduced Java runtime,
-so it does not depend on Homebrew. The managed app lives in `Contents/Resources/app`; `Contents/MacOS/WiiVCInjector`
+so it does not depend on Homebrew. The managed app lives in `Contents/Resources/app`; `Contents/MacOS/TeconMoonWiiVCInjector`
 is a small launcher script (keeps `codesign --verify --deep --strict` clean).
 
 CI (`.github/workflows/macos-ci.yml`) builds the app, runs the UI logic self-test and renders every page in both themes
@@ -28,13 +28,13 @@ It downloads the latest release and installs it in `/Applications`.
 
 ## First run
 
-The app is ad-hoc signed, not notarized, so recent macOS versions block it with "WiiVCInjector.app was not opened"
+The app is ad-hoc signed, not notarized, so recent macOS versions block it with "TeconMoonWiiVCInjector.app was not opened"
 (right click > Open no longer bypasses this). Click **OK** (not "Move to Trash") and do one of:
 
-- System Settings > Privacy & Security, scroll to Security, click **Open Anyway** next to the WiiVCInjector message and confirm; or
+- System Settings > Privacy & Security, scroll to Security, click **Open Anyway** next to the TeconMoonWiiVCInjector message and confirm; or
 - run this in Terminal (adjust the path):
 
-      xattr -dr com.apple.quarantine ~/Downloads/WiiVCInjector.app
+      xattr -dr com.apple.quarantine ~/Downloads/TeconMoonWiiVCInjector.app
 
 Removing the quarantine flag is the only thing the command does. Notarization needs a paid Apple Developer account and is not set up.
 
@@ -51,7 +51,7 @@ matching `*.axaml.cs` files, and the control names are the ones from the WinForm
 Render a page without opening a window (`WIIVC_THEME=light|dark` pins the theme, `WIIVC_TAB=0..4` picks the page,
 `WIIVC_WINDOW=settings|sdcard` renders another window, `WIIVC_SETTINGS=/tmp/x.json` keeps your real keys out of the picture):
 
-    WIIVC_SETTINGS=/tmp/x.json WIIVC_THEME=dark WIIVC_TAB=2 WIIVC_SNAPSHOT=/tmp/x.png WiiVCInjector.app/Contents/MacOS/WiiVCInjector
+    WIIVC_SETTINGS=/tmp/x.json WIIVC_THEME=dark WIIVC_TAB=2 WIIVC_SNAPSHOT=/tmp/x.png TeconMoonWiiVCInjector.app/Contents/MacOS/TeconMoonWiiVCInjector
 
 ## Converting several games at once
 
@@ -62,7 +62,7 @@ or a failed build is skipped and listed in the final summary; the other games st
 
 ## Differences from the Windows app
 
-- Settings and keys are stored in `~/Library/Application Support/WiiVCInjector/settings.json` instead of the registry.
+- Settings and keys are stored in `~/Library/Application Support/TeconMoonWiiVCInjector/settings.json` instead of the registry.
 - Wii-VMC: the external wii-vmc.exe window is replaced by a dialog that picks the target video mode
   (NTSC 480i, PAL60, PAL50, 480p). It patches the video mode tables of the game's main.dol (experimental).
 - C2W patch: ported to C# (`Engine/C2wPatcher.cs`, from FIX94's c2w_patcher). Needs your own ancast key. Verified only on a synthetic image.
@@ -70,7 +70,7 @@ or a failed build is skipped and listed in the final summary; the other games st
 - GameCube images can be an ISO/GCM, a `.ciso`, a `.rvz` or a GameCube `.nkit.iso`. The build turns them into the plain `game.iso` that Nintendont expects
   (the same goes for the 2nd disc). A CISO is unpacked by the app itself. RVZ and NKit drop the junk padding of a disc and regenerate it on read, so they go
   through the [NKit](https://github.com/Nanook/NKit) command line tool (MIT): the first time one is needed the app downloads release 3.2.2 (about 18 MB) into
-  `~/Library/Caches/WiiVCInjector/tools/`, checks it against a fixed SHA-256 and runs `nkit expand`. Wii RVZ is not supported. `WIIVC_NKIT=/path/to/nkit` uses another executable.
+  `~/Library/Caches/TeconMoonWiiVCInjector/tools/`, checks it against a fixed SHA-256 and runs `nkit expand`. Wii RVZ is not supported. `WIIVC_NKIT=/path/to/nkit` uses another executable.
 - `WIIVC_GUIBUILD=1` drives the real window (mode, game load, images, Build tab, BUILD button) through a homebrew build; keys come from WIIVC_COMMON_KEY and WIIVC_TITLE_KEY.
 - Engine self-test (`WIIVC_SELFTEST=1`) also runs WBFS, GameCube (synthetic header) and WiiWare builds; none used a real game.
 - Boot sound and TGA conversion are done in C# (no sox, no png2tgacmd); not compared byte for byte with the originals.
@@ -84,7 +84,7 @@ or a failed build is skipped and listed in the final summary; the other games st
 
 The button "Game settings..." (GC Retail mode, under the cheat codes button) sets options for one game only, in the format of Dolphin's GameINI. Each option can follow the Nintendont
 setting, be forced on or be forced off: Fullscreen (`AspectRatio = 1` or `2`, Nintendont's "WiiU Widescreen"), Widescreen hack (`wideScreenHack`, "Force Widescreen"), Progressive scan
-(`ProgressiveScan`, "Force Progressive"), Skip IPL (`SkipIPL`), and three keys of this app that Dolphin does not have: Patch PAL50 (`PatchPAL50`), Video mode (`VideoMode`: Auto, PAL50, PAL60, NTSC or MPAL) and the Deflicker filter (`Deflicker`, with a forced video mode). The window shows the text of the file. "Save" keeps it in `~/Library/Application Support/WiiVCInjector/gamesettings/<id4>.ini`,
+(`ProgressiveScan`, "Force Progressive"), Skip IPL (`SkipIPL`), and three keys of this app that Dolphin does not have: Patch PAL50 (`PatchPAL50`), Video mode (`VideoMode`: Auto, PAL50, PAL60, NTSC or MPAL) and the Deflicker filter (`Deflicker`, with a forced video mode). The window shows the text of the file. "Save" keeps it in `~/Library/Application Support/TeconMoonWiiVCInjector/gamesettings/<id4>.ini`,
 "Copy to SD card..." puts it at `teconmoon/<id4>.ini` on the card, and installing Nintendont from the SD Card menu copies every saved file. The Teconmoon Nintendont applies it when that game
 starts, also from a WUP, without rebuilding the WUP and without changing `nincfg.bin` (see `nintendont-teconmoon/README.md`).
 
@@ -143,6 +143,6 @@ synthetic DOL that carries GeckoLoader's hook pattern (the real tool, `WIIVC_GEC
 
 ## Checks
 
-- `WIIVC_SNAPSHOT=out.png [WIIVC_TAB=n] dotnet bin/Release/net10.0/WiiVCInjector.dll` renders a tab to a PNG and exits.
-- `WIIVC_UITEST=1 dotnet bin/Release/net10.0/WiiVCInjector.dll` runs the UI logic self-test (uses a temporary settings file).
-- `WIIVC_GCCONVERT=game.rvz [WIIVC_GCOUT=out.iso] WIIVC_SELFTEST=1 dotnet bin/Release/net10.0/WiiVCInjector.dll` unpacks a GameCube image (ISO, CISO, RVZ or NKit) with the code the build uses, walks the disc's file table and prints the SHA-1. The same game in CISO, RVZ and NKit must print the same SHA-1; an RVZ or NKit image downloads the NKit tool the first time.
+- `WIIVC_SNAPSHOT=out.png [WIIVC_TAB=n] dotnet bin/Release/net10.0/TeconMoonWiiVCInjector.dll` renders a tab to a PNG and exits.
+- `WIIVC_UITEST=1 dotnet bin/Release/net10.0/TeconMoonWiiVCInjector.dll` runs the UI logic self-test (uses a temporary settings file).
+- `WIIVC_GCCONVERT=game.rvz [WIIVC_GCOUT=out.iso] WIIVC_SELFTEST=1 dotnet bin/Release/net10.0/TeconMoonWiiVCInjector.dll` unpacks a GameCube image (ISO, CISO, RVZ or NKit) with the code the build uses, walks the disc's file table and prints the SHA-1. The same game in CISO, RVZ and NKit must print the same SHA-1; an RVZ or NKit image downloads the NKit tool the first time.

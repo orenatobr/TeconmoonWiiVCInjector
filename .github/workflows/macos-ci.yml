@@ -22,9 +22,9 @@ jobs:
       - name: Install a virtual display
         run: sudo apt-get update && sudo apt-get install -y xvfb libfontconfig1
       - name: Build
-        run: dotnet build macos/WiiVCInjector -c Release -o "$RUNNER_TEMP/app"
+        run: dotnet build macos/TeconMoonWiiVCInjector -c Release -o "$RUNNER_TEMP/app"
       - name: UI logic self-test
-        run: WIIVC_UITEST=1 xvfb-run -a dotnet "$RUNNER_TEMP/app/WiiVCInjector.dll"
+        run: WIIVC_UITEST=1 xvfb-run -a dotnet "$RUNNER_TEMP/app/TeconMoonWiiVCInjector.dll"
       - name: Nintendont per game settings parser (C)
         run: macos/nintendont-teconmoon/test-gamesettings.sh
       - name: Render both themes
@@ -33,7 +33,7 @@ jobs:
           for theme in light dark; do
             for tab in 0 1 2 3 4; do
               WIIVC_SETTINGS="$RUNNER_TEMP/settings.json" WIIVC_THEME=$theme WIIVC_TAB=$tab \
-                WIIVC_SNAPSHOT="$RUNNER_TEMP/shots/${theme}_tab${tab}.png" xvfb-run -a dotnet "$RUNNER_TEMP/app/WiiVCInjector.dll"
+                WIIVC_SNAPSHOT="$RUNNER_TEMP/shots/${theme}_tab${tab}.png" xvfb-run -a dotnet "$RUNNER_TEMP/app/TeconMoonWiiVCInjector.dll"
             done
           done
       - uses: actions/upload-artifact@v4

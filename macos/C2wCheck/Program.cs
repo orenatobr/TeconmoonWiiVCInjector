@@ -1,5 +1,5 @@
 using System.Security.Cryptography;
-using WiiVCInjector;
+using TeconMoonWiiVCInjector;
 
 if (args.Length == 4 && args[0] == "patch")
 {

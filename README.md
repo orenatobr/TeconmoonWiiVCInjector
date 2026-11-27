@@ -10,8 +10,8 @@ This fork adds a native **macOS (Apple Silicon) port** under [`macos/`](macos/),
 - A C# build engine replaces the Windows tools: wit, GetExtTypePatcher, nfs2iso2nfs and NUSPacker run natively, PNG to TGA and boot sound (WAV to btsnd) are done in C#, and the Wii U base files are downloaded with JNUSTool using your own keys.
 - The C2W patch is a C# port of [FIX94's c2w_patcher](https://github.com/FIX94/c2w_patcher) (MIT); on a synthetic image its output is byte identical to the original tool.
 - Wii VMC (closed source, Windows only) is replaced by an open, experimental video mode patcher with a target picker (NTSC 480i, PAL60, PAL50, 480p).
-- Settings are stored in `~/Library/Application Support/WiiVCInjector/settings.json` instead of the Windows registry.
-- Packaging: `macos/package.sh` builds a self-contained `WiiVCInjector.app` (bundled .NET runtime and a minimal Java runtime). Download it from the [latest release](https://github.com/orenatobr/TeconmoonWiiVCInjector/releases/latest).
+- Settings are stored in `~/Library/Application Support/TeconMoonWiiVCInjector/settings.json` instead of the Windows registry.
+- Packaging: `macos/package.sh` builds a self-contained `TeconMoonWiiVCInjector.app` (bundled .NET runtime and a minimal Java runtime). Download it from the [latest release](https://github.com/orenatobr/TeconmoonWiiVCInjector/releases/latest).
 
 **Install (Apple silicon):**
 

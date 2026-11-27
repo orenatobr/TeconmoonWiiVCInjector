@@ -1,5 +1,5 @@
 #!/bin/bash
-# Builds dist/WiiVCInjector.app (arm64, self-contained, ad-hoc signed), a zip and its .sha256 sidecar.
+# Builds dist/TeconMoonWiiVCInjector.app (arm64, self-contained, ad-hoc signed), a zip and its .sha256 sidecar.
 # Upload both files to the release: install.sh downloads the .sha256 too and stops with a 404 if it is missing.
 # Env: VERSION (default 1.0.0), TOOLS_SRC (dir with bin jar BASE DOL share; default: the local
 # tcmoon-mac/tools), JDK_HOME (default openjdk@17 from Homebrew). nfs2iso2nfs is downloaded and built here.
@@ -10,38 +10,38 @@ VERSION="${VERSION:-1.0.0}"
 TOOLS_SRC="${TOOLS_SRC:-/Volumes/Renato/Wii U/tcmoon-mac/tools}"
 JDK_HOME="${JDK_HOME:-$(/usr/libexec/java_home -v 17 2>/dev/null || echo /opt/homebrew/opt/openjdk@17/libexec/openjdk.jdk/Contents/Home)}"
 DIST="$ROOT/dist"
-APP="$DIST/WiiVCInjector.app"
+APP="$DIST/TeconMoonWiiVCInjector.app"
 RES="$APP/Contents/Resources"
 TOOLS="$RES/tools"
 WORK="$(mktemp -d)"
 trap 'rm -rf "$WORK"' EXIT
 
-rm -rf "$APP" "$DIST/WiiVCInjector-macos-arm64.zip" "$DIST/WiiVCInjector-macos-arm64.zip.sha256"
+rm -rf "$APP" "$DIST/TeconMoonWiiVCInjector-macos-arm64.zip" "$DIST/TeconMoonWiiVCInjector-macos-arm64.zip.sha256"
 mkdir -p "$APP/Contents/MacOS" "$TOOLS"/{bin,jar}
 
 echo "==> publish app"
-dotnet publish "$ROOT/macos/WiiVCInjector" -c Release -r osx-arm64 --self-contained true -p:Version="$VERSION" -o "$WORK/app" -v q
+dotnet publish "$ROOT/macos/TeconMoonWiiVCInjector" -c Release -r osx-arm64 --self-contained true -p:Version="$VERSION" -o "$WORK/app" -v q
 # Managed dlls in Contents/MacOS break `codesign --verify --strict` (unsigned subcomponents), so the
-# app lives in Resources/app and MacOS/WiiVCInjector is a tiny launcher that execs it.
+# app lives in Resources/app and MacOS/TeconMoonWiiVCInjector is a tiny launcher that execs it.
 mkdir -p "$RES/app"
 cp -R "$WORK/app/." "$RES/app/"
 rm -f "$RES/app/"*.pdb
-cat > "$APP/Contents/MacOS/WiiVCInjector" <<'LAUNCH'
+cat > "$APP/Contents/MacOS/TeconMoonWiiVCInjector" <<'LAUNCH'
 #!/bin/bash
-exec "$(cd "$(dirname "$0")/../Resources/app" && pwd)/WiiVCInjector" "$@"
+exec "$(cd "$(dirname "$0")/../Resources/app" && pwd)/TeconMoonWiiVCInjector" "$@"
 LAUNCH
-chmod +x "$APP/Contents/MacOS/WiiVCInjector"
+chmod +x "$APP/Contents/MacOS/TeconMoonWiiVCInjector"
 
 echo "==> Info.plist + icon"
 cat > "$APP/Contents/Info.plist" <<PLIST
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0"><dict>
-<key>CFBundleName</key><string>WiiVC Injector</string>
-<key>CFBundleDisplayName</key><string>WiiVC Injector</string>
+<key>CFBundleName</key><string>TeconMoonWiiVCInjector</string>
+<key>CFBundleDisplayName</key><string>TeconMoonWiiVCInjector</string>
 <key>CFBundleIdentifier</key><string>com.orenatobr.wiivcinjector</string>
-<key>CFBundleExecutable</key><string>WiiVCInjector</string>
-<key>CFBundleIconFile</key><string>WiiVCInjector</string>
+<key>CFBundleExecutable</key><string>TeconMoonWiiVCInjector</string>
+<key>CFBundleIconFile</key><string>TeconMoonWiiVCInjector</string>
 <key>CFBundlePackageType</key><string>APPL</string>
 <key>CFBundleVersion</key><string>$VERSION</string>
 <key>CFBundleShortVersionString</key><string>$VERSION</string>
@@ -49,7 +49,7 @@ cat > "$APP/Contents/Info.plist" <<PLIST
 <key>NSHighResolutionCapable</key><true/>
 </dict></plist>
 PLIST
-python3 "$ROOT/macos/make_icns.py" "$ROOT/TeconMoon's WiiVC Injector/WiiU.ico" "$RES/WiiVCInjector.icns"
+python3 "$ROOT/macos/make_icns.py" "$ROOT/TeconMoon's WiiVC Injector/WiiU.ico" "$RES/TeconMoonWiiVCInjector.icns"
 
 echo "==> tools"
 # copy without AppleDouble / .DS_Store (source may be exFAT)
@@ -87,11 +87,11 @@ echo "==> codesign (ad-hoc)"
 find "$APP/Contents/Resources" -type f | while read -r f; do
   if file -b "$f" | grep -q 'Mach-O'; then codesign --force -s - "$f" 2>/dev/null; fi
 done
-codesign --force -s - "$APP/Contents/MacOS/WiiVCInjector"
+codesign --force -s - "$APP/Contents/MacOS/TeconMoonWiiVCInjector"
 codesign --force --deep -s - "$APP"
 codesign --verify --deep --strict "$APP" && echo "codesign verify OK"
 
 echo "==> zip"
-ditto -c -k --keepParent "$APP" "$DIST/WiiVCInjector-macos-arm64.zip"
-(cd "$DIST" && shasum -a 256 WiiVCInjector-macos-arm64.zip > WiiVCInjector-macos-arm64.zip.sha256 && cat WiiVCInjector-macos-arm64.zip.sha256)
-ls -lh "$DIST/WiiVCInjector-macos-arm64.zip"
+ditto -c -k --keepParent "$APP" "$DIST/TeconMoonWiiVCInjector-macos-arm64.zip"
+(cd "$DIST" && shasum -a 256 TeconMoonWiiVCInjector-macos-arm64.zip > TeconMoonWiiVCInjector-macos-arm64.zip.sha256 && cat TeconMoonWiiVCInjector-macos-arm64.zip.sha256)
+ls -lh "$DIST/TeconMoonWiiVCInjector-macos-arm64.zip"

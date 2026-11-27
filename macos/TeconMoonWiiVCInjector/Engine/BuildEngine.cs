@@ -14,8 +14,22 @@ public static class BuildEngine
     public static Task<string> RunAsync(BuildOptions o, IProgress<(int Percent, string Status)> progress, CancellationToken ct = default) =>
         Task.Run(() => Run(o, progress, ct), ct);
 
-    static string Sanitize(string s) =>
-        string.Join("_", s.Split(Path.GetInvalidFileNameChars(), StringSplitOptions.RemoveEmptyEntries)).TrimEnd('.');
+    /// <summary>Cleans a title for a FAT32 SD card: ":" becomes " - ", other forbidden characters are dropped.</summary>
+    static string Sanitize(string s)
+    {
+        s = s.Replace(":", " - ");
+        var bad = new HashSet<char>("\\/*?\"<>|").Concat(Path.GetInvalidFileNameChars()).ToHashSet();
+        s = new string(s.Where(c => !bad.Contains(c) && c >= ' ').ToArray());
+        return System.Text.RegularExpressions.Regex.Replace(s, @"\s+(-\s+)+", " - ").Trim().TrimEnd('.', ' ');
+    }
+
+    /// <summary>Output folder name: "[WUP][WII|NGC] Name - Subtitle", the layout the WUP installer on the Wii U accepts.</summary>
+    internal static string FolderName(string system, string title1, string? title2)
+    {
+        var name = Sanitize(title1);
+        if (!string.IsNullOrWhiteSpace(title2)) name = $"{name} - {Sanitize(title2)}";
+        return $"[WUP][{(system == "gcn" ? "NGC" : "WII")}] {name}";
+    }
 
     static string Run(BuildOptions o, IProgress<(int Percent, string Status)> progress, CancellationToken ct)
     {
@@ -97,7 +111,7 @@ public static class BuildEngine
                 throw new InvalidOperationException("nfs2iso2nfs did not produce content/hif_000000.nfs, so the package would not contain the game.");
 
             P(85, "Encrypting contents into installable WUP Package...");
-            var outPath = Path.Combine(o.OutputDir, $"{Sanitize(o.Title1)} WUP-N-{ids.Text}_{ids.Packed}");
+            var outPath = Path.Combine(o.OutputDir, FolderName(o.System, o.Title1, o.Title2));
             Directory.CreateDirectory(outPath);
             // cafe2wii adds files NUSPacker's own rules do not know; it would stop with "not assigned to any content"
             var packer = o.C2wPatch ? NusPackerRules.Cafe2wiJar(Tools.Jar("NUSPacker"), work) : Tools.Jar("NUSPacker");

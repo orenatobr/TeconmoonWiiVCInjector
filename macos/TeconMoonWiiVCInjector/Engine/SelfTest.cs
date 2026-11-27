@@ -106,6 +106,10 @@ internal static class SelfTest
         var root = System.Xml.Linq.XDocument.Parse(meta).Root!;
         Check("meta escaping + two lines", root.Element("longname_en")!.Value == "A & B <C>\nL2" && root.Element("shortname_en")!.Value == "A & B <C>"
             && root.Element("product_code")!.Value == "WUP-N-RSPE" && root.Element("drc_use")!.Value == "65537");
+        Check("output folder: [WUP][NGC] with colon as dash",
+            BuildEngine.FolderName("gcn", "Resident Evil Code: Veronica X", null) == "[WUP][NGC] Resident Evil Code - Veronica X");
+        Check("output folder: [WUP][WII] with subtitle and no forbidden characters",
+            BuildEngine.FolderName("wii", "Zelda: Skyward?", "Sword/HD.") == "[WUP][WII] Zelda - Skyward - SwordHD");
         Check("nfs wii", string.Join(' ', Metadata.NfsArgs("wii", "g.iso", "-instantcc", true, true)) == "-enc -instantcc -lrpatch -iso g.iso");
         Check("nfs dol", string.Join(' ', Metadata.NfsArgs("dol", "g.iso", "", false, true)) == "-enc -homebrew -passthrough -iso g.iso");
         Check("nfs wiiware", string.Join(' ', Metadata.NfsArgs("wiiware", "g.iso", "-nocc", false, true)) == "-enc -homebrew -nocc -iso g.iso");
